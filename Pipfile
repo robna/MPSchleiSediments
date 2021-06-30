@@ -6,6 +6,8 @@ name = "pypi"
 [packages]
 jupyter = "*"
 mysql-connector-python = "*"
+altair-transform = {git = "https://github.com/altair-viz/altair-transform.git"}
+vega-datasets = "*"
 
 [dev-packages]
 
