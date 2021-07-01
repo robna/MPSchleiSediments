@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "f54584b40bef052625b8df6b63c8b9df41660cc3e7225e9ae1e7e867ca548356"
+            "sha256": "3a1781274fdf335b0fdfceecca5e0413270fbb9bcac446485aca13c77cb19a4a"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -24,9 +24,25 @@
             "markers": "python_version >= '3.6'",
             "version": "==4.1.0"
         },
+        "altair-data-server": {
+            "hashes": [
+                "sha256:b39205a48ab2678020fc58739cb973845879ed169cb5addddc9dcbf5a69aeb2b",
+                "sha256:bd1414d69dbfec22c804b34210491d7313e5edc7736504dfb8c405ded0e2015b"
+            ],
+            "markers": "python_version >= '3.6'",
+            "version": "==0.4.1"
+        },
         "altair-transform": {
             "git": "https://github.com/altair-viz/altair-transform.git",
             "ref": "b65bf854de1e80f931e063d8fb2ec938773826fb"
+        },
+        "altair-viewer": {
+            "hashes": [
+                "sha256:2964dbde6b7c5be723ddd9d509db4de67c9fb4c765d4e864087dc931c4524439",
+                "sha256:5e290c472b70f14b5c943d464b96ca78c7131bb5f515cdb8b031e0d0722267e5"
+            ],
+            "index": "pypi",
+            "version": "==0.3.0"
         },
         "argon2-cffi": {
             "hashes": [
@@ -546,6 +562,14 @@
                 "sha256:096f9b8350b65ebd2fd1346b12452efe5b9607f7482813ffca50c22722a807ce"
             ],
             "version": "==3.11"
+        },
+        "portpicker": {
+            "hashes": [
+                "sha256:c2831ff4328a21e928ffc9e52124bcafacaf5816d38a1a72dc329680dc1bb7ba",
+                "sha256:fda2cd7bf93fffc54580a945584dc3f4897a37074c79a197fceed9566a06d1dd"
+            ],
+            "markers": "python_version >= '3.6'",
+            "version": "==1.4.0"
         },
         "prometheus-client": {
             "hashes": [

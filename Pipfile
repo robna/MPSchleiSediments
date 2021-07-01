@@ -8,6 +8,7 @@ jupyter = "*"
 mysql-connector-python = "*"
 altair-transform = {git = "https://github.com/altair-viz/altair-transform.git"}
 vega-datasets = "*"
+altair-viewer = "*"
 
 [dev-packages]
 
