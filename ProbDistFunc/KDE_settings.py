@@ -2,8 +2,8 @@ import numpy as np
 
 class Config:
     lower_size_limit: int = 1  # the smallest particle size in µm included in the kde computation
-    upper_size_limit: int = 1000  # the largest particle size in µm included in the kde computation
-    kde_steps: int = 1000  # number points on the size axis where the kde is defined (like number of bins in histogram)
+    upper_size_limit: int = 5000  # the largest particle size in µm included in the kde computation
+    kde_steps: int = 5000  # number points on the size axis where the kde is defined (like number of bins in histogram)
     optimise_bw: bool = False  # if True: compute an individual bandwidth for each sample before computing the KDE
     bws_to_test: int = 100  # if optimise_bw = True: how many bandwidth values should be tried out?
     fixed_bw: int = 50  # if optimise_bw = False: fixed bandwidth value to use for all kde's

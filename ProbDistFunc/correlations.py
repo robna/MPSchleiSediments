@@ -5,27 +5,23 @@ from scipy import stats
 from KDE_settings import Config
 
 
-def correlate_size_ranges(df):  # TODO: adapt correlation loop from ParticleAlign project
-    df_r = pd.DataFrame(columns=['alpha', 'beta',
-                                 'r_BDI', 'p_BDI',
-                                 'r_IQI', 'p_IQI'])
+def range_conc_correlation(size_pdfs, sdd_MP_sed):  # TODO: adapt correlation loop from ParticleAlign project
+    step = (Config.upper_size_limit - Config.lower_size_limit) / Config.kde_steps
+    df_r = pd.DataFrame(columns=['lower_size', 'upper_size', 'r', 'p'])
 
-    p = np.arange(Config.minParameterForBDI, Config.maxParameterForBDI, Config.stepParameterForBDI)
-    for alpha in p:
-        for beta in p:
-            if alpha == 0 and beta ==0:
-                pass
-            else:
-                df = make_BDI(df, alpha, beta)
-                r_BDI = stats.pearsonr(df.particle_loss, df.BDI)
-                r_IQI = stats.pearsonr(df.particle_loss, df.IQI)
-                df_r.loc[len(df_r)] = [alpha, beta,
-                                       r_BDI[0], r_BDI[1],
-                                       r_IQI[0], r_IQI[1]]
-                print(f'Running BDI optimisation with alpha =     {round(alpha, 2)}                        ', end="\r", flush=True)
+    for i in size_pdfs.x_d:
+        for j in size_pdfs.x_d[size_pdfs.x_d > i]:
+            size_sum = size_pdfs.loc[(size_pdfs.x_d >= i) & (size_pdfs.x_d < j)].sum()
+            size_sum.drop('x_d', inplace=True)
+            range_prob = size_sum * step
+            range_conc = range_prob * sdd_MP_sed.set_index('Sample').Concentration
 
-    # print(df_r.loc[df_r.r_IQI == df_r.r_IQI.max()])
-    print(df_r.loc[df_r.r_BDI == df_r.r_BDI.max()])
-    bestAlpha, bestBeta = df_r.loc[df_r.r_BDI == df_r.r_BDI.max()].iloc[0, 0:2]
+            r = stats.pearsonr(range_conc, sdd_MP_sed.set_index('Sample').TOC)
+            df_r.loc[len(df_r)] = [i, j, r[0], r[1]]
+            print(f'Correlating TOC with size range            [{i},        {j}]                ', end="\r", flush=True)
 
-    return bestAlpha, bestBeta
+    print(df_r.loc[df_r.r == df_r.r.max()])
+    bestLower, bestUpper = df_r.loc[df_r.r == df_r.r.max()].iloc[0, 0:2]
+    return bestLower, bestUpper, df_r
+
+
