@@ -4,11 +4,14 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+altair-transform = {git = "https://github.com/altair-viz/altair-transform.git"}
+altair-viewer = "*"
 jupyter = "*"
 mysql-connector-python = "*"
-altair-transform = {git = "https://github.com/altair-viz/altair-transform.git"}
+seaborn = "*"
+sklearn = "*"
+statsmodels = "*"
 vega-datasets = "*"
-altair-viewer = "*"
 
 [dev-packages]
 

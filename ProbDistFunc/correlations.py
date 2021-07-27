@@ -5,23 +5,42 @@ from scipy import stats
 from KDE_settings import Config
 
 
-def range_conc_correlation(size_pdfs, sdd_MP_sed):  # TODO: adapt correlation loop from ParticleAlign project
-    step = (Config.upper_size_limit - Config.lower_size_limit) / Config.kde_steps
+def predictorcorr(df_range_conc, predictors, col_name):
     df_r = pd.DataFrame(columns=['lower_size', 'upper_size', 'r', 'p'])
-
-    for i in size_pdfs.x_d:
-        for j in size_pdfs.x_d[size_pdfs.x_d > i]:
-            size_sum = size_pdfs.loc[(size_pdfs.x_d >= i) & (size_pdfs.x_d < j)].sum()
-            size_sum.drop('x_d', inplace=True)
-            range_prob = size_sum * step
-            range_conc = range_prob * sdd_MP_sed.set_index('Sample').Concentration
-
-            r = stats.pearsonr(range_conc, sdd_MP_sed.set_index('Sample').TOC)
-            df_r.loc[len(df_r)] = [i, j, r[0], r[1]]
-            print(f'Correlating TOC with size range            [{i},        {j}]                ', end="\r", flush=True)
-
-    print(df_r.loc[df_r.r == df_r.r.max()])
+    
+    for index, range_conc in df_range_conc.iterrows():
+        lower, upper = index.split('_')
+        if range_conc.max() > 1e-32:  # don't proceed with correlation if all probabilities in current size slice are practically zero
+            r = stats.pearsonr(range_conc, predictors[col_name])
+        else: r = [np.nan, np.nan]    
+        df_r.loc[len(df_r)] = [lower, upper, r[0], r[1]]
+    
+        print(f'Correlating {col_name} with size range            [{lower},        {upper}]                ', end="\r", flush=True)
+    
+    print(df_r.loc[df_r.r == df_r.r.max()], end="\r", flush=True)
     bestLower, bestUpper = df_r.loc[df_r.r == df_r.r.max()].iloc[0, 0:2]
     return bestLower, bestUpper, df_r
 
 
+
+
+def crosscorr(datax, datay):
+    """
+    inspired from: https://towardsdatascience.com/four-ways-to-quantify-synchrony-between-time-series-data-b99136c4a9c9
+    datax, datay : pandas.Series objects of equal length
+    
+    Returns
+    -------
+    best: highest correlation coefficients and corresponding shift
+    df_r: Dataframe containing shift steps and resulting pearson correlation coeffs between datax and datay
+    """
+    
+    lags = range(-len(datax), len(datax)+1)
+    df_r = pd.DataFrame(lags, columns = ['shifted'])
+    
+    r = [datax.corr(datay.shift(lag)) for lag in lags]
+    df_r['pearson'] = r
+    
+    best = df_r.loc[df_r['pearson'] == df_r['pearson'].max()]
+
+    return best, df_r
