@@ -6,12 +6,16 @@ name = "pypi"
 [packages]
 altair-transform = {git = "https://github.com/altair-viz/altair-transform.git"}
 altair-viewer = "*"
-jupyter = "*"
 mysql-connector-python = "*"
 seaborn = "*"
 sklearn = "*"
 statsmodels = "*"
 vega-datasets = "*"
+jupyterlab = "*"
+jupyterlab-git = "*"
+jupyterlab-github = "*"
+nodejs = "*"
+npm = "*"
 
 [dev-packages]
 
