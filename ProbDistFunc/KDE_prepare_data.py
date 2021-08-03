@@ -79,6 +79,9 @@ def equalise_MP_and_Sed(df_range_conc, sed_size_freqs):
     df_range_conc.drop([row for row in df_range_conc.index if row not in sed_size_freqs.index], axis=0, inplace=True)
     sed_size_freqs.drop([row for row in sed_size_freqs.index if row not in df_range_conc.index], axis=0, inplace=True)
     
+    if not Config.range_conc:  # normalize to max conc of all size bins, i.e. turn from concentrations to percentage abundances   
+        df_range_conc = df_range_conc.apply(lambda x: x/x.max(), axis=0)
+    
     melted_df_range_conc = df_range_conc.T.reset_index().melt(id_vars='sample', var_name='ranges', value_name='conc')
     melted_df_range_conc[['lower', 'upper']] = melted_df_range_conc.ranges.str.split('_', expand=True).astype(int)
     melted_df_range_conc.drop(columns='ranges', inplace=True)

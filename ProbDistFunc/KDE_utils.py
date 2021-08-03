@@ -56,9 +56,11 @@ def make_range_conc(size_pdfs, sdd_MP_sed):
 
     for i in size_pdfs.x_d:
         for j in size_pdfs.x_d[size_pdfs.x_d > i]:
+            
+            step = j - i
+            
             relevant_sizes = size_pdfs.loc[(size_pdfs.x_d >= i) & (size_pdfs.x_d < j)]
             size_sum = relevant_sizes.sum()
-            step = j - i
             size_sum.drop('x_d', inplace=True)
 
             range_prob = size_sum * step
@@ -68,9 +70,7 @@ def make_range_conc(size_pdfs, sdd_MP_sed):
             df_range_conc = df_range_conc.append(range_conc)
             
     df_range_conc.rename_axis(columns='sample', inplace=True)
-    
-    if not Config.range_conc:
-                df_range_conc = df_range_conc.apply(lambda x: x/x.max(), axis=1)  # normalize to max conc of all size bins, i.e. turn from concentrations to percentage abundances            
+             
     return df_range_conc
 
 
