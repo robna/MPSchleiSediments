@@ -4,11 +4,14 @@ from sklearn.neighbors import KernelDensity
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import LeaveOneOut
 from KDE_settings import Config
+import KDE_prepare_data
 
 
 def optimise_bandwidth(data):
-    """"Finds an "optimised" kernel bandwidth for the data
-    using sklearn GridSearchCrossValidation and LeaveOneOut algorithms"""
+    """
+    Finds an "optimised" kernel bandwidth for the data
+    using sklearn GridSearchCrossValidation and LeaveOneOut algorithms
+    """
 
     grid = GridSearchCV(KernelDensity(kernel=Config.kernel),
                         {'bandwidth': Config.bandwidths},
@@ -19,9 +22,11 @@ def optimise_bandwidth(data):
 
 
 def calculate_kde(data, x_d = Config.x_d[:, None]):
-    """Makes a kernel density estimation using parameters from the Config class in KDE_settings.py.
+    """
+    Makes a kernel density estimation using parameters from the Config class in KDE_settings.py.
     Data should be a 1D np-array, x_d is the discrete values where the probability density is evaluated,
-    bw is the bandwidth to be used for the kernels"""
+    bw is the bandwidth to be used for the kernels
+    """
 
     bw = optimise_bandwidth(data) if Config.optimise_bw else Config.fixed_bw
 
@@ -36,8 +41,12 @@ def calculate_kde(data, x_d = Config.x_d[:, None]):
 
 
 def per_sample_kde(pdd_sdd_MP, x_d = Config.x_d):
-    """Loop through the MP df (grouped by samples) and calculate one kde per sample.
-    Returns a df with the x-values in the first column followed by computed densities for each x of each sample."""
+    """
+    Loop through the MP df (grouped by samples) and calculate one kde per sample.
+    Returns a df with the x-values in the first column
+    followed by computed densities for each x of each sample.
+    """
+    
     kde_results = pd.DataFrame({'x_d': x_d})  # initialise results df to be filled in loop
 
     for SampleName, SampleGroup in pdd_sdd_MP.groupby(['Sample']):
@@ -47,33 +56,57 @@ def per_sample_kde(pdd_sdd_MP, x_d = Config.x_d):
         kde_results[SampleName] = kde_result
 
         # print(f'{SampleName}:    bandwidth is {round(bw, 2)}')
+        
+    kde_results.set_index('x_d', inplace=True)
+    kde_results.columns.name = 'sample'
     return kde_results
 
 
-def make_range_conc(size_pdfs, sdd_MP_sed):
-    #step = (Config.upper_size_limit - Config.lower_size_limit) / (Config.kde_steps - 1)  # TODO: make step from x_d to account for non-uniform steps
-    df_range_conc = pd.DataFrame()
+def probDens2conc(size_pdfs, sdd_MP_sed):
+    """
+    Converts df of probability densities into df of concentrations per size bins.
+    Size bins are represented by their lower boundary as the df's index (inclusive)
+    and reach upt to the next index (exclusive). Both boundary are named in the final index labels.
+    """
+    
+    steps = size_pdfs.reset_index().x_d.shift(-1) - size_pdfs.reset_index().x_d
+    
+    size_prob = size_pdfs.mul(list(steps), axis=0)
+    size_conc = size_prob * sdd_MP_sed.set_index('Sample').Concentration
+    
+    size_conc = KDE_prepare_data.complete_index_labels(size_conc)
+    
+    return size_conc
 
-    for i in size_pdfs.x_d:
-        for j in size_pdfs.x_d[size_pdfs.x_d > i]:
+
+def range_aggregator(dfin):
+    """
+    Calculates an extended DF showing not only concentrations / freqs in single size bins,
+    but additionally also all possible consecutive aggregated (summed) bin combination.
+    This function can be used for MP and sediment DFs alike if the input DFs are in the right shape:
+    Columns: samples
+    Rows: single size bin with lower boundary in µm as index labels
+    
+    TODO: maybe it is possible to avoid nested loop by summing up shifting DFs?
+    """
+    
+    dfin.index.name = 'a'
+    dfin.reset_index(inplace=True)  # temporary fix because x_d has turn from column to index
+    dfout = pd.DataFrame()
+
+    for i in dfin.a:
+        for j in dfin.a[dfin.a > i]:
             
             step = j - i
             
-            relevant_sizes = size_pdfs.loc[(size_pdfs.x_d >= i) & (size_pdfs.x_d < j)]
+            relevant_sizes = dfin.loc[(dfin.a >= i) & (dfin.a < j)]
             size_sum = relevant_sizes.sum()
-            size_sum.drop('x_d', inplace=True)
+            size_sum.drop('a', inplace=True)
 
-            range_prob = size_sum * step
-            range_conc = range_prob * sdd_MP_sed.set_index('Sample').Concentration
-            range_conc.rename(f'{i}_{j}', inplace=True)
+            size_sum.rename(f'{i}_{j}', inplace=True)
             
-            df_range_conc = df_range_conc.append(range_conc)
+            dfout = dfout.append(size_sum)
             
-    df_range_conc.rename_axis(columns='sample', inplace=True)
+    dfout.rename_axis(columns='sample', inplace=True)
              
-    return df_range_conc
-
-
-
-
-
+    return dfout

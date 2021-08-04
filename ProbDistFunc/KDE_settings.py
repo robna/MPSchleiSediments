@@ -9,7 +9,7 @@ class Config:
     bws_to_test: int = 100  # if optimise_bw = True: how many bandwidth values should be tried out?
     fixed_bw: int = 50  # if optimise_bw = False: fixed bandwidth value to use for all kde's
     kernel: str = 'gaussian'  # type of kernel to be used
-    range_conc: bool = False  # if True calculate MP concentrations (#/kg) for individual size bins, otherwise calculate percentages
+    bin_conc: bool = False  # if True calculate MP concentrations (#/kg) for individual size bins, otherwise calculate percentages
 
 
 # creates the x-axis data for the prob. dist. func.
