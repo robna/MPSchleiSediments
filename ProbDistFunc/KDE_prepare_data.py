@@ -72,6 +72,33 @@ def sdd2pdd(sdd_MP, pdd_MP):
     return pdd_sdd_MP
 
 
+def melt_size_ranges(df, value_name):
+    """
+    Converts df with size bins or ranges in rows and samples in columns into a long-format df with 
+    """
+    
+    melted_df = df.T.reset_index().melt(id_vars='sample', var_name='ranges', value_name=value_name)
+    melted_df[['lower', 'upper']] = melted_df.ranges.str.split('_', expand=True).astype(int)
+    melted_df.drop(columns='ranges', inplace=True)
+    
+    return melted_df
+
+
+def merge_size_ranges(df1, value_name1, df2, value_name2):
+    """
+    Merges (after sending through melt) MP and sediment DFs.
+    Expects Dataframe 1 followed by a string argument
+    for the name of the value column in the merged DF.
+    Then the same for Dataframe 2.
+    """
+    
+    melted1 = melt_size_ranges(df1, value_name1)
+    melted2 = melt_size_ranges(df2, value_name2)
+    df = melted1.merge(melted2, on=['sample', 'lower', 'upper'])
+    
+    return df
+
+
 def equalise_MP_and_Sed(mp, sed):
     """
     Various data harmonisation steps on DFs containing per size bin data of MP concentrations (mp)
@@ -92,16 +119,16 @@ def equalise_MP_and_Sed(mp, sed):
     # In this case values will continue to represent concentrations.
     if not Config.bin_conc:  
         mp = mp.apply(lambda x: x/x.sum()*100, axis=0)
+        
+    #melted_mp = mp.T.reset_index().melt(id_vars='sample', var_name='ranges', value_name='MP')
+    #melted_mp[['lower', 'upper']] = melted_mp.ranges.str.split('_', expand=True).astype(int)
+    #melted_mp.drop(columns='ranges', inplace=True)
+        
+    #melted_sed = sed.T.reset_index().melt(id_vars='sample', var_name='ranges', value_name='SED')
+    #melted_sed[['lower', 'upper']] = melted_sed.ranges.str.split('_', expand=True).astype(int)
+    #melted_sed.drop(columns='ranges', inplace=True)
     
-    melted_mp = mp.T.reset_index().melt(id_vars='sample', var_name='ranges', value_name='conc')
-    melted_mp[['lower', 'upper']] = melted_mp.ranges.str.split('_', expand=True).astype(int)
-    melted_mp.drop(columns='ranges', inplace=True)
-    
-    melted_sed = sed.T.reset_index().melt(id_vars='sample', var_name='ranges', value_name='freq')
-    melted_sed[['lower', 'upper']] = melted_sed.ranges.str.split('_', expand=True).astype(int)
-    melted_sed.drop(columns='ranges', inplace=True)
-    
-    MPsedMelt = melted_mp.merge(melted_sed, on=['sample', 'lower', 'upper'])
+    MPsedMelt = merge_size_ranges(mp, 'MP', sed, 'SED')
     
     return mp, sed, MPsedMelt
 
