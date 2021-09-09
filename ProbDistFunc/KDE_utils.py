@@ -58,6 +58,8 @@ def per_sample_kde(pdd_sdd_MP, x_d = Config.x_d):
         # print(f'{SampleName}:    bandwidth is {round(bw, 2)}')
         
     kde_results.set_index('x_d', inplace=True)
+    kde_results = kde_results.loc[Config.lower_size_limit:Config.upper_size_limit]  # truncate to relevant range
+    
     kde_results.columns.name = 'sample'
     return kde_results
 

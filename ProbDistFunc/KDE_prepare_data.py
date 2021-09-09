@@ -84,17 +84,38 @@ def melt_size_ranges(df, value_name):
     return melted_df
 
 
-def merge_size_ranges(df1, value_name1, df2, value_name2):
+def merge_size_ranges(df1, value_name1, df2, value_name2, cart_prod=False):
     """
     Merges (after sending through melt) MP and sediment DFs.
     Expects Dataframe 1 followed by a string argument
     for the name of the value column in the merged DF.
     Then the same for Dataframe 2.
+    
+    Arg 'cart_prod = False' (default):
+    It returns the merged-melted df with rows for each
+    stations MP and sed concentration per single size range.
+    
+    Arg 'cart_prod = True':
+    It returns the merged-melted df with rows for each
+    stations MP concentration per single size range repeated
+    for each possible combination with a single size range
+    frequency of sediments. I.e. a cartesian product of the
+    two dataframes (without cross-listing samples)
     """
     
     melted1 = melt_size_ranges(df1, value_name1)
     melted2 = melt_size_ranges(df2, value_name2)
-    df = melted1.merge(melted2, on=['sample', 'lower', 'upper'])
+    if cart_prod:
+        df = melted1.merge(melted2, how='cross')  # make cartesian product df, samples are crossed too!
+        df = df.loc[df.sample_x==df.sample_y].drop(['sample_y'],  # only keep entries where samples match
+                                                     axis=1).rename(columns=
+                                                                    {'sample_x': 'sample',
+                                                                     'lower_x': 'lower_MP',
+                                                                     'upper_x': 'upper_MP',
+                                                                     'lower_y': 'lower_SED',
+                                                                     'upper_y': 'upper_SED'})
+    else:
+        df= melted1.merge(melted2, on=['sample', 'lower', 'upper'])
     
     return df
 
@@ -166,6 +187,9 @@ def sediment_preps(sed_size_freqs, rebinning=False):
     sed_size_freqs = sed_size_freqs.groupby('sample').mean()  # take the average of all repeated Master Sizer measurements on individual samples
     #sed_size_freqs = sed_size_freqs.set_index('sample').rename_axis(index=None)
     sed_size_freqs.rename(columns = {'0.01': '0'}, inplace=True)
+    sed_size_freqs.columns = sed_size_freqs.columns.astype(int)
+    
+    sed_size_freqs.T.loc[Config.lower_size_limit:Config.upper_size_limit].T  # truncate to relevant size range
     
     if rebinning:
         sed_size_freqs = rebin(sed_size_freqs)

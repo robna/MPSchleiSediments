@@ -12,10 +12,11 @@ sklearn = "*"
 statsmodels = "*"
 vega-datasets = "*"
 jupyterlab = "*"
-jupyterlab-git = "*"
-jupyterlab-github = "*"
 nodejs = "*"
 npm = "*"
+streamlit = "*"
+streamlit-vega-lite = "*"
+jupyterlab-git = "*"
 
 [dev-packages]
 
