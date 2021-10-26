@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 import altair as alt
+import seaborn as sns
 
 # from streamlit_vega_lite import altair_component
 # alt.renderers.enable('altair_viewer')  # use to display altair charts externally in browser instead of inline (only activate in non-vega-compatible IDE like pycharm)
@@ -98,10 +99,29 @@ def main():
     df = pd.DataFrame([MPnow.sum(), SEDnow.sum()], index=['MP', 'SED'])
 
     st.write(scatter_chart(df))
+    
+    MP_bin_width = st.select_slider('Choose MP bin width', options=sed_x_d)
+    SED_bin_width = st.select_slider('Choose SED bin width', options=sed_x_d)
+    
+#     MP_size_conc['bin_widths'] = MP_size_conc.index.str.split('_').str[1].astype(int) - MP_size_conc.index.str.split('_').str[0].astype(int)
+#     sed_size_freqs.bin_widths = sed_size_freqs.index.str.split('_').str[1].astype(int) - sed_size_freqs.index.str.split('_').str[0].astype(int)
+    
+    MPbins = MP_size_conc.groupby(MP_size_conc.reset_index(drop=True).index // MP_bin_width).sum()
+    SEDbins = MP_size_conc.groupby(MP_size_conc.reset_index(drop=True).index // MP_bin_width).sum()
+    
+    df2 = correlations.rangecorr(MPbins, SEDbins)
+    
+    MPbins
+    MP_bin_width
+    MP_size_conc
+       
+    st.write(sns.heatmap(df2, cmap ='RdYlGn'))
+    
+    
+    
+    
 
-    MPnow
-
-    SEDnow
+    
 
 if __name__ == "__main__":
     main()

@@ -26,7 +26,8 @@ def predictorcorr(df_range_conc, predictors, col_name):
 
 def crosscorr(datax, datay):
     """
-    inspired from: https://towardsdatascience.com/four-ways-to-quantify-synchrony-between-time-series-data-b99136c4a9c9
+    inspired from:
+    https://towardsdatascience.com/four-ways-to-quantify-synchrony-between-time-series-data-b99136c4a9c9
     datax, datay : pandas.Series objects of equal length
     
     Returns
@@ -44,3 +45,19 @@ def crosscorr(datax, datay):
     best = df_r.loc[df_r['pearson'] == df_r['pearson'].max()]
 
     return best, df_r
+
+
+def rangecorr(mp, sed):
+    """Calculate a correlation matrix containing Pearson correlation
+    coefficients for all combinations of any original or summed bins of MP and sediments.
+    """
+
+    corrMat = np.corrcoef(mp, sed)
+    corrMat = corrMat[:len(mp), len(sed):]  # only take upper right quadrant of correlation matrix
+
+    corrMatDF = pd.DataFrame(corrMat, index=mp.index, columns=sed.index)  # turn np array into df
+    
+    corrMatDF.index.name = 'MP'
+    corrMatDF.columns.name = 'SED'
+    
+    return corrMatDF
