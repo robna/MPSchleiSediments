@@ -1,10 +1,10 @@
 import pandas as pd
 
 def blank_procedure(samples_MP, IPF_blank_MP):
-    '''
+    """
     Identifies particles that need to be eliminated from the data set,
     because they match with particles found in corresponding IPF lab blanks
-    '''
+    """
     
     samples_MP_copy = samples_MP.copy()  # take copy to retain an unaltered version of samples_MP
 
@@ -63,10 +63,10 @@ def blank_procedure(samples_MP, IPF_blank_MP):
 
 
 def blind_procedure(env_MP, syn_blind):
-    '''
+    """
     Identifies particles that need to be eliminated from the data set,
     because they match with particles found in corresponding IOW blinds
-    '''
+    """
     
     env_MP_copy = env_MP.copy()
     IOW_elimination_list = pd.DataFrame(
@@ -105,10 +105,10 @@ def blind_procedure(env_MP, syn_blind):
 
 
 def update_env_and_blind(samples_MP_copy, IOW_blind_MP):
-    '''
+    """
     Porting the particle eliminations that happened in the joint `samples_MP_copy` (env. + blind MP)
     onto the indvidual dataframes `env_MP` and `IOW_blind_MP`.
-    '''
+    """
     
     IOW_blind_MP = samples_MP_copy[samples_MP_copy.index.isin(IOW_blind_MP.index)].copy()
     # For differentiation to env_MP their `size_geom_mean` is renamed to `blind_size_geom_mean`.
@@ -121,13 +121,13 @@ def update_env_and_blind(samples_MP_copy, IOW_blind_MP):
 
 
 def make_syn_blind(IOW_blind_MP):
-    '''
+    """
     Create a combined dataframe from all blind samples,
     but only including the correct amount of particles
     E.g. in the case of 4 blind samples: only every 4th
     particle would be included (sorted by size, to not
     distort the size spectrum of particles).
-    '''
+    """
     
     blind_PhTs = IOW_blind_MP.groupby(['polymer_type', 'Colour', 'Shape'])  # collection of phenotypes
     blinds = pd.unique(IOW_blind_MP.Sample).size  # number of blind samples that were included

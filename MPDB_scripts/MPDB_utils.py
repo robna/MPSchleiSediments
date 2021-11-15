@@ -17,14 +17,12 @@ def particle_amplification(MP):
     # by to extrapolate to whole sample. Then do the repetition using np. repeat and write it back into "MP"
     MP = MP.loc[np.repeat(MP.index.values, round(1 / MP.Fraction_analysed))]
 
-    MP.IDParticles = MP.IDParticles.astype(str) + '_' + MP.groupby('IDParticles').cumcount().astype(str)  # .replace('0','')
-    # --> replace 0 if not wanted
+    MP.IDParticles = MP.IDParticles.astype(str) + '_' + MP.groupby('IDParticles').cumcount().astype(str)
     return MP
 
 
 def geom_mean(MP):
     MP['size_geom_mean'] = np.sqrt(MP['Size_1_[µm]'] * MP['Size_2_[µm]'])
-    #MP.set_index('IDParticles', inplace=True)  # TODO: this should better not be in this function, find a better place for it
     return MP
 
 
