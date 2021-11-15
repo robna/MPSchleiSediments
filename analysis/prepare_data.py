@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from KDE_settings import Regio_Sep, Config
+from settings import Regio_Sep, Config
 
 
 def aggregate_SDD(pdd_MP):
@@ -61,14 +61,14 @@ def sdd2pdd(sdd_MP, pdd_MP):
     Some of the SDD data are merged onto the PDD df,
     meaning their values get repeated for each particle of a sample
     """
-    
+
     pdd_sdd_MP = pdd_MP.merge(sdd_MP[['Sample', 'TOC', 'Regio_Sep']], on='Sample')
     pdd_sdd_MP.rename(columns={'TOC': 'TOCs', 'Sampling_weight_[kg]': 'Sampling_weight'}, inplace=True)
 
     # the PDD df get very large, so we drop certain data columns that are not needed for the plots
     pdd_sdd_MP.drop(['Site_name', 'GPS_LON', 'GPS_LAT', 'Compartment',
-                 'Contributor', 'Project', 'Size_1_[µm]', 'Size_2_[µm]', 'Shape', 'Colour',
-                 'polymer_type', 'library_entry', 'lab_blank_ID', 'sample_ID'], axis=1, inplace=True)
+                     'Contributor', 'Project', 'Size_1_[µm]', 'Size_2_[µm]', 'Shape', 'Colour',
+                     'polymer_type', 'library_entry', 'lab_blank_ID', 'sample_ID'], axis=1, inplace=True)
     return pdd_sdd_MP
 
 
@@ -76,11 +76,11 @@ def melt_size_ranges(df, value_name):
     """
     Converts df with size bins or ranges in rows and samples in columns into a long-format df with 
     """
-    
+
     melted_df = df.T.reset_index().melt(id_vars='sample', var_name='ranges', value_name=value_name)
     melted_df[['lower', 'upper']] = melted_df.ranges.str.split('_', expand=True).astype(int)
     melted_df.drop(columns='ranges', inplace=True)
-    
+
     return melted_df
 
 
@@ -102,12 +102,12 @@ def merge_size_ranges(df1, value_name1, df2, value_name2, cart_prod=False):
     frequency of sediments. I.e. a cartesian product of the
     two dataframes (without cross-listing samples)
     """
-    
+
     melted1 = melt_size_ranges(df1, value_name1)
     melted2 = melt_size_ranges(df2, value_name2)
     if cart_prod:
         df = melted1.merge(melted2, how='cross')  # make cartesian product df, samples are crossed too!
-        df = df.loc[df.sample_x==df.sample_y].drop(['sample_y'],  # only keep entries where samples match
+        df = df.loc[df.sample_x == df.sample_y].drop(['sample_y'],  # only keep entries where samples match
                                                      axis=1).rename(columns=
                                                                     {'sample_x': 'sample',
                                                                      'lower_x': 'lower_MP',
@@ -115,8 +115,8 @@ def merge_size_ranges(df1, value_name1, df2, value_name2, cart_prod=False):
                                                                      'lower_y': 'lower_SED',
                                                                      'upper_y': 'upper_SED'})
     else:
-        df= melted1.merge(melted2, on=['sample', 'lower', 'upper'])
-    
+        df = melted1.merge(melted2, on=['sample', 'lower', 'upper'])
+
     return df
 
 
@@ -125,32 +125,22 @@ def equalise_MP_and_Sed(mp, sed):
     Various data harmonisation steps on DFs containing per size bin data of MP concentrations (mp)
     and sediment frequencies (sed). See inline comments for separate steps.
     """
-    
-    # make mp and sed contain only rows (size ranges) and columns (samples), which they have in common
 
+    # make mp and sed contain only rows (size ranges) and columns (samples), which they have in common
     mp.drop([col for col in mp.columns if col not in sed.columns], axis=1, inplace=True)
     sed.drop([col for col in sed.columns if col not in mp.columns], axis=1, inplace=True)
-
     mp.drop([row for row in mp.index if row not in sed.index], axis=0, inplace=True)
     sed.drop([row for row in sed.index if row not in mp.index], axis=0, inplace=True)
-    
+
     # Normalise to summed conc of all size bins,
     # i.e. turn from concentrations to percentage abundances.
     # Can be omitted by making bin_conc = True in settings Config.
     # In this case values will continue to represent concentrations.
-    if not Config.bin_conc:  
-        mp = mp.apply(lambda x: x/x.sum()*100, axis=0)
-        
-    #melted_mp = mp.T.reset_index().melt(id_vars='sample', var_name='ranges', value_name='MP')
-    #melted_mp[['lower', 'upper']] = melted_mp.ranges.str.split('_', expand=True).astype(int)
-    #melted_mp.drop(columns='ranges', inplace=True)
-        
-    #melted_sed = sed.T.reset_index().melt(id_vars='sample', var_name='ranges', value_name='SED')
-    #melted_sed[['lower', 'upper']] = melted_sed.ranges.str.split('_', expand=True).astype(int)
-    #melted_sed.drop(columns='ranges', inplace=True)
-    
+    if not Config.bin_conc:
+        mp = mp.apply(lambda x: x / x.sum() * 100, axis=0)
+
     MPsedMelt = merge_size_ranges(mp, 'MP', sed, 'SED')
-    
+
     return mp, sed, MPsedMelt
 
 
@@ -159,10 +149,10 @@ def rebin(df):
     Sum columns into larger bins
     Returns a df with fewer columns, i.e. coarser bins
     """
-    
-    df2 = df.groupby([[i//Config.rebin_by_n for i in range(0,len(df.T))]], axis = 1).sum()
+
+    df2 = df.groupby([[i // Config.rebin_by_n for i in range(0, len(df.T))]], axis=1).sum()
     df2.columns = df.columns[::Config.rebin_by_n]
-    
+
     return df2
 
 
@@ -171,37 +161,39 @@ def complete_index_labels(df):
     Turns index labels from single number (lower boundary of size bin) to range ('lower'_'upper').
     Drops the last row (which has no upper).
     """
-    
-    df.index = df.iloc[:,0].add_suffix('_').index.values + np.append(df.index[1:].values, 'x')
+
+    df.index = df.iloc[:, 0].add_suffix('_').index.values + np.append(df.index[1:].values, 'x')
     df.drop(index=df.index[-1], inplace=True)
-    
+
     return df
 
 
-def sediment_preps(sed_size_freqs, rebinning=False):
+def sediment_preps(sed_df, rebinning=False):
     """
     Takes the imported sediment grain size data from Master Sizer csv export and prepares a
     dataframe suitable for the following data analyses
     """
-    
-    sed_size_freqs = sed_size_freqs.groupby('sample').mean()  # take the average of all repeated Master Sizer measurements on individual samples
-    #sed_size_freqs = sed_size_freqs.set_index('sample').rename_axis(index=None)
-    sed_size_freqs.rename(columns = {'0.01': '0'}, inplace=True)
-    sed_size_freqs.columns = sed_size_freqs.columns.astype(int)
-    
-    sed_size_freqs.T.loc[Config.lower_size_limit:Config.upper_size_limit].T  # truncate to relevant size range
-    
+
+    sed_df = sed_df.groupby('sample').mean()  # average all repeated Master Sizer measurements on individual samples
+    sed_df.rename(columns={'0.01': '0'}, inplace=True)
+    sed_df.columns = sed_df.columns.astype(int)
+
+    sed_df = sed_df.T.loc[Config.lower_size_limit:Config.upper_size_limit].T  # truncate to relevant size range
+
+    zero_counts = sed_df.fillna(0).astype(bool).sum(axis=0)  # count number of zeros in each column
+    sed_df = sed_df.loc[:, zero_counts[zero_counts > int((1 - Config.allowed_zeros) * sed_df.shape[0])].index.values]
+
     if rebinning:
-        sed_size_freqs = rebin(sed_size_freqs)
-    
-    sed_x_d = sed_size_freqs.columns.values.astype(int)
+        sed_df = rebin(sed_df)
+
+    sed_x_d = sed_df.columns.values.astype(int)
     sed_step = np.diff(sed_x_d)
 
-    sed_size_freqs = sed_size_freqs.T
-    
-    sed_size_freqs = complete_index_labels(sed_size_freqs)
-    
-    return sed_size_freqs, sed_x_d
+    sed_df = sed_df.T
+
+    sed_df = complete_index_labels(sed_df)
+
+    return sed_df, sed_x_d
 
 
 def combination_sums(df):  # TODO:not tested yet
@@ -228,14 +220,13 @@ def combination_sums(df):  # TODO:not tested yet
                                               10_40   d+g+j    e+h+k    f+i+l
                                               20_40    g+j      h+k      i+l
     """
-    
+
     ol = len(df)  # original length
-    
+
     for i in range(ol):
-        for j in range(i+1,ol):
-            new_row_name = df.index[i].split('_')[0] + '_' + df.index[j].split('_')[1]  # creates a string for the row index from the first and the last rows in the sum
+        for j in range(i + 1, ol):
+            new_row_name = df.index[i].split('_')[0] + '_' + df.index[j].split('_')[
+                1]  # creates a string for the row index from the first and the last rows in the sum
             df.loc[new_row_name] = df.iloc[i:j].sum()
-            
+
     return df
-
-

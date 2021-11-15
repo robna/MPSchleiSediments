@@ -2,23 +2,23 @@ import pandas as pd
 import streamlit as st
 import altair as alt
 from streamlit_vega_lite import altair_component
-import KDE_prepare_data
+import prepare_data
 import KDE_utils
-from KDE_settings import Config
+from settings import Config
 
 # alt.renderers.enable('altair_viewer')  # use to display altair charts externally in browser instead of inline (only activate in non-vega-compatible IDE like pycharm)
 alt.data_transformers.disable_max_rows()
 
 try:  # if on phy-server local modules will not be found if their directory is not added to PATH
     import sys
-    sys.path.append("/silod7/lenz/MPSchleiSediments/ProbDistFunc/")
+    sys.path.append("/silod7/lenz/MPSchleiSediments/analysis/")
     import os
-    os.chdir("/silod7/lenz/MPSchleiSediments/ProbDistFunc/")
+    os.chdir("/silod7/lenz/MPSchleiSediments/analysis/")
 except Exception:
     pass
 
 import os
-os.chdir("/home/nibor/PycharmProjects/MPSchleiSediments/ProbDistFunc")
+os.chdir("/analysis")
 
 st.set_page_config(layout="wide")
 

@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-from KDE_settings import Config
+from settings import Config
 
 
 def predictorcorr(df_range_conc, predictors, col_name):

@@ -4,6 +4,7 @@ class Config:
     rebin_by_n: int = 5  # make sediment size bins coarser: sum up every n bins into one new
     lower_size_limit: int = 0  # the smallest particle size in µm included in the kde computation
     upper_size_limit: int = 5000  # the largest particle size in µm included in the kde computation
+    allowed_zeros: float = 0.1  # the fraction of allowed zeros in a sediment size bin
     kde_steps: int = 496  # number points on the size axis where the kde is defined (like number of bins in histogram)
     optimise_bw: bool = False  # if True: compute an individual bandwidth for each sample before computing the KDE
     bws_to_test: int = 100  # if optimise_bw = True: how many bandwidth values should be tried out?
@@ -14,6 +15,7 @@ class Config:
     MPup: int = 250
     SEDlow: int = 50
     SEDup: int = 250
+    ILR_transform: bool = True  # if True: use the ILR transform for sediment size data before dimensionality reduction
 
 
 # creates the x-axis data for the prob. dist. func.
