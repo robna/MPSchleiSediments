@@ -1,12 +1,11 @@
-import mysql.connector
 import pandas as pd
 import numpy as np
-import getpass
-from MPDB_settings import polyDropList, blankList
+from MPDB_settings import polyDropList, blindList, Config
 
 
 def poly_exclude(MP):
-    MP = MP[~MP[['polymer_type', 'library_entry']].isin(polyDropList)]
+    MP.query('polymer_type not in @polyDropList and library_entry not in @polyDropList')
+    # equal to: MP[~MP['polymer_type'].isin(polyDropList) & ~MP['library_entry'].isin(polyDropList)]
     return MP
 
 
@@ -25,8 +24,12 @@ def particle_amplification(MP):
 
 def geom_mean(MP):
     MP['size_geom_mean'] = np.sqrt(MP['Size_1_[µm]'] * MP['Size_2_[µm]'])
-    MP.set_index('IDParticles', inplace=True)
-    MP = MP[MP['Size_1_[µm]'] >= 50]
+    #MP.set_index('IDParticles', inplace=True)  # TODO: this should better not be in this function, find a better place for it
+    return MP
+
+
+def size_filter(MP):
+    MP = MP[MP[Config.size_filter_dimension] >= Config.size_filter_highpass]
     return MP
 
 
@@ -39,13 +42,18 @@ def shape_colour(MP):
     return MP
 
 
+def set_id_to_index(MP):
+    MP.set_index('IDParticles', inplace=True)
+    return MP
+
+
 def separate_MPs(MP):
     # take environmental MP from dataset (without any blinds or blanks):
     env_MP = MP.loc[(MP.Compartment == 'sediment') & (MP.Site_name == 'Schlei') & (MP.Contributor == 27)].copy()
 
     #take IOW blinds from dataset:
     IOW_blind_MP = MP.loc[(MP.Site_name == "lab") & (MP.Project == "BONUS MICROPOLL") & (MP.Contributor == 27)]
-    IOW_blind_MP = IOW_blind_MP.loc[IOW_blind_MP.Sample.isin(blankList)]
+    IOW_blind_MP = IOW_blind_MP.loc[IOW_blind_MP.Sample.isin(blindList)]
 
     # make combined env. MP and blind MP dataframe:
     samples_MP = pd.concat([env_MP, IOW_blind_MP], axis=0)

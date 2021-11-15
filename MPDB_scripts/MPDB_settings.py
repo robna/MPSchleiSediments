@@ -49,10 +49,14 @@ polyDropList: list = ['Poly (tetrafluoro ethylene)',
                       'PB15+PV23']
 
 # blind samples to be used for analysis
-blankList = ['Blank_11.02.19',
-                 'Blank_5.11.19_IS_1',
-                 'Blank_5.11.19_IS_2',
-                 'Blank_6.11.19_1',
-                 'Blank_6.11.19_2',
-                 'Blank_20.11.19_IS',
-                 'Blank_20.11.19']
+blindList = ['Blank_11.02.19',
+             'Blank_5.11.19_IS_1',
+             'Blank_5.11.19_IS_2',
+             'Blank_6.11.19_1',
+             'Blank_6.11.19_2',
+             'Blank_20.11.19_IS',
+             'Blank_20.11.19']
+
+class Config:
+    size_filter_dimension: str = 'Size_1_[µm]'  # Can be either 'Size_1_[µm]', 'Size_2_[µm]', or 'size_geom_mean'. Sets the dimension on which to apply the > x µm filter
+    size_filter_highpass: int = 50  # Value in µm applied to size_filter_dimension to only keep particle >= in size.

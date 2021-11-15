@@ -17,6 +17,8 @@ npm = "*"
 streamlit = "*"
 streamlit-vega-lite = "*"
 jupyterlab-git = "*"
+rpy2 = "*"
+pyrolite = "*"
 
 [dev-packages]
 
