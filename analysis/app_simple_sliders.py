@@ -30,15 +30,15 @@ st.set_page_config(layout="wide")
 def data_load_and_prep():
     pdd_MP = pd.read_csv('../csv/env_MP_clean_list_SchleiSediments.csv', index_col=0)
     sed_size_freqs = pd.read_csv('../csv/Enders_export_10µm_linear_noR_RL.csv')
-    sed_size_freqs, sed_x_d = KDE_prepare_data.sediment_preps(sed_size_freqs, rebinning=False)
+    sed_size_freqs, sed_x_d = prepare_data.sediment_preps(sed_size_freqs, rebinning=False)
 
-    sdd_MP = KDE_prepare_data.aggregate_SDD(pdd_MP)
-    sdd_MP_sed = KDE_prepare_data.add_sediment(sdd_MP)
-    pdd_sdd_MP = KDE_prepare_data.sdd2pdd(sdd_MP_sed, pdd_MP)
+    sdd_MP = prepare_data.aggregate_SDD(pdd_MP)
+    sdd_MP_sed = prepare_data.add_sediment(sdd_MP)
+    pdd_sdd_MP = prepare_data.sdd2pdd(sdd_MP_sed, pdd_MP)
 
     size_pdfs = KDE_utils.per_sample_kde(pdd_sdd_MP, x_d=sed_x_d)
     MP_size_conc = KDE_utils.probDens2conc(size_pdfs, sdd_MP_sed)
-    MP_size_conc, sed_size_freqs, MPsedMelted = KDE_prepare_data.equalise_MP_and_Sed(MP_size_conc, sed_size_freqs)
+    MP_size_conc, sed_size_freqs, MPsedMelted = prepare_data.equalise_MP_and_Sed(MP_size_conc, sed_size_freqs)
 
     return MP_size_conc, sed_size_freqs, sed_x_d
 
