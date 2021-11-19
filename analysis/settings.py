@@ -1,20 +1,28 @@
 import numpy as np
 
 class Config:
+    
+    rebinning: bool = False  # whether or not to aggregate sizes to coarser bins
     rebin_by_n: int = 5  # make sediment size bins coarser: sum up every n bins into one new
+    
     lower_size_limit: int = 0  # the smallest particle size in µm included in the kde computation
     upper_size_limit: int = 5000  # the largest particle size in µm included in the kde computation
-    allowed_zeros: float = 0.1  # the fraction of allowed zeros in a sediment size bin
+    
+    allowed_zeros: float = 1  # the fraction of allowed zeros in a sediment size bin
+    
     kde_steps: int = 496  # number points on the size axis where the kde is defined (like number of bins in histogram)
     optimise_bw: bool = False  # if True: compute an individual bandwidth for each sample before computing the KDE
     bws_to_test: int = 100  # if optimise_bw = True: how many bandwidth values should be tried out?
     fixed_bw: int = 50  # if optimise_bw = False: fixed bandwidth value to use for all kde's
     kernel: str = 'gaussian'  # type of kernel to be used
+    
     bin_conc: bool = False  # if True calculate MP concentrations (#/kg) for individual size bins, otherwise calculate percentages
+    
     MPlow: int = 50
     MPup: int = 250
     SEDlow: int = 50
     SEDup: int = 250
+    
     ILR_transform: bool = True  # if True: use the ILR transform for sediment size data before dimensionality reduction
 
 

@@ -19,6 +19,8 @@ streamlit-vega-lite = "*"
 jupyterlab-git = "*"
 rpy2 = "*"
 pyrolite = "*"
+plotly = "*"
+scikit-bio = "*"
 
 [dev-packages]
 

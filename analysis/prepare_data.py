@@ -52,7 +52,7 @@ def add_sediment(sdd_MP):
                                   left_on='Sample', right_index=True)
 
     # export the final data
-    sdd_MP_sed.to_csv('../csv/MP_Stats_SchleiSediments.csv')
+    # sdd_MP_sed.to_csv('../csv/MP_Stats_SchleiSediments.csv')
     return sdd_MP_sed
 
 
@@ -77,7 +77,7 @@ def melt_size_ranges(df, value_name):
     Converts df with size bins or ranges in rows and samples in columns into a long-format df with 
     """
 
-    melted_df = df.T.reset_index().melt(id_vars='sample', var_name='ranges', value_name=value_name)
+    melted_df = df.reset_index().melt(id_vars='sample', var_name='ranges', value_name=value_name)
     melted_df[['lower', 'upper']] = melted_df.ranges.str.split('_', expand=True).astype(int)
     melted_df.drop(columns='ranges', inplace=True)
 
@@ -137,7 +137,7 @@ def equalise_MP_and_Sed(mp, sed):
     # Can be omitted by making bin_conc = True in settings Config.
     # In this case values will continue to represent concentrations.
     if not Config.bin_conc:
-        mp = mp.apply(lambda x: x / x.sum() * 100, axis=0)
+        mp = mp.apply(lambda x: x / x.sum() * 100, axis=1)
 
     MPsedMelt = merge_size_ranges(mp, 'MP', sed, 'SED')
 
@@ -162,13 +162,13 @@ def complete_index_labels(df):
     Drops the last row (which has no upper).
     """
 
-    df.index = df.iloc[:, 0].add_suffix('_').index.values + np.append(df.index[1:].values, 'x')
-    df.drop(index=df.index[-1], inplace=True)
+    df.columns = df.iloc[0, :].add_suffix('_').index.values + np.append(df.columns[1:].values, 'x')
+    df = df.iloc[:,0:-1]
 
     return df
 
 
-def sediment_preps(sed_df, rebinning=False):
+def sediment_preps(sed_df):
     """
     Takes the imported sediment grain size data from Master Sizer csv export and prepares a
     dataframe suitable for the following data analyses
@@ -178,25 +178,23 @@ def sediment_preps(sed_df, rebinning=False):
     sed_df.rename(columns={'0.01': '0'}, inplace=True)
     sed_df.columns = sed_df.columns.astype(int)
 
-    sed_df = sed_df.T.loc[Config.lower_size_limit:Config.upper_size_limit].T  # truncate to relevant size range
+    sed_df = sed_df.loc[:, Config.lower_size_limit:Config.upper_size_limit]  # truncate to relevant size range
 
-    zero_counts = sed_df.fillna(0).astype(bool).sum(axis=0)  # count number of zeros in each column
-    sed_df = sed_df.loc[:, zero_counts[zero_counts > int((1 - Config.allowed_zeros) * sed_df.shape[0])].index.values]
-
-    if rebinning:
+    if Config.rebinning:
         sed_df = rebin(sed_df)
 
-    sed_x_d = sed_df.columns.values.astype(int)
-    sed_step = np.diff(sed_x_d)
-
-    sed_df = sed_df.T
+    sed_lower_boundaries = sed_df.columns.values.astype(int)  # write the size bins lower boundaries in an array
 
     sed_df = complete_index_labels(sed_df)
 
-    return sed_df, sed_x_d
+    non_zero_counts = sed_df.fillna(1).astype(bool).sum(axis=0)  # count number of non-zero-values in each column
+    sed_df = sed_df.loc[:, non_zero_counts[non_zero_counts >= int(
+        (1 - Config.allowed_zeros) * sed_df.shape[0])].index.values]  # drop columns with too many zeros
+
+    return sed_df, sed_lower_boundaries
 
 
-def combination_sums(df):  # TODO:not tested yet
+def combination_sums(df):  # TODO: not tested yet
     """
     Append new rows to a df, where each new row is a column-wise sum of an original row
     and any possible combination of consecutively following rows. The input df must have
@@ -230,3 +228,36 @@ def combination_sums(df):  # TODO:not tested yet
             df.loc[new_row_name] = df.iloc[i:j].sum()
 
     return df
+
+
+def range_aggregator(df_in):
+    """
+    Calculates an extended DF showing not only concentrations / freqs in single size bins,
+    but additionally also all possible consecutive aggregated (summed) bin combination.
+    This function can be used for MP and sediment DFs alike if the input DFs are in the right shape:
+    Columns: samples
+    Rows: single size bin with lower boundary in µm as index labels
+    
+    TODO: maybe it is possible to avoid nested loop by summing up shifting DFs?
+    """
+
+    df_in.index.name = 'a'
+    df_in.reset_index(inplace=True)  # temporary fix because x_d has turn from column to index
+    df_out = pd.DataFrame()
+
+    for i in df_in.a:
+        for j in df_in.a[df_in.a > i]:
+            step = j-i
+
+            relevant_sizes = df_in.loc[(df_in.a >= i) & (df_in.a < j)]
+            size_sum = relevant_sizes.sum()
+            size_sum.drop('a', inplace=True)
+
+            size_sum.rename(f'{i}_{j}', inplace=True)
+
+            df_out = df_out.append(size_sum)
+
+    df_out.rename_axis(columns='sample', inplace=True)
+
+    return df_out
+
