@@ -38,7 +38,7 @@ def data_load_and_prep():
 
     size_pdfs = KDE_utils.per_sample_kde(pdd_sdd_MP, x_d=sed_x_d)
     MP_size_conc = KDE_utils.probDens2conc(size_pdfs, sdd_MP_sed)
-    MP_size_conc, sed_size_freqs, MPsedMelted = prepare_data.equalise_MP_and_Sed(MP_size_conc, sed_size_freqs)
+    MP_size_conc, sed_size_freqs, MPsedMelted = prepare_data.equalise_mp_and_sed(MP_size_conc, sed_size_freqs)
 
     return MP_size_conc, sed_size_freqs, sed_x_d
 
@@ -103,8 +103,8 @@ def main():
     MP_bin_width = st.select_slider('Choose MP bin width', options=sed_x_d)
     SED_bin_width = st.select_slider('Choose SED bin width', options=sed_x_d)
     
-#     MP_size_conc['bin_widths'] = MP_size_conc.index.str.split('_').str[1].astype(int) - MP_size_conc.index.str.split('_').str[0].astype(int)
-#     sed_size_freqs.bin_widths = sed_size_freqs.index.str.split('_').str[1].astype(int) - sed_size_freqs.index.str.split('_').str[0].astype(int)
+#     mp_size_conc['bin_widths'] = mp_size_conc.index.str.split('_').str[1].astype(int) - mp_size_conc.index.str.split('_').str[0].astype(int)
+#     sed_sdd.bin_widths = sed_sdd.index.str.split('_').str[1].astype(int) - sed_sdd.index.str.split('_').str[0].astype(int)
     
     MPbins = MP_size_conc.groupby(MP_size_conc.reset_index(drop=True).index // MP_bin_width).sum()
     SEDbins = MP_size_conc.groupby(MP_size_conc.reset_index(drop=True).index // MP_bin_width).sum()

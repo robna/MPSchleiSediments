@@ -1,12 +1,12 @@
 import numpy as np
 import pandas as pd
-from settings import Regio_Sep, Config
+from settings import regio_sep, Config
 
 
-def aggregate_SDD(pdd_MP):
+def aggregate_SDD(mp_pdd):
     """Calculates certain Sample domain data (SDD) aggregation from the particle domain data (PDD)"""
 
-    sdd_MP = pdd_MP.groupby(['Sample']).agg(
+    mp_sdd = mp_pdd.groupby(['Sample']).agg(
         Frequency=('Site_name', 'count'),
         FrequencyA500=('size_geom_mean', lambda x: (x >= 500).sum()),
         FrequencyB500=('size_geom_mean', lambda x: (x < 500).sum()),
@@ -20,56 +20,52 @@ def aggregate_SDD(pdd_MP):
         # MP_D50_B500 = ('size_geom_mean', lambda x: (x<500).median())
     ).reset_index()
 
-    sdd_MP['Concentration'] = round(sdd_MP['Frequency'] / (sdd_MP['Mass'] * sdd_MP['Split']))
-    sdd_MP['ConcentrationA500'] = round(sdd_MP['FrequencyA500'] / (sdd_MP['Mass'] * sdd_MP['Split']))
-    sdd_MP['ConcentrationB500'] = round(sdd_MP['FrequencyB500'] / (sdd_MP['Mass'] * sdd_MP['Split']))
-    return sdd_MP
+    mp_sdd['Concentration'] = round(mp_sdd['Frequency'] / (mp_sdd['Mass'] * mp_sdd['Split']))
+    mp_sdd['ConcentrationA500'] = round(mp_sdd['FrequencyA500'] / (mp_sdd['Mass'] * mp_sdd['Split']))
+    mp_sdd['ConcentrationB500'] = round(mp_sdd['FrequencyB500'] / (mp_sdd['Mass'] * mp_sdd['Split']))
+    return mp_sdd
 
 
-def add_sediment(sdd_MP):
+def add_sediment(mp_sdd):
     """Takes SDD and amends it with corresponding sediment data"""
     # import d50 values
     sed_d50 = pd.read_csv('../csv/Schlei_Sed_D50_new.csv', index_col=0)
 
-    # import ogranic matter size, TOC, Hg data
-    sed_OM = pd.read_csv('../csv/Schlei_OM.csv', index_col=0)
+    # import organic matter size, TOC, Hg data
+    sed_om = pd.read_csv('../csv/Schlei_OM.csv', index_col=0)
 
     # import sampling log data
     slogs = pd.read_csv('../csv/Schlei_sed_sampling_log.csv', index_col=0)
 
     # import distance to waste water treatment plant
-    Dist_WWTP = pd.read_csv('../csv/Schlei_Sed_Dist_WWTP.csv', index_col=0)
+    dist_wwtp = pd.read_csv('../csv/Schlei_Sed_Dist_WWTP.csv', index_col=0)
 
     # merge with mp per station
-    sdd_MP_sed = pd.merge(sdd_MP, slogs.reset_index(), on=['Sample'], how='left')
-    sdd_MP_sed = pd.merge(sdd_MP_sed, sed_d50.reset_index(), on=['Sample'], how='left')
-    sdd_MP_sed = pd.merge(sdd_MP_sed, sed_OM.reset_index(), on=['Sample'], how='left')
-    sdd_MP_sed = pd.merge(sdd_MP_sed, Dist_WWTP.reset_index(), on=['Sample'], how='left')
+    mp_added_predictors_sdd = pd.merge(mp_sdd, slogs.reset_index(), on=['Sample'], how='left').merge(  # add metadata
+        sed_d50.reset_index(), on=['Sample'], how='left').merge(  # add sediment D50
+        sed_om.reset_index(), on=['Sample'], how='left').merge(  # add OM data
+        dist_wwtp.reset_index(), on=['Sample'], how='left').merge(  # add distance to WWTP
+        pd.DataFrame.from_dict(regio_sep, orient='index', columns=['regio_sep']),left_on='Sample', right_index=True)
 
-    # flag entries as belonging to a certain region of the Schlei fjord
-    sdd_MP_sed = sdd_MP_sed.merge(pd.DataFrame.from_dict(Regio_Sep, orient='index',
-                                                         columns=['Regio_Sep']),
-                                  left_on='Sample', right_index=True)
-
-    # export the final data
-    # sdd_MP_sed.to_csv('../csv/MP_Stats_SchleiSediments.csv')
-    return sdd_MP_sed
+    # optionally: uncomment to export the final data
+    # mp_added_sed_sdd.to_csv('../csv/MP_Stats_SchleiSediments.csv')
+    return mp_added_predictors_sdd
 
 
-def sdd2pdd(sdd_MP, pdd_MP):
+def sdd2pdd(mp_sdd, mp_pdd):  # TODO: not used, remove?
     """
     Some of the SDD data are merged onto the PDD df,
     meaning their values get repeated for each particle of a sample
     """
 
-    pdd_sdd_MP = pdd_MP.merge(sdd_MP[['Sample', 'TOC', 'Regio_Sep']], on='Sample')
-    pdd_sdd_MP.rename(columns={'TOC': 'TOCs', 'Sampling_weight_[kg]': 'Sampling_weight'}, inplace=True)
+    mp_added_predictors_pdd = mp_pdd.merge(mp_sdd[['Sample', 'TOC', 'regio_sep']], on='Sample')
+    mp_added_predictors_pdd.rename(columns={'TOC': 'TOCs', 'Sampling_weight_[kg]': 'Sampling_weight'}, inplace=True)
 
     # the PDD df get very large, so we drop certain data columns that are not needed for the plots
-    pdd_sdd_MP.drop(['Site_name', 'GPS_LON', 'GPS_LAT', 'Compartment',
+    mp_added_predictors_pdd.drop(['Site_name', 'GPS_LON', 'GPS_LAT', 'Compartment',
                      'Contributor', 'Project', 'Size_1_[µm]', 'Size_2_[µm]', 'Shape', 'Colour',
                      'polymer_type', 'library_entry', 'lab_blank_ID', 'sample_ID'], axis=1, inplace=True)
-    return pdd_sdd_MP
+    return mp_added_predictors_pdd
 
 
 def melt_size_ranges(df, value_name):
@@ -120,7 +116,7 @@ def merge_size_ranges(df1, value_name1, df2, value_name2, cart_prod=False):
     return df
 
 
-def equalise_MP_and_Sed(mp, sed):
+def equalise_mp_and_sed(mp, sed):
     """
     Various data harmonisation steps on DFs containing per size bin data of MP concentrations (mp)
     and sediment frequencies (sed). See inline comments for separate steps.
@@ -139,9 +135,9 @@ def equalise_MP_and_Sed(mp, sed):
     if not Config.bin_conc:
         mp = mp.apply(lambda x: x / x.sum() * 100, axis=1)
 
-    MPsedMelt = merge_size_ranges(mp, 'MP', sed, 'SED')
+    mp_sed_melt = merge_size_ranges(mp, 'MP', sed, 'SED')
 
-    return mp, sed, MPsedMelt
+    return mp, sed, mp_sed_melt
 
 
 def rebin(df):
@@ -163,7 +159,7 @@ def complete_index_labels(df):
     """
 
     df.columns = df.iloc[0, :].add_suffix('_').index.values + np.append(df.columns[1:].values, 'x')
-    df = df.iloc[:,0:-1]
+    df = df.iloc[:, 0:-1]
 
     return df
 
@@ -194,7 +190,7 @@ def sediment_preps(sed_df):
     return sed_df, sed_lower_boundaries
 
 
-def combination_sums(df):  # TODO: not tested yet
+def combination_sums(df):  # TODO: convert to samples-in-rows-format
     """
     Append new rows to a df, where each new row is a column-wise sum of an original row
     and any possible combination of consecutively following rows. The input df must have
@@ -228,36 +224,3 @@ def combination_sums(df):  # TODO: not tested yet
             df.loc[new_row_name] = df.iloc[i:j].sum()
 
     return df
-
-
-def range_aggregator(df_in):
-    """
-    Calculates an extended DF showing not only concentrations / freqs in single size bins,
-    but additionally also all possible consecutive aggregated (summed) bin combination.
-    This function can be used for MP and sediment DFs alike if the input DFs are in the right shape:
-    Columns: samples
-    Rows: single size bin with lower boundary in µm as index labels
-    
-    TODO: maybe it is possible to avoid nested loop by summing up shifting DFs?
-    """
-
-    df_in.index.name = 'a'
-    df_in.reset_index(inplace=True)  # temporary fix because x_d has turn from column to index
-    df_out = pd.DataFrame()
-
-    for i in df_in.a:
-        for j in df_in.a[df_in.a > i]:
-            step = j-i
-
-            relevant_sizes = df_in.loc[(df_in.a >= i) & (df_in.a < j)]
-            size_sum = relevant_sizes.sum()
-            size_sum.drop('a', inplace=True)
-
-            size_sum.rename(f'{i}_{j}', inplace=True)
-
-            df_out = df_out.append(size_sum)
-
-    df_out.rename_axis(columns='sample', inplace=True)
-
-    return df_out
-

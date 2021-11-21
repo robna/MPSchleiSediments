@@ -35,7 +35,7 @@ def data_load_and_prep():
 
     size_pdfs = KDE_utils.per_sample_kde(pdd_sdd_MP, x_d=sed_x_d)
     MP_size_conc = KDE_utils.probDens2conc(size_pdfs, sdd_MP_sed)
-    MP_size_conc, sed_size_freqs, MPsedMelted = KDE_prepare_data.equalise_MP_and_Sed(MP_size_conc, sed_size_freqs)
+    MP_size_conc, sed_size_freqs, MPsedMelted = KDE_prepare_data.equalise_mp_and_sed(MP_size_conc, sed_size_freqs)
 
     return MP_size_conc, sed_size_freqs, sed_x_d
 
@@ -136,7 +136,7 @@ def main():
 
     df = filter_data(MP_size_conc, sed_size_freqs)
 
-    # event_dict = altair_component(altair_chart=chart_composer(MP_size_conc.copy(), sed_size_freqs.copy(), df))
+    # event_dict = altair_component(altair_chart=chart_composer(mp_size_conc.copy(), sed_sdd.copy(), df))
     event_dict1 = altair_component(altair_chart=select_charts1(MP_size_conc.copy()))
     event_dict2 = altair_component(altair_chart=select_charts2(sed_size_freqs.copy()))
 
@@ -157,7 +157,7 @@ def main():
     st.write(scatter_chart(df))
 
     # st.write(scatter_chart(df))
-    # st.write(select_charts(MP_size_conc.copy(), sed_size_freqs.copy()))
+    # st.write(select_charts(mp_size_conc.copy(), sed_sdd.copy()))
 
 if __name__ == "__main__":
     main()
