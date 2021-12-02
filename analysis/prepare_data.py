@@ -29,7 +29,7 @@ def aggregate_SDD(mp_pdd):
 def add_sediment(mp_sdd):
     """Takes SDD and amends it with corresponding sediment data"""
     # import d50 values
-    sed_d50 = pd.read_csv('../csv/Schlei_Sed_D50_new.csv', index_col=0)
+    sed_d50 = pd.read_csv('../csv/Schlei_Sed_D50_<63.csv', index_col=0)
 
     # import organic matter size, TOC, Hg data
     sed_om = pd.read_csv('../csv/Schlei_OM.csv', index_col=0)

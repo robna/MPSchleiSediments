@@ -31,9 +31,7 @@ class Config:
 
     glm_family: sm.families.Gamma()  # type of family to be used for the GLM
     glm_formula: str = f'Concentration ~ {predictors[0]} +' \
-                       f'{predictors[1]} +' \
-                       f'{predictors[2]} +' \
-                       f'{predictors[3]}'
+                       f'{predictors[1]}'
 
 
 # creates the x-axis data for the prob. dist. func.
