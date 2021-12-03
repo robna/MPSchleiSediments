@@ -21,6 +21,7 @@ rpy2 = "*"
 pyrolite = "*"
 plotly = "*"
 scikit-bio = "*"
+pydeck = "*"
 
 [dev-packages]
 
