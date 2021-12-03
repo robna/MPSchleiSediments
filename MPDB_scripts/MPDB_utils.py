@@ -4,7 +4,7 @@ from MPDB_settings import polyDropList, blindList, Config
 
 
 def poly_exclude(MP):
-    MP.query('polymer_type not in @polyDropList and library_entry not in @polyDropList')
+    MP = MP.query('polymer_type not in @polyDropList and library_entry not in @polyDropList')
     # equal to: MP[~MP['polymer_type'].isin(polyDropList) & ~MP['library_entry'].isin(polyDropList)]
     return MP
 

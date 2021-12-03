@@ -24,18 +24,14 @@ from settings import Config
 
 st.set_page_config(layout="wide")
 
-predictorlist = ['PC1', 'PC2', 'D50', 'smaller63', 'TOC']
-reponselist = ['Concentration', 'ConcentrationA500', 'ConcentrationB500', 'MP_D50']
-
+featurelist = ['Concentration', 'ConcentrationA500', 'ConcentrationB500', 'MP_D50',
+                 'PC1', 'PC2', 'Mass', 'GPS_LONs', 'GPS_LATs', 'Split',
+                 'MP_D50', 'D50', 'smaller63', 'TOC', 'Hg', 'Dist_WWTP']
 
 @st.cache()
 def data_load_and_prep():
     # What happened so far: DB extract and blank procedure. Now import resulting MP data from csv
     mp_pdd = pd.read_csv('../csv/env_MP_clean_list_SchleiSediments.csv', index_col=0)
-
-    # The following is a hotfix for missing data on sampling weight.
-    # TODO: Correct error in S29 in MPDB and reomove this line!
-    mp_pdd.loc[mp_pdd.Sample == 'Schlei_S29', 'Sampling_weight_[kg]'] = 0.25
 
     # Also import sediment data (sediment frequencies per size bin from master sizer export)
     sed_sdd = pd.read_csv('../csv/Enders_export_10µm_linear_noR_RL.csv')
@@ -149,14 +145,12 @@ def main():
     st.markdown('___', unsafe_allow_html=True)
     st.text("")  # empty line to make some distance
     
-    
-    
     st.subheader('Polymer composition')
     # st.markdown("Some text that describes what's going on here", unsafe_allow_html=True)
     
     mp_pdd = mp_pdd.loc[mp_pdd.Shape.isin(shapefilter) & mp_pdd.polymer_type.isin(polymerfilter)]  # filter mp_pdd based on selected response features
     st.write(poly_comp_chart(mp_pdd))
-        
+            
     st.markdown('___', unsafe_allow_html=True)
     st.text("")  # empty line to make some distance
     
@@ -191,22 +185,22 @@ def main():
     
     resid = glm_res.resid_deviance.copy()
     from statsmodels import graphics
-    col1.pyplot(graphics.gofplots.qqplot(resid, line='r'))
+    col3.pyplot(graphics.gofplots.qqplot(resid, line='r'))
     
     st.text("")  # empty line to make some distance
     st.markdown('___', unsafe_allow_html=True)
     st.text("")  # empty line to make some distance
-    st.subheader('Predictor colinearity check')
+    st.subheader('Single predictor correlation and colinearity check')
     
-    predx = st.selectbox('Predictor 1', predictorlist)
-    predy = st.selectbox('Predictor 2', predictorlist, index=1)
+    predx = st.selectbox('x-Values:', featurelist)
+    predy = st.selectbox('y-Values:', featurelist, index=1)
     
-
     st.write(scatter_chart(df, predx, predy, title=''))
     
+        
     st.markdown('___', unsafe_allow_html=True)
-
-    
+    st.text("")  # empty line to make some distance
+           
     
 if __name__ == "__main__":
     main()

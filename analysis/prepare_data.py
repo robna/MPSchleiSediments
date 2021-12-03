@@ -3,19 +3,6 @@ import pandas as pd
 from settings import regio_sep, Config
 
 
-def dms2dd(s):
-    """
-    Converts Lat Lon coordinates to decimal degrees.
-    source: https://stackoverflow.com/a/50193328
-    """
-    # example: s = """0°51'56.29"S"""
-    degrees, minutes, seconds, direction = re.split('[°\'"]+', s)
-    dd = float(degrees) + float(minutes)/60 + float(seconds)/(60*60);
-    if direction in ('S','W'):
-        dd*= -1
-    return dd
-
-
 def aggregate_SDD(mp_pdd):
     """Calculates certain Sample domain data (SDD) aggregation from the particle domain data (PDD)"""
     
@@ -36,9 +23,10 @@ def aggregate_SDD(mp_pdd):
         # MP_D50_B500 = ('size_geom_mean', lambda x: (x<500).median())
     ).reset_index()
 
-    mp_sdd['Concentration'] = round(mp_sdd['Frequency'] / (mp_sdd['Mass'] * mp_sdd['Split']))
-    mp_sdd['ConcentrationA500'] = round(mp_sdd['FrequencyA500'] / (mp_sdd['Mass'] * mp_sdd['Split']))
-    mp_sdd['ConcentrationB500'] = round(mp_sdd['FrequencyB500'] / (mp_sdd['Mass'] * mp_sdd['Split']))
+    # TODO: OBS! Do not multiply by 'Split' here, as this has already been implemented as "Particle amplificatio" during the MPDB procedures
+    mp_sdd['Concentration'] = round(mp_sdd['Frequency'] / mp_sdd['Mass'])
+    mp_sdd['ConcentrationA500'] = round(mp_sdd['FrequencyA500'] / mp_sdd['Mass'])
+    mp_sdd['ConcentrationB500'] = round(mp_sdd['FrequencyB500'] / mp_sdd['Mass'])
     return mp_sdd
 
 
