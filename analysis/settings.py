@@ -30,6 +30,7 @@ class Config:
     ILR_transform: bool = True  # if True: use the ILR transform for sediment size data before dimensionality reduction
 
     glm_family: str = 'Gamma'  # type of family to be used for the GLM
+    glm_link: str = None  # Link function for GLM; use None for default link of chosen family
     glm_formula: str = f'Concentration ~ {predictors[0]} +' \
                        f'{predictors[1]}'
 

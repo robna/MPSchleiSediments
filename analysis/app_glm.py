@@ -60,24 +60,26 @@ def map(data):
     st.write(pdk.Deck(
         map_style="mapbox://styles/mapbox/light-v9",
         initial_view_state={
-            "latitude": lat,
-            "longitude": lon,
-            "zoom": zoom,
+            "latitude": 54.5770,
+            "longitude": 9.8124,
+            "zoom": 11,
             "pitch": 50,
         },
         layers=[
             pdk.Layer(
-                "HexagonLayer",
+                "ColumnLayer",
                 data=data,
-                get_position=["lon", "lat"],
+                get_position=["GPS_LONs", "GPS_Lats"],
+                get_elevation="Concentration",
                 radius=100,
-                elevation_scale=4,
-                elevation_range=[0, 1000],
+                elevation_scale=100,
+                #elevation_range=[0, 1000],
                 pickable=True,
                 extruded=True,
-            ),
+                auto_highlight=True
+            )
         ]
-    ))
+    ).to_html())
 
 
 def poly_comp_chart(mp_pdd):
@@ -99,10 +101,9 @@ def poly_comp_chart(mp_pdd):
         x= alt.X('Sample',sort = sample_order),
         y= alt.Y('Concentration',scale = alt.Scale(type ='linear')),
         color= 'polymer_type',
+        opacity=alt.condition(selection, alt.value(1), alt.value(0.2)),
         tooltip = ['polymer_type', 'Concentration']
     ).add_selection(
-        selection
-    ).transform_filter(
         selection
     )
     
@@ -115,7 +116,7 @@ def scatter_chart(df, x, y, title='Title'):
         x=x,
         y=y,
         color='regio_sep',
-        tooltip='index'
+        tooltip='Sample'
     )
 
     RegLine = scatter.transform_regression(
@@ -139,25 +140,39 @@ def scatter_chart(df, x, y, title='Title'):
 
 
 def main():
-    mp_pdd, sedpco = data_load_and_prep()
-    
-    st.title('Microplastics and sediment analysis')
-    # st.write('')
-    # st.write("Some text that describes what's going on here", unsafe_allow_html=True)
-    st.text("")  # empty line to make some distance
-    st.markdown('___', unsafe_allow_html=True)
+    mp_pdd, sedpco = data_load_and_prep()  # load data
     
     shapefilter = st.sidebar.multiselect('Select shapes:', ['irregular', 'fibre'], default=['irregular', 'fibre'])
     polymerfilter = st.sidebar.multiselect('Select polymers:', mp_pdd.polymer_type.unique(), default=mp_pdd.polymer_type.unique())
+        
+    st.title('Microplastics and sediment analysis')
+    st.markdown('___', unsafe_allow_html=True)
+    st.text("")  # empty line to make some distance
+    
+    
+    
+    st.subheader('Polymer composition')
+    # st.markdown("Some text that describes what's going on here", unsafe_allow_html=True)
     
     mp_pdd = mp_pdd.loc[mp_pdd.Shape.isin(shapefilter) & mp_pdd.polymer_type.isin(polymerfilter)]  # filter mp_pdd based on selected response features
     st.write(poly_comp_chart(mp_pdd))
-    
+        
+    st.markdown('___', unsafe_allow_html=True)
+    st.text("")  # empty line to make some distance
     
     st.subheader('GLM')
     regionfilter = st.multiselect('Select regions:', ['inner', 'outer', 'outlier', 'river'], default=['inner', 'outer', 'outlier', 'river'])
     mp_added_sed_sdd = pdd2sdd(mp_pdd, regionfilter)
     df = sedpco.merge(mp_added_sed_sdd, left_index=True, right_on='Sample')
+    # map(df)
+    
+    col1, col2 = st.columns(2)
+    family = col1.radio('Select ditribution family:', ['Gaussian', 'Poisson', 'Gamma', 'Tweedie'], index=2)
+    Config.glm_family = family
+    
+    link = col2.selectbox('Select link function (use None for default link of family):',
+                          [None, 'identity', 'Power', 'inverse_power', 'sqrt', 'log'], index=0)
+    Config.glm_link = link
     
     Config.glm_formula = st.text_input('GLM formula:', 'Concentration ~ Dist_WWTP + D50 + PC2')
     

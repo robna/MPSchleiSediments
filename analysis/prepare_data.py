@@ -3,6 +3,19 @@ import pandas as pd
 from settings import regio_sep, Config
 
 
+def dms2dd(s):
+    """
+    Converts Lat Lon coordinates to decimal degrees.
+    source: https://stackoverflow.com/a/50193328
+    """
+    # example: s = """0°51'56.29"S"""
+    degrees, minutes, seconds, direction = re.split('[°\'"]+', s)
+    dd = float(degrees) + float(minutes)/60 + float(seconds)/(60*60);
+    if direction in ('S','W'):
+        dd*= -1
+    return dd
+
+
 def aggregate_SDD(mp_pdd):
     """Calculates certain Sample domain data (SDD) aggregation from the particle domain data (PDD)"""
     
