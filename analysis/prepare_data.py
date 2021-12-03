@@ -5,8 +5,11 @@ from settings import regio_sep, Config
 
 def aggregate_SDD(mp_pdd):
     """Calculates certain Sample domain data (SDD) aggregation from the particle domain data (PDD)"""
+    
+    if isinstance(mp_pdd, pd.DataFrame):  # if raw DF is submitted instead of groupby object, then group first
+        mp_pdd = mp_pdd.groupby(['Sample'])
 
-    mp_sdd = mp_pdd.groupby(['Sample']).agg(
+    mp_sdd = mp_pdd.agg(
         Frequency=('Site_name', 'count'),
         FrequencyA500=('size_geom_mean', lambda x: (x >= 500).sum()),
         FrequencyB500=('size_geom_mean', lambda x: (x < 500).sum()),
