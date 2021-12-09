@@ -6,9 +6,9 @@ def sed_pcoa(df, num_coords = 3):
     """
     | Takes a datframe of sediment grain sizes (compositional data), with rows = samples, columns = size bins.
     | num_coords is the number of principal coordinates to return (default = 3).
-    | Calculates a distance matrix using the distance measure defined in Config.
+    | Calculates a Bray-Curtis dissimilarity matrix for the PCoA.
     | Calculates a Principal COordinate Analysis and returns its scores.
-    | Returns the requested number of PCs as apandas df and prints their explained proportion.
+    | Returns the requested number of PCos as a pandas df and prints their explained proportion.
     """
     
     data = df.values

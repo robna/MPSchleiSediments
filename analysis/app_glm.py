@@ -161,7 +161,7 @@ def main():
     # map(df)
     
     col1, col2 = st.columns(2)
-    family = col1.radio('Select ditribution family:', ['Gaussian', 'Poisson', 'Gamma', 'Tweedie'], index=2)
+    family = col1.radio('Select ditribution family:', ['Gaussian', 'Poisson', 'Gamma', 'Tweedie', 'NegativeBinomial'], index=2)  # for neg.binom use CT-alpha-estimator from here: https://web.archive.org/web/20210303054417/https://dius.com.au/2017/08/03/using-statsmodels-glms-to-model-beverage-consumption/
     Config.glm_family = family
     
     link = col2.selectbox('Select link function (use None for default link of family):',
