@@ -57,13 +57,13 @@ def per_sample_kde(pdd_MP, x_d):
         kde_results.loc[SampleName] = kde_result
 
         print(f'{SampleName}:    bandwidth is {round(bw, 2)}                  ', end='\r')
-        time.sleep(0.1)
+        time.sleep(0.05)
 
     kde_results = kde_results.T.set_index('x_d').T  # workaround as pandas has no df.set_columns() function
-    kde_results.columns = kde_results.columns.astype(int)  # ...and turn column headers back to integers
+    # kde_results.columns = kde_results.columns.astype(int)  # ...and turn column headers back to integers
     kde_results = kde_results.loc[:, Config.lower_size_limit:Config.upper_size_limit]  # truncate to relevant range
 
-    kde_results.index.name = 'sample'
+    kde_results.index.name = 'Sample'
     return kde_results
 
 

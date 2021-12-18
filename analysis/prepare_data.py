@@ -77,8 +77,8 @@ def melt_size_ranges(df, value_name):
     Converts df with size bins or ranges in rows and samples in columns into a long-format df with 
     """
 
-    melted_df = df.reset_index().melt(id_vars='sample', var_name='ranges', value_name=value_name)
-    melted_df[['lower', 'upper']] = melted_df.ranges.str.split('_', expand=True).astype(int)
+    melted_df = df.reset_index().melt(id_vars='Sample', var_name='ranges', value_name=value_name)
+    melted_df[['lower', 'upper']] = melted_df.ranges.str.split('_', expand=True).astype(float)
     melted_df.drop(columns='ranges', inplace=True)
 
     return melted_df
@@ -107,15 +107,15 @@ def merge_size_ranges(df1, value_name1, df2, value_name2, cart_prod=False):
     melted2 = melt_size_ranges(df2, value_name2)
     if cart_prod:
         df = melted1.merge(melted2, how='cross')  # make cartesian product df, samples are crossed too!
-        df = df.loc[df.sample_x == df.sample_y].drop(['sample_y'],  # only keep entries where samples match
+        df = df.loc[df.Sample_x == df.Sample_y].drop(['Sample_y'],  # only keep entries where samples match
                                                      axis=1).rename(columns=
-                                                                    {'sample_x': 'sample',
+                                                                    {'Sample_x': 'Sample',
                                                                      'lower_x': 'lower_MP',
                                                                      'upper_x': 'upper_MP',
                                                                      'lower_y': 'lower_SED',
                                                                      'upper_y': 'upper_SED'})
     else:
-        df = melted1.merge(melted2, on=['sample', 'lower', 'upper'])
+        df = melted1.merge(melted2, on=['Sample', 'lower', 'upper'])
 
     return df
 
@@ -174,16 +174,17 @@ def sediment_preps(sed_df):
     dataframe suitable for the following data analyses
     """
 
-    sed_df = sed_df.groupby('sample').mean()  # average all repeated Master Sizer measurements on individual samples
-    sed_df.rename(columns={'0.01': '0'}, inplace=True)
-    sed_df.columns = sed_df.columns.astype(int)
+    sed_df = sed_df.groupby('Sample').mean()  # average all repeated Master Sizer measurements on individual samples
+    # sed_df.rename(columns={'0.01': '0'}, inplace=True)  # renaming lowest size bin to 0
+    sed_df = sed_df.loc[:, pd.to_numeric(sed_df.columns, errors='coerce') > 0]  # only keep columns that hold size bin data
+    sed_df.columns = sed_df.columns.astype(float)
 
-    sed_df = sed_df.loc[:, Config.lower_size_limit:Config.upper_size_limit]  # truncate to relevant size range
-
+    sed_df = sed_df.loc[:, (sed_df.columns.astype('float') >= Config.lower_size_limit) & (sed_df.columns.astype('float') <= Config.upper_size_limit)]  # truncate to relevant size range
+    
     if Config.rebinning:
         sed_df = rebin(sed_df)
 
-    sed_lower_boundaries = sed_df.columns.values.astype(int)  # write the size bins lower boundaries in an array
+    sed_lower_boundaries = sed_df.columns.values  # write the size bins lower boundaries in an array
 
     sed_df = complete_index_labels(sed_df)
 

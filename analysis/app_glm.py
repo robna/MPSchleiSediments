@@ -34,7 +34,7 @@ def data_load_and_prep():
     mp_pdd = pd.read_csv('../csv/env_MP_clean_list_SchleiSediments.csv', index_col=0)
 
     # Also import sediment data (sediment frequencies per size bin from master sizer export)
-    sed_sdd = pd.read_csv('../csv/Enders_export_10µm_linear_noR_RL.csv')
+    sed_sdd = pd.read_csv('../csv/sediment_grainsize.csv')
     # Get the binning structure of the imported sediment data and optionally rebin it (make binning coarser) for faster computation
     sed_sdd, _ = prepare_data.sediment_preps(sed_sdd)
     sedpco = sed_pcoa(sed_sdd, num_coords = 2)
@@ -52,30 +52,35 @@ def pdd2sdd(mp_pdd, regions):
     return mp_added_sed_sdd
 
 
-def map(data):
+def station_map(data):
+    data = data.loc[:,['Sample', 'GPS_LON', 'GPS_LAT']]
     st.write(pdk.Deck(
         map_style="mapbox://styles/mapbox/light-v9",
-        initial_view_state={
-            "latitude": 54.5770,
-            "longitude": 9.8124,
-            "zoom": 11,
-            "pitch": 50,
-        },
+        initial_view_state=pdk.data_utils.compute_view(data[['GPS_LON','GPS_LAT']]),  # {"latitude": 54.5770,"longitude": 9.8124,"zoom": 11,"pitch": 50},
         layers=[
             pdk.Layer(
-                "ColumnLayer",
+                "HexagonLayer",
                 data=data,
-                get_position=["GPS_LONs", "GPS_Lats"],
-                get_elevation="Concentration",
+                get_position=["GPS_LON", "GPS_LAT"],
                 radius=100,
                 elevation_scale=100,
-                #elevation_range=[0, 1000],
+                elevation_range=[0, 1000],
                 pickable=True,
                 extruded=True,
-                auto_highlight=True
-            )
-        ]
-    ).to_html())
+                auto_highlight=True)]))
+    
+
+    # Define a layer to display on a map
+
+#     layer = pdk.Layer(
+#         "GridLayer", data, pickable=True, extruded=True, cell_size=200, elevation_scale=4, get_position=["GPS_LONs", "GPS_Lats"],
+#     )
+
+#     view_state = pdk.ViewState(latitude=54.5770, longitude=9.8124, zoom=11, bearing=0, pitch=45)
+
+#     # Render
+#     r = pdk.Deck(layers=[layer], initial_view_state=view_state, tooltip={"text": "{position}\nCount: {count}"},)
+#     st.write(r)
 
 
 def poly_comp_chart(mp_pdd):
@@ -112,7 +117,7 @@ def scatter_chart(df, x, y, title='Title'):
         x=x,
         y=y,
         color='regio_sep',
-        tooltip='Sample'
+        tooltip=['Sample', x, y]
     )
 
     RegLine = scatter.transform_regression(
@@ -143,6 +148,7 @@ def main():
         
     st.title('Microplastics and sediment analysis')
     st.markdown('___', unsafe_allow_html=True)
+    station_map(mp_pdd)
     st.text("")  # empty line to make some distance
     
     st.subheader('Polymer composition')
@@ -158,7 +164,7 @@ def main():
     regionfilter = st.multiselect('Select regions:', ['inner', 'outer', 'outlier', 'river'], default=['inner', 'outer', 'outlier', 'river'])
     mp_added_sed_sdd = pdd2sdd(mp_pdd, regionfilter)
     df = sedpco.merge(mp_added_sed_sdd, left_index=True, right_on='Sample')
-    # map(df)
+    
     
     col1, col2 = st.columns(2)
     family = col1.radio('Select ditribution family:', ['Gaussian', 'Poisson', 'Gamma', 'Tweedie', 'NegativeBinomial'], index=2)  # for neg.binom use CT-alpha-estimator from here: https://web.archive.org/web/20210303054417/https://dius.com.au/2017/08/03/using-statsmodels-glms-to-model-beverage-consumption/
