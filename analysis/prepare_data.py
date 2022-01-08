@@ -35,6 +35,9 @@ def add_sediment(mp_sdd):
     # import d50 values
     sed_d50 = pd.read_csv('../csv/Schlei_Sed_D50_<63.csv', index_col=0)
 
+    # import gradistat results
+    sed_gradistat = pd.read_csv('../csv/GRADISTAT_Schlei_iow.csv', index_col=0)
+
     # import organic matter size, TOC, Hg data
     sed_om = pd.read_csv('../csv/Schlei_OM.csv', index_col=0)
 
@@ -47,6 +50,7 @@ def add_sediment(mp_sdd):
     # merge with mp per station
     mp_added_predictors_sdd = pd.merge(mp_sdd, slogs.reset_index(), on=['Sample'], how='left').merge(  # add metadata
         sed_d50.reset_index(), on=['Sample'], how='left').merge(  # add sediment D50
+        sed_gradistat.reset_index(), on=['Sample'], how='left').merge(  # add sediment gradistat
         sed_om.reset_index(), on=['Sample'], how='left').merge(  # add OM data
         dist_wwtp.reset_index(), on=['Sample'], how='left').merge(  # add distance to WWTP
         pd.DataFrame.from_dict(regio_sep, orient='index', columns=['regio_sep']),left_on='Sample', right_index=True)

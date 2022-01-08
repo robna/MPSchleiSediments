@@ -136,7 +136,7 @@ def main():
 
     df = filter_data(MP_size_conc, sed_size_freqs)
 
-    # event_dict = altair_component(altair_chart=chart_composer(mp_size_conc.copy(), sed_sdd.copy(), df))
+    # event_dict = altair_component(altair_chart=chart_composer(mp_size_conc.copy(), grainsize_iow.copy(), df))
     event_dict1 = altair_component(altair_chart=select_charts1(MP_size_conc.copy()))
     event_dict2 = altair_component(altair_chart=select_charts2(sed_size_freqs.copy()))
 
@@ -157,7 +157,7 @@ def main():
     st.write(scatter_chart(df))
 
     # st.write(scatter_chart(df))
-    # st.write(select_charts(mp_size_conc.copy(), sed_sdd.copy()))
+    # st.write(select_charts(mp_size_conc.copy(), grainsize_iow.copy()))
 
 if __name__ == "__main__":
     main()

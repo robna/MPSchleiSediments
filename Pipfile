@@ -11,17 +11,12 @@ seaborn = "*"
 sklearn = "*"
 statsmodels = "*"
 vega-datasets = "*"
-jupyterlab = "*"
-nodejs = "*"
-npm = "*"
 streamlit = "*"
 streamlit-vega-lite = "*"
-jupyterlab-git = "*"
 rpy2 = "*"
-pyrolite = "*"
 plotly = "*"
-scikit-bio = "*"
 pydeck = "*"
+scikit-bio = "*"
 
 [dev-packages]
 

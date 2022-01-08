@@ -29,7 +29,7 @@ st.set_page_config(layout="wide")
 @st.cache()
 def data_load_and_prep():
     pdd_MP = pd.read_csv('../csv/env_MP_clean_list_SchleiSediments.csv', index_col=0)
-    sed_size_freqs = pd.read_csv('../csv/Enders_export_10µm_linear_noR_RL.csv')
+    sed_size_freqs = pd.read_csv('../csv/sediment_grainsize_IOW.csv')
     sed_size_freqs, sed_x_d = prepare_data.sediment_preps(sed_size_freqs, rebinning=False)
 
     sdd_MP = prepare_data.aggregate_SDD(pdd_MP)
@@ -104,7 +104,7 @@ def main():
     SED_bin_width = st.select_slider('Choose SED bin width', options=sed_x_d)
     
 #     mp_size_conc['bin_widths'] = mp_size_conc.index.str.split('_').str[1].astype(int) - mp_size_conc.index.str.split('_').str[0].astype(int)
-#     sed_sdd.bin_widths = sed_sdd.index.str.split('_').str[1].astype(int) - sed_sdd.index.str.split('_').str[0].astype(int)
+#     grainsize_iow.bin_widths = grainsize_iow.index.str.split('_').str[1].astype(int) - grainsize_iow.index.str.split('_').str[0].astype(int)
     
     MPbins = MP_size_conc.groupby(MP_size_conc.reset_index(drop=True).index // MP_bin_width).sum()
     SEDbins = MP_size_conc.groupby(MP_size_conc.reset_index(drop=True).index // MP_bin_width).sum()

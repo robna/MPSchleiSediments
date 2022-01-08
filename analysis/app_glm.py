@@ -2,20 +2,11 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 import altair as alt
-import pydeck as pdk
+# import pydeck as pdk
 
 # from streamlit_vega_lite import altair_component
 # alt.renderers.enable('altair_viewer')  # use to display altair charts externally in browser instead of inline (only activate in non-vega-compatible IDE like pycharm)
 alt.data_transformers.disable_max_rows()
-
-try:  # if on phy-server local modules will not be found if their directory is not added to PATH
-    import sys
-
-    sys.path.append("/silod7/lenz/MPSchleiSediments/analysis/")
-    import os
-    os.chdir("/silod7/lenz/MPSchleiSediments/analysis/")
-except Exception:
-    pass
 
 import prepare_data
 import glm
@@ -25,8 +16,36 @@ from settings import Config
 st.set_page_config(layout="wide")
 
 featurelist = ['Concentration', 'ConcentrationA500', 'ConcentrationB500', 'MP_D50',
-                 'PC1', 'PC2', 'Mass', 'GPS_LONs', 'GPS_LATs', 'Split',
-                 'MP_D50', 'D50', 'smaller63', 'TOC', 'Hg', 'Dist_WWTP']
+               'PC1', 'PC2', 'Mass', 'GPS_LONs', 'GPS_LATs', 'Split',
+               'MP_D50', 'D50', 'smaller63', 'TOC', 'Hg', 'Dist_WWTP',
+               'MoM_ari_MEAN', 'MoM_ari_SORTING', 'MoM_ari_SKEWNESS',
+               'MoM_ari_KURTOSIS', 'MoM_geo_MEAN', 'MoM_geo_SORTING',
+               'MoM_geo_SKEWNESS', 'MoM_geo_KURTOSIS', 'MoM_log_MEAN',
+               'MoM_log_SORTING', 'MoM_log_SKEWNESS', 'MoM_log_KURTOSIS',
+               'FW_geo_MEAN', 'FW_geo_SORTING', 'FW_geo_SKEWNESS',
+               'FW_geo_KURTOSIS', 'FW_log_MEAN', 'FW_log_SORTING',
+               'FW_log_SKEWNESS', 'FW_log_KURTOSIS', 'FW_des_MEAN',
+               'FW_des_SORTING', 'FW_des_SKEWNESS', 'FW_des_KURTOSIS',
+               'MODE 1 (mm)', 'MODE 2 (mm)', 'MODE 3 (mm)', 'MODE 1 (f)',
+               'MODE 2 (f)', 'MODE 3 (f)', 'D10 (mm)', 'D50 (mm)', 'D90 (mm)',
+               '(D90 / D10) (mm)', '(D90 - D10) (mm)', '(D75 / D25) (mm)',
+               '(D75 - D25) (mm)', 'D10 (f)', 'D50 (f)', 'D90 (f)',
+               '(D90 / D10) (f)', '(D90 - D10) (f)', '(D75 / D25) (f)',
+               '(D75 - D25) (f)', '% GRAVEL', '% SAND', '% MUD',
+               '% V COARSE GRAVEL', '% COARSE GRAVEL', '% MEDIUM GRAVEL',
+               '% FINE GRAVEL', '% V FINE GRAVEL', '% V COARSE SAND',
+               '% COARSE SAND', '% MEDIUM SAND', '% FINE SAND', '% V FINE SAND',
+               '% V COARSE SILT', '% COARSE SILT', '% MEDIUM SILT', '% FINE SILT',
+               '% V FINE SILT', '% CLAY', '20', '25', '32', '38', '45', '53',
+               '63', '75', '90', '106', '125', '150', '180', '212', '250', '300',
+               '355', '425', '500', '600', '710', '850', '1000', '1180', '1400',
+               '1700', '2000', '2360', '2800', '3350', '4000', '4750', '5600',
+               '6300', '6700', '8000', '9500', ' Below 63 µm', ' Below 90 µm',
+               ' Below 125 µm', ' Below 180 µm', ' Below 250 µm', ' Below 355 µm',
+               ' Below 500 µm', ' Below 710 µm', ' Below 1000 µm',
+               ' Below 1400 µm', ' Below 2000 µm', ' Above 2000 µm', 'Dx 10',
+               'Dx 16', 'Dx 25', 'Dx 50', 'Dx 75', 'Dx 84', 'Dx 90', 'TOC', 'Hg',
+               'Dist_WWTP', 'regio_sep']
 
 @st.cache()
 def data_load_and_prep():
@@ -34,14 +53,15 @@ def data_load_and_prep():
     mp_pdd = pd.read_csv('../csv/env_MP_clean_list_SchleiSediments.csv', index_col=0)
 
     # Also import sediment data (sediment frequencies per size bin from master sizer export)
-    sed_sdd = pd.read_csv('../csv/sediment_grainsize.csv')
+    grainsize_iow = pd.read_csv('../csv/sediment_grainsize_IOW.csv')
     # Get the binning structure of the imported sediment data and optionally rebin it (make binning coarser) for faster computation
-    sed_sdd, _ = prepare_data.sediment_preps(sed_sdd)
-    sedpco = sed_pcoa(sed_sdd, num_coords = 2)
+    grainsize_iow, _ = prepare_data.sediment_preps(grainsize_iow)
+    sedpco = sed_pcoa(grainsize_iow, num_coords = 2)
     
     return mp_pdd, sedpco
 
  
+@st.cache()
 def pdd2sdd(mp_pdd, regions):
     # ...some data wrangling to prepare particle domain data and sample domain data for MP and combine with certain sediment aggregates.
     mp_sdd = prepare_data.aggregate_SDD(mp_pdd)
@@ -52,22 +72,22 @@ def pdd2sdd(mp_pdd, regions):
     return mp_added_sed_sdd
 
 
-def station_map(data):
-    data = data.loc[:,['Sample', 'GPS_LON', 'GPS_LAT']]
-    st.write(pdk.Deck(
-        map_style="mapbox://styles/mapbox/light-v9",
-        initial_view_state=pdk.data_utils.compute_view(data[['GPS_LON','GPS_LAT']]),  # {"latitude": 54.5770,"longitude": 9.8124,"zoom": 11,"pitch": 50},
-        layers=[
-            pdk.Layer(
-                "HexagonLayer",
-                data=data,
-                get_position=["GPS_LON", "GPS_LAT"],
-                radius=100,
-                elevation_scale=100,
-                elevation_range=[0, 1000],
-                pickable=True,
-                extruded=True,
-                auto_highlight=True)]))
+# def station_map(data):
+#     data = data.loc[:,['Sample', 'GPS_LON', 'GPS_LAT']]
+#     st.write(pdk.Deck(
+#         map_style="mapbox://styles/mapbox/light-v9",
+#         initial_view_state=pdk.data_utils.compute_view(data[['GPS_LON','GPS_LAT']]),  # {"latitude": 54.5770,"longitude": 9.8124,"zoom": 11,"pitch": 50},
+#         layers=[
+#             pdk.Layer(
+#                 "HexagonLayer",
+#                 data=data,
+#                 get_position=["GPS_LON", "GPS_LAT"],
+#                 radius=100,
+#                 elevation_scale=100,
+#                 elevation_range=[0, 1000],
+#                 pickable=True,
+#                 extruded=True,
+#                 auto_highlight=True)]))
     
 
     # Define a layer to display on a map
@@ -148,7 +168,7 @@ def main():
         
     st.title('Microplastics and sediment analysis')
     st.markdown('___', unsafe_allow_html=True)
-    station_map(mp_pdd)
+    # station_map(mp_pdd)  # plot map
     st.text("")  # empty line to make some distance
     
     st.subheader('Polymer composition')
@@ -197,10 +217,10 @@ def main():
     st.markdown('___', unsafe_allow_html=True)
     st.text("")  # empty line to make some distance
     st.subheader('Single predictor correlation and colinearity check')
-    
+
     predx = st.selectbox('x-Values:', featurelist)
     predy = st.selectbox('y-Values:', featurelist, index=1)
-    
+
     st.write(scatter_chart(df, predx, predy, title=''))
     
         
