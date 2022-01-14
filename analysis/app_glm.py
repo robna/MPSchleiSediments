@@ -15,37 +15,13 @@ from settings import Config
 
 st.set_page_config(layout="wide")
 
-featurelist = ['Concentration', 'ConcentrationA500', 'ConcentrationB500', 'MP_D50',
-               'PC1', 'PC2', 'Mass', 'GPS_LONs', 'GPS_LATs', 'Split',
-               'MP_D50', 'D50', 'smaller63', 'TOC', 'Hg', 'Dist_WWTP',
-               'MoM_ari_MEAN', 'MoM_ari_SORTING', 'MoM_ari_SKEWNESS',
-               'MoM_ari_KURTOSIS', 'MoM_geo_MEAN', 'MoM_geo_SORTING',
-               'MoM_geo_SKEWNESS', 'MoM_geo_KURTOSIS', 'MoM_log_MEAN',
-               'MoM_log_SORTING', 'MoM_log_SKEWNESS', 'MoM_log_KURTOSIS',
-               'FW_geo_MEAN', 'FW_geo_SORTING', 'FW_geo_SKEWNESS',
-               'FW_geo_KURTOSIS', 'FW_log_MEAN', 'FW_log_SORTING',
-               'FW_log_SKEWNESS', 'FW_log_KURTOSIS', 'FW_des_MEAN',
-               'FW_des_SORTING', 'FW_des_SKEWNESS', 'FW_des_KURTOSIS',
-               'MODE 1 (mm)', 'MODE 2 (mm)', 'MODE 3 (mm)', 'MODE 1 (f)',
-               'MODE 2 (f)', 'MODE 3 (f)', 'D10 (mm)', 'D50 (mm)', 'D90 (mm)',
-               '(D90 / D10) (mm)', '(D90 - D10) (mm)', '(D75 / D25) (mm)',
-               '(D75 - D25) (mm)', 'D10 (f)', 'D50 (f)', 'D90 (f)',
-               '(D90 / D10) (f)', '(D90 - D10) (f)', '(D75 / D25) (f)',
-               '(D75 - D25) (f)', '% GRAVEL', '% SAND', '% MUD',
-               '% V COARSE GRAVEL', '% COARSE GRAVEL', '% MEDIUM GRAVEL',
-               '% FINE GRAVEL', '% V FINE GRAVEL', '% V COARSE SAND',
-               '% COARSE SAND', '% MEDIUM SAND', '% FINE SAND', '% V FINE SAND',
-               '% V COARSE SILT', '% COARSE SILT', '% MEDIUM SILT', '% FINE SILT',
-               '% V FINE SILT', '% CLAY', '20', '25', '32', '38', '45', '53',
-               '63', '75', '90', '106', '125', '150', '180', '212', '250', '300',
-               '355', '425', '500', '600', '710', '850', '1000', '1180', '1400',
-               '1700', '2000', '2360', '2800', '3350', '4000', '4750', '5600',
-               '6300', '6700', '8000', '9500', ' Below 63 µm', ' Below 90 µm',
-               ' Below 125 µm', ' Below 180 µm', ' Below 250 µm', ' Below 355 µm',
-               ' Below 500 µm', ' Below 710 µm', ' Below 1000 µm',
-               ' Below 1400 µm', ' Below 2000 µm', ' Above 2000 µm', 'Dx 10',
-               'Dx 16', 'Dx 25', 'Dx 50', 'Dx 75', 'Dx 84', 'Dx 90', 'TOC', 'Hg',
-               'Dist_WWTP', 'regio_sep']
+featurelist = ['Concentration', 'ConcentrationA500', 'ConcentrationB500', 'MP_D50', 'PC1', 'PC2', 'Mass', 'GPS_LONs', 'GPS_LATs', 'Split',
+               'MP_D50', 'D50', 'smaller63', 'MoM_ari_MEAN', 'MoM_ari_SORTING', 'MoM_ari_SKEWNESS', 'MoM_ari_KURTOSIS', 'MoM_geo_MEAN', 'MoM_geo_SORTING',
+               'MoM_geo_SKEWNESS', 'MoM_geo_KURTOSIS', 'MoM_log_MEAN', 'MoM_log_SORTING', 'MoM_log_SKEWNESS', 'MoM_log_KURTOSIS', 'FW_geo_MEAN', 'FW_geo_SORTING',
+               'FW_geo_SKEWNESS', 'FW_geo_KURTOSIS', 'FW_log_MEAN', 'FW_log_SORTING', 'FW_log_SKEWNESS', 'FW_log_KURTOSIS', 'MODE 1 (µm)', 'MODE 2 (µm)', 'MODE 3 (µm)',
+               'D10 (µm)', 'D50 (µm)', 'D90 (µm)', '(D90 div D10) (µm)', '(D90 - D10) (µm)', '(D75 div D25) (µm)', '(D75 - D25) (µm)', 'perc GRAVEL', 'perc SAND', 'perc MUD',
+               'perc V COARSE SAND', 'perc COARSE SAND', 'perc MEDIUM SAND', 'perc FINE SAND', 'perc V FINE SAND', 'perc V COARSE SILT', 'perc COARSE SILT',
+               'perc MEDIUM SILT', 'perc FINE SILT', 'perc V FINE SILT', 'perc CLAY', 'Dx 50', 'TOC', 'Hg', 'Dist_WWTP', 'regio_sep']
 
 @st.cache()
 def data_load_and_prep():
@@ -184,8 +160,7 @@ def main():
     regionfilter = st.multiselect('Select regions:', ['inner', 'outer', 'outlier', 'river'], default=['inner', 'outer', 'outlier', 'river'])
     mp_added_sed_sdd = pdd2sdd(mp_pdd, regionfilter)
     df = sedpco.merge(mp_added_sed_sdd, left_index=True, right_on='Sample')
-    
-    
+        
     col1, col2 = st.columns(2)
     family = col1.radio('Select ditribution family:', ['Gaussian', 'Poisson', 'Gamma', 'Tweedie', 'NegativeBinomial'], index=2)  # for neg.binom use CT-alpha-estimator from here: https://web.archive.org/web/20210303054417/https://dius.com.au/2017/08/03/using-statsmodels-glms-to-model-beverage-consumption/
     Config.glm_family = family

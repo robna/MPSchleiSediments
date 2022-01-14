@@ -51,7 +51,7 @@ def add_sediment(mp_sdd):
     mp_added_predictors_sdd = pd.merge(mp_sdd, slogs.reset_index(), on=['Sample'], how='left').merge(  # add metadata
         sed_d50.reset_index(), on=['Sample'], how='left').merge(  # add sediment D50
         sed_gradistat.reset_index(), on=['Sample'], how='left').merge(  # add sediment gradistat
-        sed_om.reset_index(), on=['Sample'], how='left').merge(  # add OM data
+        sed_om.reset_index()[['Sample', 'Dx 50', 'TOC', 'Hg']], on=['Sample'], how='left').merge(  # add OM data
         dist_wwtp.reset_index(), on=['Sample'], how='left').merge(  # add distance to WWTP
         pd.DataFrame.from_dict(regio_sep, orient='index', columns=['regio_sep']),left_on='Sample', right_index=True)
 
