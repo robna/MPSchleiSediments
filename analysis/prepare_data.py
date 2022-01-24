@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from skbio.stats.composition import closure
 from settings import regio_sep, Config
 
 
@@ -32,48 +33,49 @@ def aggregate_SDD(mp_pdd):
 
 def add_sediment(mp_sdd):
     """Takes SDD and amends it with corresponding sediment data"""
-    # import d50 values
-    sed_d50 = pd.read_csv('../csv/Schlei_Sed_D50_<63.csv', index_col=0)
+    
+    # import d50 values  # TODO: commented out, as we use D50 and <63 from Gradistat; may be deleted (also sown in merge section)
+    # sed_d50 = pd.read_csv('../csv/Schlei_Sed_D50_<63.csv', index_col=0)
 
     # import gradistat results
-    sed_gradistat = pd.read_csv('../csv/GRADISTAT_Schlei_iow.csv', index_col=0)
+    sed_gradistat = pd.read_csv('../data/GRADISTAT_IOW_vol_log-cau_not-closed.csv', index_col=0)
 
     # import organic matter size, TOC, Hg data
-    sed_om = pd.read_csv('../csv/Schlei_OM.csv', index_col=0)
+    sed_om = pd.read_csv('../data/Schlei_OM.csv', index_col=0)
 
     # import sampling log data
-    slogs = pd.read_csv('../csv/Schlei_sed_sampling_log.csv', index_col=0)
+    slogs = pd.read_csv('../data/Schlei_sed_sampling_log.csv', index_col=0)
 
     # import distance to waste water treatment plant
-    dist_wwtp = pd.read_csv('../csv/Schlei_Sed_Dist_WWTP.csv', index_col=0)
+    dist_wwtp = pd.read_csv('../data/Schlei_Sed_Dist_WWTP.csv', index_col=0)
 
     # merge with mp per station
-    mp_added_predictors_sdd = pd.merge(mp_sdd, slogs.reset_index(), on=['Sample'], how='left').merge(  # add metadata
-        sed_d50.reset_index(), on=['Sample'], how='left').merge(  # add sediment D50
+    mp_added_predictors_sdd = pd.merge(mp_sdd, slogs.reset_index()[['Sample', 'Depth']], on=['Sample'], how='left').merge(  # add metadata
+        # sed_d50.reset_index(), on=['Sample'], how='left').merge(  # add sediment D50
         sed_gradistat.reset_index(), on=['Sample'], how='left').merge(  # add sediment gradistat
-        sed_om.reset_index()[['Sample', 'Dx 50', 'TOC', 'Hg']], on=['Sample'], how='left').merge(  # add OM data
+        sed_om.reset_index()[['Sample', 'OM_D50', 'TOC', 'Hg']], on=['Sample'], how='left').merge(  # add OM data
         dist_wwtp.reset_index(), on=['Sample'], how='left').merge(  # add distance to WWTP
-        pd.DataFrame.from_dict(regio_sep, orient='index', columns=['regio_sep']),left_on='Sample', right_index=True)
+        pd.DataFrame.from_dict(regio_sep, orient='index', columns=['regio_sep']),left_on='Sample', right_index=True)  # add flags for regions
 
     # optionally: uncomment to export the final data
     # mp_added_sed_sdd.to_csv('../csv/MP_Stats_SchleiSediments.csv')
     return mp_added_predictors_sdd
 
 
-def sdd2pdd(mp_sdd, mp_pdd):  # TODO: not used, remove?
-    """
-    Some of the SDD data are merged onto the PDD df,
-    meaning their values get repeated for each particle of a sample
-    """
+# def sdd2pdd(mp_sdd, mp_pdd):  # TODO: not used, remove?
+#     """
+#     Some of the SDD data are merged onto the PDD df,
+#     meaning their values get repeated for each particle of a sample
+#     """
 
-    mp_added_predictors_pdd = mp_pdd.merge(mp_sdd[['Sample', 'TOC', 'regio_sep']], on='Sample')
-    mp_added_predictors_pdd.rename(columns={'TOC': 'TOCs', 'Sampling_weight_[kg]': 'Sampling_weight'}, inplace=True)
+#     mp_added_predictors_pdd = mp_pdd.merge(mp_sdd[['Sample', 'TOC', 'regio_sep']], on='Sample')
+#     mp_added_predictors_pdd.rename(columns={'TOC': 'TOCs', 'Sampling_weight_[kg]': 'Sampling_weight'}, inplace=True)
 
-    # the PDD df get very large, so we drop certain data columns that are not needed for the plots
-    mp_added_predictors_pdd.drop(['Site_name', 'GPS_LON', 'GPS_LAT', 'Compartment',
-                     'Contributor', 'Project', 'Size_1_[µm]', 'Size_2_[µm]', 'Shape', 'Colour',
-                     'polymer_type', 'library_entry', 'lab_blank_ID', 'sample_ID'], axis=1, inplace=True)
-    return mp_added_predictors_pdd
+#     # the PDD df get very large, so we drop certain data columns that are not needed for the plots
+#     mp_added_predictors_pdd.drop(['Site_name', 'GPS_LON', 'GPS_LAT', 'Compartment',
+#                      'Contributor', 'Project', 'Size_1_[µm]', 'Size_2_[µm]', 'Shape', 'Colour',
+#                      'polymer_type', 'library_entry', 'lab_blank_ID', 'sample_ID'], axis=1, inplace=True)
+#     return mp_added_predictors_pdd
 
 
 def melt_size_ranges(df, value_name):
@@ -130,7 +132,7 @@ def equalise_mp_and_sed(mp, sed):
     and sediment frequencies (sed). See inline comments for separate steps.
     """
 
-    # make mp and sed contain only rows (size ranges) and columns (samples), which they have in common
+    # make mp and sed contain only columns (size ranges) and rows (samples), which they have in common
     mp.drop([col for col in mp.columns if col not in sed.columns], axis=1, inplace=True)
     sed.drop([col for col in sed.columns if col not in mp.columns], axis=1, inplace=True)
     mp.drop([row for row in mp.index if row not in sed.index], axis=0, inplace=True)
@@ -142,7 +144,7 @@ def equalise_mp_and_sed(mp, sed):
     # In this case values will continue to represent concentrations.
     if not Config.bin_conc:
         mp = mp.apply(lambda x: x / x.sum() * 100, axis=1)
-
+        
     mp_sed_melt = merge_size_ranges(mp, 'MP', sed, 'SED')
 
     return mp, sed, mp_sed_melt
@@ -183,7 +185,8 @@ def sediment_preps(sed_df):
     sed_df = sed_df.loc[:, pd.to_numeric(sed_df.columns, errors='coerce') > 0]  # only keep columns that hold size bin data
     sed_df.columns = sed_df.columns.astype(float)
 
-    sed_df = sed_df.loc[:, (sed_df.columns.astype('float') >= Config.lower_size_limit) & (sed_df.columns.astype('float') <= Config.upper_size_limit)]  # truncate to relevant size range
+    sed_df = sed_df.loc[:, (sed_df.columns.astype('float') >= Config.lower_size_limit) &
+                        (sed_df.columns.astype('float') <= Config.upper_size_limit)]  # truncate to relevant size range
     
     if Config.rebinning:
         sed_df = rebin(sed_df)
@@ -191,6 +194,9 @@ def sediment_preps(sed_df):
     sed_lower_boundaries = sed_df.columns.values  # write the size bins lower boundaries in an array
 
     sed_df = complete_index_labels(sed_df)
+    
+    if Config.closing:
+        sed_df[:] = closure(sed_df.to_numpy()) * Config.closing  # close compositional data
 
     non_zero_counts = sed_df.fillna(1).astype(bool).sum(axis=0)  # count number of non-zero-values in each column
     sed_df = sed_df.loc[:, non_zero_counts[non_zero_counts >= int(

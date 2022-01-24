@@ -7,6 +7,7 @@ predictors = ['Dist_WWTP', 'TOC', 'D50', 'PC1', 'PC2']  # columns to be used as 
 
 class Config:
     rebinning: bool = False  # whether or not to aggregate sizes to coarser bins
+    closing: int = 100 # make comp data closed to int value: 0 for no closure, 1 for fraction, 100 for percentages
     rebin_by_n: int = 5  # make sediment size bins coarser: sum up every n bins into one new
 
     lower_size_limit: int = 0  # the smallest particle size in µm included in the kde computation
@@ -78,4 +79,44 @@ regio_sep = {
     'Schlei_S30': 'outer',
     'Schlei_S31': 'outer',
     'Schlei_S32': 'outer'
+}
+
+shortnames = {
+    'Schlei_S1': 'S01',
+    'Schlei_S1_15cm': 'S01d',
+    'Schlei_S2': 'S02',
+    'Schlei_S2_15cm': 'S02d',
+    'Schlei_S3': 'S03',
+    'Schlei_S4': 'S04',
+    'Schlei_S4_15cm': 'S04d',
+    'Schlei_S5': 'S05',
+    'Schlei_S6': 'S06',
+    'Schlei_S7': 'S07',
+    'Schlei_S8': 'S08',
+    'Schlei_S9': 'S09',
+    'Schlei_S10': 'S10',
+    'Schlei_S10_15cm': 'S10d',
+    'Schlei_S11': 'S11',
+    'Schlei_S12': 'S12',
+    'Schlei_S13': 'S13',
+    'Schlei_S14': 'S14',
+    'Schlei_S15': 'S15',
+    'Schlei_S16': 'S16',
+    'Schlei_S17': 'S17',
+    'Schlei_S18': 'S18',
+    'Schlei_S18_15cm': 'S18d',
+    'Schlei_S19': 'S19',
+    'Schlei_S20': 'S20',
+    'Schlei_S21': 'S21',
+    'Schlei_S22': 'S22',
+    'Schlei_S23': 'S23',
+    'Schlei_S24': 'S24',
+    'Schlei_S25': 'S25',
+    'Schlei_S26': 'S26',
+    'Schlei_S27': 'S27',
+    'Schlei_S28': 'S28',
+    'Schlei_S29': 'S29',
+    'Schlei_S30': 'S30',
+    'Schlei_S31': 'S31',
+    'Schlei_S32': 'S32'
 }

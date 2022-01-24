@@ -8,15 +8,15 @@ altair-transform = {git = "https://github.com/altair-viz/altair-transform.git"}
 altair-viewer = "*"
 mysql-connector-python = "*"
 seaborn = "*"
-sklearn = "*"
 statsmodels = "*"
 vega-datasets = "*"
-streamlit = "*"
 streamlit-vega-lite = "*"
 rpy2 = "*"
 plotly = "*"
 pydeck = "*"
 scikit-bio = "*"
+xgboost = "*"
+shapash = "*"
 
 [dev-packages]
 
