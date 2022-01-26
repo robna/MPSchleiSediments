@@ -16,7 +16,7 @@ def sed_pca(df):
     pca = PCA(.95)
     principalComponents = pca.fit_transform(x)
     
-    pc_names = ['PC_' + str(z + 1) for z in range(pca.n_components_)]  # create as many labels for columns 'PC_#' as there are principle components  
+    pc_names = ['PC' + str(z + 1) for z in range(pca.n_components_)]  # create as many labels for columns 'PC_#' as there are principle components  
     
     pc_df = pd.DataFrame(data = principalComponents, index = df.index, columns = pc_names)
     pc_exp = pca.explained_variance_ratio_

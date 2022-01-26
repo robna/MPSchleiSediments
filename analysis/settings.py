@@ -2,7 +2,7 @@ import numpy as np
 import statsmodels.formula.api as smf
 import statsmodels.api as sm
 
-predictors = ['Dist_WWTP', 'TOC', 'D50', 'PC1', 'PC2']  # columns to be used as predictors
+predictors = ['Dist_WWTP', 'TOC', 'D50 (µm)', 'PC1', 'PC2']  # columns to be used as predictors
 
 
 class Config:
