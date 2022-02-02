@@ -1,8 +1,24 @@
 import numpy as np
 import pandas as pd
 from skbio.stats.composition import closure
-from settings import regio_sep, Config
+from settings import densities, regio_sep, Config
 
+
+def mass_conversion(df):
+    """Adds MP density, volume and mass to each particle"""
+    
+    df['size_dimension_decrease_factor'] = df.loc[df.Shape == 'irregular', 'Size_2_[µm]'] / df.loc[df.Shape == 'irregular', 'Size_1_[µm]']  # calculates the factor, by which size dimishes from 1st to 2nd dimension
+    
+    df['density'] = df['polymer_type'].map(densities)
+    df['density'].fillna(1141)  # assume a general average density where exact density is not available, ref: https://doi.org/10.1021/acs.est.0c02982
+    
+    # Estimate volumes, ref: # from https://doi.org/10.1016/j.watres.2018.05.019
+    df.loc[df['Shape'] == 'irregular', 'particle_volume_[µm3]'] = 4/3 * np.pi * (df['Size_1_[µm]']/2) * (df['Size_2_[µm]']/2)**2 * df['size_dimension_decrease_factor']  # ellipsoid volume with 3rd dim = 2nd dim * (2nd dim / 1st dim)
+    df.loc[df['Shape'] == 'fibre', 'particle_volume_[µm3]'] = np.pi * df['Size_1_[µm]'] * (df['Size_2_[µm]']/2)**2  # because of they way how Gepard detects MP we do not assume a fibre void fraction here
+    
+    df['particle_mass_[µg]'] = df['particle_volume_[µm3]'] * df['density'] * 1e-9
+    
+    return df
 
 def aggregate_SDD(mp_pdd):
     """Calculates certain Sample domain data (SDD) aggregation from the particle domain data (PDD)"""

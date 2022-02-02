@@ -6,6 +6,8 @@ predictors = ['Dist_WWTP', 'TOC', 'D50 (µm)', 'PC1', 'PC2']  # columns to be us
 
 
 class Config:
+    min_part_count: float = 20  # how many MP particles are required to be considered as a valid sample 
+
     rebinning: bool = False  # whether or not to aggregate sizes to coarser bins
     closing: int = 100 # make comp data closed to int value: 0 for no closure, 1 for fraction, 100 for percentages
     rebin_by_n: int = 5  # make sediment size bins coarser: sum up every n bins into one new
@@ -119,4 +121,30 @@ shortnames = {
     'Schlei_S30': 'S30',
     'Schlei_S31': 'S31',
     'Schlei_S32': 'S32'
+}
+
+densities = {  # Polymer densities in kg m⁻³
+    'Acrylic resin': None,
+    'Acrylnitril-Butadien-Styrol-Copolymer': 1040,
+    'Alkyd resin': None,
+    'Epoxy resin': None,
+    'Ethylen-Vinylacetat-Copolymer': 951,
+    'Nitrile rubber': None,
+    'Poly (ethylene terephthalate)': 1350,
+    'Poly (methyl methacrylate)': 1190,
+    'Poly (vinyl chloride)': 1400,
+    'Polyamide ': 1130,
+    'Polycaprolacton': None,
+    'Polycarbonate': 1200,
+    'Polyethylene': 940,
+    'Polyhydroxybutyrat': None,
+    'Polylactide': None,
+    'Polyoxymethylene': None,
+    'Polypropylene': 900,
+    'Polysiloxane': None,
+    'Polystyrene': 1043,
+    'Polyurethane ': 1190,
+    'Silicone-rubber': None,
+    'Styrene-butadiene-styrene block copolymer': None,
+    'Unknown': None
 }

@@ -31,7 +31,7 @@ featurelist = ['Concentration', 'ConcentrationA500', 'ConcentrationB500', 'MP_D5
 @st.cache()
 def data_load_and_prep():
     # What happened so far: DB extract and blank procedure. Now import resulting MP data from csv
-    mp_pdd = pd.read_csv('../data/env_MP_clean_list_SchleiSediments.csv', index_col=0)
+    mp_pdd = pd.read_csv('../data/env_MP_clean_list_SchleiSediments_NoIOWblindRemoval.csv', index_col=0)
 
     # Also import sediment data (sediment frequencies per size bin from master sizer export)
     grainsize_iow = pd.read_csv('../data/sediment_grainsize_IOW_vol_log-cau_not-closed.csv')
