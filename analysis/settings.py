@@ -2,7 +2,9 @@ import numpy as np
 import statsmodels.formula.api as smf
 import statsmodels.api as sm
 
-predictors = ['Dist_WWTP', 'TOC', 'D50 (µm)', 'PC1', 'PC2']  # columns to be used as predictors
+target = 'Concentration'
+
+predictors = ['Dist_WWTP', 'TOC', 'Q("D50 (µm)")"', 'PC1', 'PC2']  # columns to be used as predictors
 
 
 class Config:
@@ -32,9 +34,9 @@ class Config:
 
     ILR_transform: bool = True  # if True: use the ILR transform for sediment size data before dimensionality reduction
 
-    glm_family: str = 'Gamma'  # type of family to be used for the GLM
+    glm_family: str = 'Poisson'  # type of family to be used for the GLM
     glm_link: str = None  # Link function for GLM; use None for default link of chosen family
-    glm_formula: str = f'Concentration ~ {predictors[0]} +' \
+    glm_formula: str = f'{target} ~ {predictors[0]} + ' \
                        f'{predictors[1]}'
 
 

@@ -1,21 +1,19 @@
 import numpy as np
 import pandas as pd
 import streamlit as st
-import altair as alt
-# import pydeck as pdk
-
-# from streamlit_vega_lite import altair_component
-# alt.renderers.enable('altair_viewer')  # use to display altair charts externally in browser instead of inline (only activate in non-vega-compatible IDE like pycharm)
-alt.data_transformers.disable_max_rows()
+from statsmodels.graphics.gofplots import qqplot
 
 import prepare_data
 import glm
+import cv
 from components import PCOA
+from plots import scatter_chart, poly_comp_chart, station_map
 from settings import Config, shortnames
 
 st.set_page_config(layout="wide")
 
-featurelist = ['Concentration', 'ConcentrationA500', 'ConcentrationB500', 'MP_D50', 'PC1', 'PC2', 'Mass', 'GPS_LONs', 'GPS_LATs', 'Split', 'MP_D50', 'Depth',
+featurelist = ['Concentration', 'ConcentrationA500', 'pred_ConcentrationA500', 'ConcentrationB500',
+               'MP_D50', 'PC1', 'PC2', 'Mass', 'GPS_LONs', 'GPS_LATs', 'Split', 'MP_D50', 'Depth',
                'MoM_ari_MEAN', 'MoM_ari_SORTING', 'MoM_ari_SKEWNESS', 'MoM_ari_KURTOSIS',
                'MoM_geo_MEAN', 'MoM_geo_SORTING', 'MoM_geo_SKEWNESS', 'MoM_geo_KURTOSIS',
                'MoM_log_MEAN', 'MoM_log_SORTING', 'MoM_log_SKEWNESS', 'MoM_log_KURTOSIS',
@@ -26,13 +24,13 @@ featurelist = ['Concentration', 'ConcentrationA500', 'ConcentrationB500', 'MP_D5
                'perc GRAVEL', 'perc SAND', 'perc MUD',
                'perc V COARSE SAND', 'perc COARSE SAND', 'perc MEDIUM SAND', 'perc FINE SAND', 'perc V FINE SAND',
                'perc V COARSE SILT', 'perc COARSE SILT', 'perc MEDIUM SILT', 'perc FINE SILT', 'perc V FINE SILT',
-               'perc CLAY', 'OM_D50', 'TOC', 'Hg', 'Dist_WWTP', 'regio_sep']
+               'perc CLAY', 'OM_D50', 'TOC', 'Hg', 'Dist_Marina', 'Dist_WWTP', 'regio_sep']
 
 @st.cache()
 def data_load_and_prep():
     # What happened so far: DB extract and blank procedure. Now import resulting MP data from csv
     mp_pdd = pd.read_csv('../data/env_MP_clean_list_SchleiSediments.csv', index_col=0)
-    mp_pdd['polymer_type'] = mp_pdd['polymer_type'].map(shortnames)  # use abbreviations for polymer names
+    mp_pdd['polymer_type'] = mp_pdd['polymer_type'].map(shortnames).fillna(mp_pdd['polymer_type'])  # use abbreviations for polymer names but retain original names for polymers not present in shortnames
 
     # Also import sediment data (sediment frequencies per size bin from master sizer export)
     grainsize_iow = pd.read_csv('../data/sediment_grainsize_IOW_vol_log-cau_not-closed.csv')
@@ -50,98 +48,10 @@ def pdd2sdd(mp_pdd, regions):
     
     mp_added_sed_sdd = prepare_data.add_sediment(mp_sdd)
     mp_added_sed_sdd = mp_added_sed_sdd.loc[mp_added_sed_sdd.regio_sep.isin(regions)]  # filter based on selected regions
+    
+    mp_added_sed_sdd['pred_ConcentrationA500'] = np.exp(0.505 + 0.0452 * mp_added_sed_sdd['perc MUD'] + 0.0249 * 2.22 * mp_added_sed_sdd['TOC'])  # TODO: temporarily added to compare to the prediction from Kristinas Warnow paper
 
     return mp_added_sed_sdd
-
-
-# def station_map(data):
-#     data = data.loc[:,['Sample', 'GPS_LON', 'GPS_LAT']]
-#     st.write(pdk.Deck(
-#         map_style="mapbox://styles/mapbox/light-v9",
-#         initial_view_state=pdk.data_utils.compute_view(data[['GPS_LON','GPS_LAT']]),  # {"latitude": 54.5770,"longitude": 9.8124,"zoom": 11,"pitch": 50},
-#         layers=[
-#             pdk.Layer(
-#                 "HexagonLayer",
-#                 data=data,
-#                 get_position=["GPS_LON", "GPS_LAT"],
-#                 radius=100,
-#                 elevation_scale=100,
-#                 elevation_range=[0, 1000],
-#                 pickable=True,
-#                 extruded=True,
-#                 auto_highlight=True)]))
-    
-
-    # Define a layer to display on a map
-
-#     layer = pdk.Layer(
-#         "GridLayer", data, pickable=True, extruded=True, cell_size=200, elevation_scale=4, get_position=["GPS_LONs", "GPS_Lats"],
-#     )
-
-#     view_state = pdk.ViewState(latitude=54.5770, longitude=9.8124, zoom=11, bearing=0, pitch=45)
-
-#     # Render
-#     r = pdk.Deck(layers=[layer], initial_view_state=view_state, tooltip={"text": "{position}\nCount: {count}"},)
-#     st.write(r)
-
-
-def poly_comp_chart(mp_pdd, mp_added_sed_sdd):
-    poly_comp = prepare_data.aggregate_SDD(mp_pdd.groupby(['Sample', 'polymer_type']))
-    poly_comp = poly_comp.merge(mp_added_sed_sdd[['Sample', 'Dist_WWTP', 'perc MUD']], on='Sample')
-    selection = alt.selection_multi(fields=['polymer_type'], bind='legend')
-    
-    chart1 = alt.Chart(poly_comp.reset_index()).mark_bar().encode(
-        x= alt.X('Dist_WWTP', scale=alt.Scale(type='linear')), #, sort = alt.SortField(field='Dist_WWTP', order='ascending')),
-        y= alt.Y('Concentration',stack='normalize'),
-        color= alt.Color('polymer_type', scale=alt.Scale(scheme='rainbow')),
-        opacity=alt.condition(selection, alt.value(1), alt.value(0.2)),
-        tooltip = ['Sample', 'polymer_type', 'Concentration', 'Dist_WWTP']
-    ).add_selection(
-        selection
-    )
-    
-    chart2 = chart1.mark_bar().encode(
-        x=alt.value(10),
-        y=alt.Y('all_stations_summed:Q',stack='normalize'),
-        tooltip=['polymer_type','all_stations_summed:Q']
-    ).transform_aggregate(
-        all_stations_summed='sum(Concentration)',
-        groupby=['polymer_type']
-    )
-
-    chart = chart1 | chart2
-    chart.save('poly_comp_chart.html')
-
-    return chart #| chart.encode(y=alt.Y('Concentration',stack='normalize'))
-
-
-def scatter_chart(df, x, y, title='Title'):
-    df = df.reset_index()
-    scatter = alt.Chart(df).mark_point().encode(
-        x=x,
-        y=y,
-        color='regio_sep',
-        tooltip=['Sample', x, y]
-    )
-
-    RegLine = scatter.transform_regression(
-        x, y, method="linear",
-    ).mark_line(
-        color="brown"
-    )
-
-    RegParams = scatter.transform_regression(
-        x, y, method="linear", params=True
-    ).mark_text(align='left', lineBreak='\n').encode(
-        x=alt.value(120),  # pixels from left
-        y=alt.value(20),  # pixels from top
-        text='params:N'
-    ).transform_calculate(
-        params='"R² = " + round(datum.rSquared * 100)/100 + \
-        "      y = " + round(datum.coef[1] * 100)/100 + "x" + " + " + round(datum.coef[0] * 10)/10'
-    )
-
-    return alt.layer(scatter, RegLine, RegParams).properties(width= 600, height= 450).properties(title=title)
 
 
 def main():
@@ -175,14 +85,15 @@ def main():
     st.subheader('GLM')
     if st.checkbox('Calculate GLM'):
         col1, col2 = st.columns(2)
-        family = col1.radio('Select ditribution family:', ['Gaussian', 'Poisson', 'Gamma', 'Tweedie', 'NegativeBinomial'], index=2)  # for neg.binom use CT-alpha-estimator from here: https://web.archive.org/web/20210303054417/https://dius.com.au/2017/08/03/using-statsmodels-glms-to-model-beverage-consumption/
+        families = ['Gaussian', 'Poisson', 'Gamma', 'Tweedie', 'NegativeBinomial']
+        family = col1.radio('Select ditribution family:', families, index=2)  # for neg.binom use CT-alpha-estimator from here: https://web.archive.org/web/20210303054417/https://dius.com.au/2017/08/03/using-statsmodels-glms-to-model-beverage-consumption/
         Config.glm_family = family
 
-        link = col2.selectbox('Select link function (use None for default link of family):',
-                              [None, 'identity', 'Power', 'inverse_power', 'sqrt', 'log'], index=0)
+        links = [None, 'identity', 'Power', 'inverse_power', 'sqrt', 'log']
+        link = col2.selectbox('Select link function (use None for default link of family):', links, index=0)
         Config.glm_link = link
 
-        Config.glm_formula = st.text_input('GLM formula:', 'Concentration ~ Dist_WWTP + "D50 (µm)" + PC2')
+        Config.glm_formula = st.text_input('GLM formula:', 'Concentration ~ Dist_WWTP + Q("D50 (µm)") + PC2')
 
         # resp = st.sidebar.selectbox('Select Response', reponselist)
         glm_res = glm.glm(df)
@@ -194,12 +105,18 @@ def main():
 
         df['yhat'] = glm_res.mu
         df['pearson_resid'] = glm_res.resid_pearson
-        col2.write(scatter_chart(df, 'yhat', Config.glm_formula.split(' ~')[0], title='GLM --- y vs. yhat'))
-        col3.write(scatter_chart(df, 'yhat', 'pearson_resid', title='GLM --- Pearson residuals'))
+        col2.write(scatter_chart(df, 'yhat', Config.glm_formula.split(' ~')[0],
+                                 c='regio_sep', equal_axes=True,
+                                 title='GLM --- y vs. yhat'))
+        col3.write(scatter_chart(df, 'yhat', 'pearson_resid',
+                                 c='regio_sep', title='GLM --- Pearson residuals'))
 
         resid = glm_res.resid_deviance.copy()
-        from statsmodels import graphics
-        col3.pyplot(graphics.gofplots.qqplot(resid, line='r'))
+        col3.pyplot(qqplot(resid, line='r'))
+
+        if st.checkbox('LOOCV'):
+            _, metrics = cv.loocv(df)
+            st.write(metrics)
 
     st.text("")  # empty line to make some distance
     st.markdown('___', unsafe_allow_html=True)
@@ -208,8 +125,16 @@ def main():
 
     predx = st.selectbox('x-Values:', featurelist, index=11)
     predy = st.selectbox('y-Values:', featurelist, index=0)
+    c = st.selectbox('Color:', featurelist, index=62)
 
-    st.write(scatter_chart(df, predx, predy, title=''))
+    st.write(scatter_chart(df, predx, predy, c, title='', width=800, height=600))
+
+    # TODO: temporary check for r-values (remove later)
+    from scipy.stats import pearsonr
+    r, p = pearsonr(df[predx], df[predy])
+    st.write(f'Pearson r: {r}, p: {p}')
+    from sklearn.metrics import r2_score
+    st.write(f'R2: {r2_score(df[predx], df[predy])}')
     
         
     st.markdown('___', unsafe_allow_html=True)

@@ -57,7 +57,7 @@ def PCOA(df, num = 3):  # TODO: rephrase docstring as it is not specific to sedi
     return scor, load, expl
 
 
-def biplot(scor, load, expl, discr, x, y, sc, lc, ntf=5, normalise=False, figsize=(800,600)):
+def biplot(scor, load, expl, discr, x, y, sc, lc, ntf=5, normalise=False, figsize=(800,600)):  # TODO: normalisation not yet implemented
     """
     Create the Biplot based on the PCoA or PCA scores and loadings.
 

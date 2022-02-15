@@ -1,18 +1,43 @@
-from statsmodels.sandbox.tools.cross_val import LeaveOneOut, split
+import numpy as np
+import pandas as pd
+
+from statsmodels.sandbox.tools.cross_val import LeaveOneOut
+from sklearn.metrics import max_error, mean_squared_error, mean_absolute_error, r2_score
+
 import glm
+from settings import Config
 
 
-def llo_cv(df):
-    loo = LeaveOneOut(len(df))
-    pred = []
-    for train_index, test_index in loo:
-        # this could be used for doing loo-cross-val, if using array-based instead formula-and-dataframe based model:
-        #X_train, X_test, y_train, y_test = cross_val.split(train_index, test_index, X, y)  
+def loocv(df):
+    """
+    Perform LOOCV on a dataframe.
+    :param df: dataframe containing target and predictors
+    :return pred: dataframes with predictions and metrics
+    """
+    pred = pd.DataFrame(columns=['Sample', 'pred'])  # create empty dataframe for predictions
+    n = df.shape[0]  # number of samples
+    p = Config.glm_formula.count('+') + 1  # number of predictors
+    for train_index, test_index in LeaveOneOut(df.shape[0]):
+        train = df.loc[train_index, :]
+        test = df.loc[test_index, :]
+        glm_res = glm.glm(train)
+        predi = pd.concat([test.Sample, glm_res.predict(test).rename('pred')], axis=1)
+        pred = pd.concat([pred, predi])
 
-        current_input = df.loc[train_index]
-        glm_res = glm.glm(current_input)
-        pred = pred.append(glm_res.predict(glm_input.loc[test_index]))
-        
-        
-    # TODO: get error from prediction
-    # RMSE = sum((yhat-y)**2 / n)
+    target = df.loc[:, Config.glm_formula.split(' ~')[0]]  # isolate target variable (observed values)
+    pred.loc[:, Config.glm_formula.split(' ~')[0]] = target
+
+    maxe = max_error(target, pred.pred)
+    mae = mean_absolute_error(target, pred.pred)
+    rmse = np.sqrt(mean_squared_error(target, pred.pred))
+    r2 = r2_score(target, pred.pred)
+    adj_r2 = 1 - (1 - r2) * (n - 1) / (n - p - 1)
+
+    metrics = pd.DataFrame(columns=['Metric', 'Value'])
+    metrics.loc[0] = ['Max Error', maxe]
+    metrics.loc[1] = ['MAE', mae]
+    metrics.loc[2] = ['RMSE', rmse]
+    metrics.loc[3] = ['R2', r2]
+    metrics.loc[4] = ['Adj. R2', adj_r2]
+
+    return pred, metrics

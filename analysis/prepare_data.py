@@ -51,7 +51,7 @@ def aggregate_SDD(mp_pdd):
 def add_sediment(mp_sdd):
     """Takes SDD and amends it with corresponding sediment data"""
     
-    # import d50 values  # TODO: commented out, as we use D50 and <63 from Gradistat; may be deleted (also sown in merge section)
+    # import d50 values  # TODO: commented out, as we use D50 and <63 from Gradistat; may be deleted (also in merge section)
     # sed_d50 = pd.read_csv('../csv/Schlei_Sed_D50_<63.csv', index_col=0)
 
     # import gradistat results
@@ -63,15 +63,16 @@ def add_sediment(mp_sdd):
     # import sampling log data
     slogs = pd.read_csv('../data/Schlei_sed_sampling_log.csv', index_col=0)
 
-    # import distance to waste water treatment plant
-    dist_wwtp = pd.read_csv('../data/Schlei_Sed_Dist_WWTP.csv', index_col=0)
+    # # import distance to waste water treatment plant  # TODO: can be removed (also in merge section): Dist_WWTP now included in slogs
+    # dist_wwtp = pd.read_csv('../data/Schlei_Sed_Dist_WWTP.csv', index_col=0)
 
     # merge with mp per station
-    mp_added_predictors_sdd = pd.merge(mp_sdd, slogs.reset_index()[['Sample', 'Depth']], on=['Sample'], how='left').merge(  # add metadata
+    mp_added_predictors_sdd = pd.merge(mp_sdd, slogs.reset_index()[
+        ['Sample', 'Depth', 'Dist_Marina', 'Dist_WWTP']], on=['Sample'], how='left').merge(  # add metadata
         # sed_d50.reset_index(), on=['Sample'], how='left').merge(  # add sediment D50
         sed_gradistat.reset_index(), on=['Sample'], how='left').merge(  # add sediment gradistat
         sed_om.reset_index()[['Sample', 'OM_D50', 'TOC', 'Hg']], on=['Sample'], how='left').merge(  # add OM data
-        dist_wwtp.reset_index(), on=['Sample'], how='left').merge(  # add distance to WWTP
+        # dist_wwtp.reset_index(), on=['Sample'], how='left').merge(  # add distance to WWTP
         pd.DataFrame.from_dict(regio_sep, orient='index', columns=['regio_sep']),left_on='Sample', right_index=True)  # add flags for regions
 
     # optionally: uncomment to export the final data

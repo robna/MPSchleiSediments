@@ -10,8 +10,8 @@ alt.data_transformers.disable_max_rows()
 
 import prepare_data
 import glm
-from pcoa import sed_pcoa
-from settings import Config
+from components import PCOA
+from settings import Config, shortnames
 
 st.set_page_config(layout="wide")
 
@@ -31,15 +31,16 @@ featurelist = ['Concentration', 'ConcentrationA500', 'ConcentrationB500', 'MP_D5
 @st.cache()
 def data_load_and_prep():
     # What happened so far: DB extract and blank procedure. Now import resulting MP data from csv
-    mp_pdd = pd.read_csv('../data/env_MP_clean_list_SchleiSediments_NoIOWblindRemoval.csv', index_col=0)
+    mp_pdd = pd.read_csv('../data/env_MP_clean_list_SchleiSediments.csv', index_col=0)
+    mp_pdd['polymer_type'] = mp_pdd['polymer_type'].map(shortnames)  # use abbreviations for polymer names
 
     # Also import sediment data (sediment frequencies per size bin from master sizer export)
-    grainsize_iow = pd.read_csv('../data/sediment_grainsize_IOW_vol_log-cau_not-closed.csv')
+    grainsize_iow = pd.read_csv('../data/env_MP_clean_list_SchleiSediments_NoIOWblindRemoval.csv')
     # Get the binning structure of the imported sediment data and optionally rebin it (make binning coarser) for faster computation
     grainsize_iow, _ = prepare_data.sediment_preps(grainsize_iow)
-    sedpco = sed_pcoa(grainsize_iow, num_coords = 2)
+    scor, load, expl = PCOA(grainsize_iow, 2)
     
-    return mp_pdd, sedpco
+    return mp_pdd, scor
 
  
 @st.cache()
@@ -87,12 +88,11 @@ def pdd2sdd(mp_pdd, regions):
 def poly_comp_chart(mp_pdd, mp_added_sed_sdd):
     poly_comp = prepare_data.aggregate_SDD(mp_pdd.groupby(['Sample', 'polymer_type']))
     poly_comp = poly_comp.merge(mp_added_sed_sdd[['Sample', 'Dist_WWTP', 'perc MUD']], on='Sample')
-    
     selection = alt.selection_multi(fields=['polymer_type'], bind='legend')
     
-    chart = alt.Chart(poly_comp.reset_index()).mark_bar().encode(
+    chart1 = alt.Chart(poly_comp.reset_index()).mark_bar().encode(
         x= alt.X('Dist_WWTP', scale=alt.Scale(type='linear')), #, sort = alt.SortField(field='Dist_WWTP', order='ascending')),
-        y= alt.Y('Concentration', scale=alt.Scale(type='linear')),
+        y= alt.Y('Concentration',stack='normalize'),
         color= alt.Color('polymer_type', scale=alt.Scale(scheme='rainbow')),
         opacity=alt.condition(selection, alt.value(1), alt.value(0.2)),
         tooltip = ['Sample', 'polymer_type', 'Concentration', 'Dist_WWTP']
@@ -100,7 +100,19 @@ def poly_comp_chart(mp_pdd, mp_added_sed_sdd):
         selection
     )
     
-    return chart | chart.encode(y=alt.Y('Concentration',stack='normalize'))
+    chart2 = chart1.mark_bar().encode(
+        x=alt.value(10),
+        y=alt.Y('all_stations_summed:Q',stack='normalize'),
+        tooltip=['polymer_type','all_stations_summed:Q']
+    ).transform_aggregate(
+        all_stations_summed='sum(Concentration)',
+        groupby=['polymer_type']
+    )
+
+    chart = chart1 | chart2
+    chart.save('poly_comp_chart.html')
+
+    return chart #| chart.encode(y=alt.Y('Concentration',stack='normalize'))
 
 
 def scatter_chart(df, x, y, title='Title'):
@@ -133,7 +145,7 @@ def scatter_chart(df, x, y, title='Title'):
 
 
 def main():
-    mp_pdd, sedpco = data_load_and_prep()  # load data
+    mp_pdd, scor = data_load_and_prep()  # load data
     
     samplefilter = st.sidebar.multiselect('Select samples:', mp_pdd.Sample.unique(), default=mp_pdd.Sample.unique())
     shapefilter = st.sidebar.multiselect('Select shapes:', ['irregular', 'fibre'], default=['irregular', 'fibre'])
@@ -142,7 +154,7 @@ def main():
                         & mp_pdd.polymer_type.isin(polymerfilter)
                         & mp_pdd.Sample.isin(samplefilter)]  # filter mp_pdd based on selected response features
     
-    regionfilter = st.sidebar.multiselect('Select regions:', ['inner', 'outer', 'outlier', 'river'], default=['inner', 'outer', 'outlier', 'river'])
+    regionfilter = st.sidebar.multiselect('Select regions:', ['WWTP', 'inner', 'middle', 'outer', 'river'], default=['WWTP', 'inner', 'middle', 'outer', 'river'])
     mp_added_sed_sdd = pdd2sdd(mp_pdd, regionfilter)
            
     st.title('Microplastics and sediment analysis')
@@ -158,7 +170,7 @@ def main():
     st.markdown('___', unsafe_allow_html=True)
     st.text("")  # empty line to make some distance
     
-    df = sedpco.merge(mp_added_sed_sdd, left_index=True, right_on='Sample')
+    df = scor.merge(mp_added_sed_sdd, left_index=True, right_on='Sample')
     
     st.subheader('GLM')
     if st.checkbox('Calculate GLM'):
