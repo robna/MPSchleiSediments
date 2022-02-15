@@ -1,11 +1,12 @@
 import altair as alt
+
 alt.data_transformers.disable_max_rows()
 # alt.renderers.enable('altair_viewer')  # use to display altair charts externally in browser instead of inline (only activate in non-vega-compatible IDE like pycharm)
 import pydeck as pdk
 import streamlit as st
 # from streamlit_vega_lite import altair_component
 
-
+from settings import Config
 import prepare_data
 
 
@@ -72,16 +73,17 @@ def poly_comp_chart(mp_pdd, mp_added_sed_sdd):
     )
 
     chart = chart1 | chart2
-    chart.save('poly_comp_chart.html')
+    # chart.save('poly_comp_chart.html')  # activate save chart to html file
 
     return chart  # | chart.encode(y=alt.Y('Concentration',stack='normalize'))
 
 
 def station_map(data):
-    data = data.loc[:,['Sample', 'GPS_LON', 'GPS_LAT']]
+    data = data.loc[:, ['Sample', 'GPS_LON', 'GPS_LAT']]
     st.write(pdk.Deck(
         map_style="mapbox://styles/mapbox/light-v9",
-        initial_view_state=pdk.data_utils.compute_view(data[['GPS_LON','GPS_LAT']]),  # {"latitude": 54.5770,"longitude": 9.8124,"zoom": 11,"pitch": 50},
+        initial_view_state=pdk.data_utils.compute_view(data[['GPS_LON', 'GPS_LAT']]),
+        # {"latitude": 54.5770,"longitude": 9.8124,"zoom": 11,"pitch": 50},
         layers=[
             pdk.Layer(
                 "HexagonLayer",
@@ -94,16 +96,45 @@ def station_map(data):
                 extruded=True,
                 auto_highlight=True)]))
 
-
-# Define a layer to display on a map
+    # Define a layer to display on a map
 
     layer = pdk.Layer(
-        "GridLayer", data, pickable=True, extruded=True, cell_size=200, elevation_scale=4, get_position=["GPS_LONs", "GPS_Lats"],
+        "GridLayer", data, pickable=True, extruded=True, cell_size=200, elevation_scale=4,
+        get_position=["GPS_LONs", "GPS_Lats"],
     )
 
     view_state = pdk.ViewState(latitude=54.5770, longitude=9.8124, zoom=11, bearing=0, pitch=45)
 
     # Render
-    r = pdk.Deck(layers=[layer], initial_view_state=view_state, tooltip={"text": "{position}\nCount: {count}"},)
+    r = pdk.Deck(layers=[layer], initial_view_state=view_state, tooltip={"text": "{position}\nCount: {count}"}, )
     st.write(r)
 
+
+def histograms(df):
+
+    brush = alt.selection_interval(encodings=['x'])
+
+    base = alt.Chart(df).mark_bar().encode(
+        y='count():Q'
+    ).properties(
+        width=800,
+        height=200
+    )
+
+    # rule = base.mark_rule(color='red', y='height').encode(  # TODO: rule not yet scaling with changing y-axis
+    #     x=f'median({Config.size_dim}):Q',
+    #     # size=alt.value(5)
+    # )
+
+    chart = alt.vconcat(
+        base.encode(
+            alt.X(Config.size_dim,
+                  bin=alt.Bin(maxbins=30, extent=brush),
+                  scale=alt.Scale(domain=brush)
+                  ), tooltip='count():Q',
+        ), #+ rule,
+        base.encode(
+            alt.X(Config.size_dim, bin=alt.Bin(maxbins=30)),
+        ).add_selection(brush))
+
+    return chart

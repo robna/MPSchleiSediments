@@ -10,7 +10,7 @@ def mass_conversion(df):
     df['size_dimension_decrease_factor'] = df.loc[df.Shape == 'irregular', 'Size_2_[µm]'] / df.loc[df.Shape == 'irregular', 'Size_1_[µm]']  # calculates the factor, by which size dimishes from 1st to 2nd dimension
     
     df['density'] = df['polymer_type'].map(densities)
-    df['density'].fillna(densities['generic'])  # assume a general average density where exact density is not available, ref: https://doi.org/10.1021/acs.est.0c02982
+    df['density'].fillna(densities['generic'], inplace=True)  # assume a general average density where exact density is not available, ref: https://doi.org/10.1021/acs.est.0c02982
     
     # Estimate volumes, ref: # from https://doi.org/10.1016/j.watres.2018.05.019
     df.loc[df['Shape'] == 'irregular', 'particle_volume_[µm3]'] = 4/3 * np.pi * (df['Size_1_[µm]']/2) * (df['Size_2_[µm]']/2)**2 * df['size_dimension_decrease_factor']  # ellipsoid volume with 3rd dim = 2nd dim * (2nd dim / 1st dim)
