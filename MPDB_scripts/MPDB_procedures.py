@@ -59,7 +59,7 @@ def blank_procedure(samples_MP, IPF_blank_MP):
 
             print('For blank particle #', label, ': ', 'Nothing to clean up.')
     
-    return samples_MP_copy
+    return samples_MP_copy, IPF_elimination_list
 
 
 def blind_procedure(env_MP, syn_blind):
@@ -101,13 +101,13 @@ def blind_procedure(env_MP, syn_blind):
         old_length = len(IOW_elimination_list)
     print('Total number of particles eliminated due to blind particle matches: ', len(IOW_elimination_list))
     
-    return env_MP_copy
+    return env_MP_copy, IOW_elimination_list
 
 
 def update_env_and_blind(samples_MP_copy, IOW_blind_MP):
     """
     Porting the particle eliminations that happened in the joint `samples_MP_copy` (env. + blind MP)
-    onto the indvidual dataframes `env_MP` and `IOW_blind_MP`.
+    onto the individual dataframes `env_MP` and `IOW_blind_MP`.
     """
     
     IOW_blind_MP = samples_MP_copy[samples_MP_copy.index.isin(IOW_blind_MP.index)].copy()

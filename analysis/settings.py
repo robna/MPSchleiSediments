@@ -8,7 +8,7 @@ predictors = ['Dist_WWTP', 'TOC', 'Q("D50 (µm)")"', 'PC1', 'PC2']  # columns to
 
 
 class Config:
-    min_part_count: float = 18  # how many MP particles are required to be considered as a valid sample 
+    min_part_count: float = 19  # how many MP particles are required to be considered as a valid sample 
 
     rebinning: bool = False  # whether or not to aggregate sizes to coarser bins
     closing: int = 100 # make comp data closed to int value: 0 for no closure, 1 for fraction, 100 for percentages
@@ -30,7 +30,7 @@ class Config:
 
     bin_conc: bool = False  # True: calculate MP conc. (#/kg) for individual size bins; False: calculate percentages
 
-    MPlow: int = 50
+    MPlow: int = 50  # TODO: are these still needed?
     MPup: int = 250
     SEDlow: int = 50
     SEDup: int = 250

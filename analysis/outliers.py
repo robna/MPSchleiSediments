@@ -17,4 +17,4 @@ def low_freq_out(df):
     print(f'Removed {len(genuine_particle_numbers) - len(df.Sample.unique())} samples with less than {Config.min_part_count} particles.')
     print(genuine_particle_numbers[genuine_particle_numbers < Config.min_part_count])
 
-    return df
+    return df, genuine_particle_numbers
