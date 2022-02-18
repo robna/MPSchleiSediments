@@ -16,24 +16,25 @@ def scatter_chart(df, x, y, c=False, equal_axes=False, title='', width=400, heig
     domain_max = max(maxX, maxY) * 1.05
 
     df = df.reset_index()
-    scatter = alt.Chart(df).mark_point().encode(
+    base = alt.Chart(df).mark_point().encode(
         x=x,
         y=y,
         tooltip=['Sample', x, y])
-
-    if c:
-        scatter = scatter.encode(alt.Color(c, type='ordinal'))  # TODO: only ordinal works with categorical and quantiative data and also shows regrassion, when not specifying data type it works fully for categorical data, but stops showing the regression when quantitative data is chosen for color.
-
+    
     if equal_axes:
-        scatter = scatter.encode(
+        base = base.encode(
             x=alt.X(x, scale=alt.Scale(domain=[0, domain_max])),
             y=alt.X(y, scale=alt.Scale(domain=[0, domain_max])))
 
-    RegLine = scatter.transform_regression(
+    if c:
+        scatter = base.encode(alt.Color(c, scale=alt.Scale(scheme='cividis')))  # TODO: only ordinal works with categorical and quantiative data and also shows regrassion, when not specifying data type it works fully for categorical data, but stops showing the regression when quantitative data is chosen for color.
+    else: scatter = base
+
+    RegLine = base.transform_regression(
         x, y, method="linear",
     ).mark_line()
 
-    RegParams = scatter.transform_regression(
+    RegParams = base.transform_regression(
         x, y, method="linear", params=True
     ).mark_text(align='left', lineBreak='\n').encode(
         x=alt.value(width / 4),  # pixels from left
@@ -59,9 +60,9 @@ def poly_comp_chart(mp_pdd, mp_added_sed_sdd):
     chart_abs = alt.Chart(poly_comp.reset_index()).mark_bar().encode(
         x=alt.X('Dist_WWTP', scale=alt.Scale(type='linear')),
         # , sort = alt.SortField(field='Dist_WWTP', order='ascending')),
-        y=alt.Y('Concentration'), #, stack='normalize'),
+        y=alt.Y('Concentration', stack=True),
         color=alt.Color('polymer_type', scale=alt.Scale(scheme='rainbow')),
-        opacity=alt.condition(selection, alt.value(1), alt.value(0.2)),
+        opacity=alt.condition(selection, alt.value(1), alt.value(0.3)),
         tooltip=['Sample', 'polymer_type', 'Concentration', 'Dist_WWTP']
     ).add_selection(
         selection

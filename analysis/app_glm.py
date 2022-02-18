@@ -13,7 +13,7 @@ from settings import Config, shortnames
 st.set_page_config(layout="wide")
 
 featurelist = ['Frequency', 'Concentration', 'MP_D50',  # endogs
-               'ConcentrationA500', 'pred_Ord_Poly_ConcentrationA500', 'pred_Paint_ConcentrationA500', 'ConcentrationB500',  # endogs derivatives
+               'ConcentrationA500', 'pred_Ord_Poly_ConcentrationA500', 'pred_TMP_ConcentrationA500','pred_Paint_ConcentrationA500', 'ConcentrationB500',  # endogs derivatives
                'Split', 'Mass', 'GPS_LONs', 'GPS_LATs', 'Depth', 'Dist_Marina', 'Dist_WWTP', 'regio_sep',  # sampling related exogs
                'PC1', 'PC2',   # sediment size PCOA outputs
                # 'MoM_ari_MEAN', 'MoM_ari_SORTING', 'MoM_ari_SKEWNESS', 'MoM_ari_KURTOSIS',  # sediments (gradistat) exogs
@@ -57,12 +57,19 @@ def pdd2sdd(mp_pdd, regions):
         mp_added_sed_sdd.regio_sep.isin(regions)]  # filter based on selected regions
 
     mp_added_sed_sdd['pred_Ord_Poly_ConcentrationA500'] = np.exp(
-        0.505 + 0.0452 * mp_added_sed_sdd['perc MUD'] + 0.0249 * 2.22 * mp_added_sed_sdd[
-            'TOC'])  # TODO: temporarily added to compare to the prediction from Kristinas Warnow paper
+         0.505 + 0.0452 * mp_added_sed_sdd['perc MUD'] + 0.0249 * 2.22 * mp_added_sed_sdd[
+        'TOC'])  # TODO: temporarily added to compare to the prediction from Kristinas Warnow paper
+        #-0.2425 + 0.0683 * mp_added_sed_sdd['perc MUD'] - 0.0001 * mp_added_sed_sdd['Dist_WWTP']         + 0.0205 * 2.22 * mp_added_sed_sdd['TOC']
+       
     
     mp_added_sed_sdd['pred_Paint_ConcentrationA500'] = np.exp(
-        2.352 + 0.032 * mp_added_sed_sdd['perc MUD'] + 0.003 * mp_added_sed_sdd['Dist_Marina'])  # TODO: temporarily added to compare to the prediction from Kristinas Warnow paper
+        2.352 + 0.032 * mp_added_sed_sdd['perc MUD'] - 0.003 * mp_added_sed_sdd['Dist_Marina'])  
+        
+        #TODO: temporarily added to compare to the prediction from Kristinas Warnow paper
 
+    mp_added_sed_sdd['pred_TMP_ConcentrationA500'] = np.exp(
+        -0.4207 + 0.0826 * mp_added_sed_sdd['perc MUD'] - 0.0002 * mp_added_sed_sdd['Dist_WWTP'])  
+        #2.4491 + 0.0379 * mp_added_sed_sdd['perc MUD'])
     return mp_added_sed_sdd
 
 
