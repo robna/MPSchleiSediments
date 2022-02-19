@@ -203,8 +203,9 @@ def sediment_preps(sed_df):
     sed_df = sed_df.loc[:, pd.to_numeric(sed_df.columns, errors='coerce') > 0]  # only keep columns that hold size bin data
     sed_df.columns = sed_df.columns.astype(float)
 
-    sed_df = sed_df.loc[:, (sed_df.columns.astype('float') >= Config.lower_size_limit) &
-                        (sed_df.columns.astype('float') <= Config.upper_size_limit)]  # truncate to relevant size range
+    # TODO: check if this is necessary...
+    # sed_df = sed_df.loc[:, (sed_df.columns.astype('float') >= Config.lower_size_limit) &
+    #                     (sed_df.columns.astype('float') <= Config.upper_size_limit)]  # truncate to relevant size range
     
     if Config.rebinning:
         sed_df = rebin(sed_df)

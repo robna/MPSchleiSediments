@@ -120,29 +120,53 @@ def station_map(data):
 def histograms(df):
 
     brush = alt.selection_interval(encodings=['x'])
-
-    base = alt.Chart(df).mark_bar().encode(
-        y='count():Q'
-    ).properties(
-        width=800,
-        height=200
-    )
-
-    # rule = base.mark_rule(color='red', y='height').encode(  # TODO: rule not yet scaling with changing y-axis
+    #
+    # base = alt.Chart(df).properties(
+    #     width=800,
+    #     height=200
+    # )
+    #
+    # bar = base.mark_bar().encode(
+    #     y='count():Q'
+    # )
+    #
+    # rule = bar.mark_rule(color='red', y='height').encode(  # TODO: rule not yet scaling with changing y-axis
     #     x=f'median({Config.size_dim}):Q',
-    #     # size=alt.value(5)
+    #     size=alt.value(5)
+    # )
+    #
+    # chart = alt.vconcat(
+    #     # bar.encode(
+    #     #     alt.X(Config.size_dim,
+    #     #           bin=alt.Bin(maxbins=30, extent=brush),
+    #     #           scale=alt.Scale(domain=brush)
+    #     #           ), tooltip='count():Q',
+    #     # ), #+ rule,
+    #     bar.encode(
+    #         alt.X(Config.size_dim, bin=alt.Bin(maxbins=30)),
+    #     ).add_selection(brush) + rule
     # )
 
+    base = alt.Chart(df).properties(width=1000, height=200)
+
+    bar = base.mark_bar().encode(
+        x=alt.X(Config.size_dim, bin=alt.Bin(maxbins=50)),
+        y='count():Q',
+        tooltip='count():Q'
+    )
+
+    rule = base.mark_rule(color='red').encode(
+        x=f'median({Config.size_dim}):Q',
+        size=alt.value(3)
+    )
+
     chart = alt.vconcat(
-        base.encode(
-            alt.X(Config.size_dim,
-                  bin=alt.Bin(maxbins=30, extent=brush),
-                  scale=alt.Scale(domain=brush)
-                  ), tooltip='count():Q',
-        ), #+ rule,
-        base.encode(
-            alt.X(Config.size_dim, bin=alt.Bin(maxbins=30)),
-        ).add_selection(brush))
+        # bar.encode(alt.X(Config.size_dim,
+        #                  bin=alt.Bin(maxbins=50, extent=brush),
+        #                  scale=alt.Scale(domain=brush)
+        #                  ),
+        bar.add_selection(brush) + rule
+    )
 
     return chart
 

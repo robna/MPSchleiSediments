@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from math import floor, ceil
 import streamlit as st
 from statsmodels.graphics.gofplots import qqplot
 
@@ -79,17 +80,16 @@ def main():
     st.write(mp_pdd)
     st.write(mp_pdd.shape)
 
+    st.write(mp_pdd[Config.size_dim].dtypes)
     sizedim = st.sidebar.radio('Select size dimension', ['size_geom_mean', 'Size_1_[µm]', 'Size_2_[µm]'])
     Config.size_dim = sizedim
-    sizefilter = st.sidebar.slider('MP size range',
-                                   21, 20000,  # TODO: make this slider more intuitive (e.g. show the actual size range of the data)
-                                   [Config.lower_size_limit, Config.upper_size_limit])
+    size_lims = floor(mp_pdd[Config.size_dim].min() / 10) * 10, ceil(mp_pdd[Config.size_dim].max() / 10) * 10
+    sizefilter = st.sidebar.slider('MP size range', size_lims[0], size_lims[1], list(size_lims), step=10)
     Config.lower_size_limit = sizefilter[0]
     Config.upper_size_limit = sizefilter[1]
 
-    densityfilter = st.sidebar.slider('MP density range',
-                                      900, 1415,  # TODO: make this slider more intuitive (e.g. show the actual size range of the data)
-                                      [Config.lower_density_limit, Config.upper_density_limit])
+    density_lims = mp_pdd.density.min().astype(int).item(), mp_pdd.density.max().astype(int).item()
+    densityfilter = st.sidebar.slider('MP density range', density_lims[0], density_lims[1], list(density_lims), step=1)
     Config.lower_density_limit = densityfilter[0]
     Config.upper_density_limit = densityfilter[1]
 
