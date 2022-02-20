@@ -7,13 +7,16 @@ from settings import densities, regio_sep, Config
 def mass_conversion(df):
     """Adds MP density, volume and mass to each particle"""
     
-    df['size_dimension_decrease_factor'] = df.loc[df.Shape == 'irregular', 'Size_2_[µm]'] / df.loc[df.Shape == 'irregular', 'Size_1_[µm]']  # calculates the factor, by which size dimishes from 1st to 2nd dimension
-    
     df['density'] = df['polymer_type'].map(densities)
     df['density'].fillna(densities['generic'], inplace=True)  # assume a general average density where exact density is not available, ref: https://doi.org/10.1021/acs.est.0c02982
-    
-    # Estimate volumes, ref: # from https://doi.org/10.1016/j.watres.2018.05.019
-    df.loc[df['Shape'] == 'irregular', 'particle_volume_[µm3]'] = 4/3 * np.pi * (df['Size_1_[µm]']/2) * (df['Size_2_[µm]']/2)**2 * df['size_dimension_decrease_factor']  # ellipsoid volume with 3rd dim = 2nd dim * (2nd dim / 1st dim)
+
+    df['Size_3_[µm]'] = 0.312 * df['size_geom_mean'] + 3.706  # calculates the 3rd dimension, according to Kristinas correlation between size_geom_mean and manually measured height (n=116, R²=0.49)
+
+    # Estimate volumes, ref: # from https://doi.org/10.1016/j.watres.2018.05.019  -> not used anymore, as Kristina showed it to be inaccurate
+    # df['size_dimension_decrease_factor'] = df.loc[df.Shape == 'irregular', 'Size_2_[µm]'] / df.loc[df.Shape == 'irregular', 'Size_1_[µm]']  # calculates the factor, by which size dimishes from 1st to 2nd dimension
+    #df.loc[df['Shape'] == 'irregular', 'particle_volume_[µm3]'] = 4/3 * np.pi * (df['Size_1_[µm]']/2) * (df['Size_2_[µm]']/2)**2 * df['size_dimension_decrease_factor']  # ellipsoid volume with 3rd dim = 2nd dim * (2nd dim / 1st dim)
+
+    df.loc[df['Shape'] == 'irregular', 'particle_volume_[µm3]'] = 4/3 * np.pi * (df['Size_1_[µm]']/2) * (df['Size_2_[µm]']/2) * (df['Size_3_[µm]']/2)  # ellipsoid volume with 3rd dim = 2nd dim * (2nd dim / 1st dim)
     df.loc[df['Shape'] == 'fibre', 'particle_volume_[µm3]'] = np.pi * df['Size_1_[µm]'] * (df['Size_2_[µm]']/2)**2  # because of they way how Gepard detects MP we do not assume a fibre void fraction here
     
     df['particle_mass_[µg]'] = df['particle_volume_[µm3]'] * df['density'] * 1e-9
@@ -31,6 +34,7 @@ def aggregate_SDD(mp_pdd):
         Frequency=('Site_name', 'count'),
         FrequencyA500=('size_geom_mean', lambda x: (x >= 500).sum()),
         FrequencyB500=('size_geom_mean', lambda x: (x < 500).sum()),
+        MPmass=('particle_mass_[µg]', 'sum'),
         Mass=('Sampling_weight_[kg]', np.mean),
         # using "mean" here is actually weird as all entries are the same. Is there something like "first"?
         GPS_LONs=('GPS_LON', np.mean),
@@ -41,10 +45,10 @@ def aggregate_SDD(mp_pdd):
         # MP_D50_B500 = ('size_geom_mean', lambda x: (x<500).median())
     ).reset_index()
 
-    # TODO: OBS! Do not multiply by 'Split' here, as this has already been implemented as "Particle amplificatio" during the MPDB procedures
     mp_sdd['Concentration'] = round(mp_sdd['Frequency'] / mp_sdd['Mass'])
     mp_sdd['ConcentrationA500'] = round(mp_sdd['FrequencyA500'] / mp_sdd['Mass'])
     mp_sdd['ConcentrationB500'] = round(mp_sdd['FrequencyB500'] / mp_sdd['Mass'])
+    mp_sdd['MassConcentration'] = round(mp_sdd['MPmass'] / mp_sdd['Mass'])
     return mp_sdd
 
 

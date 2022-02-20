@@ -10,7 +10,21 @@ from settings import Config
 import prepare_data
 
 
-def scatter_chart(df, x, y, c=False, equal_axes=False, title='', width=400, height=300):
+def scatter_chart(df, x, y, c=False, reg=None, equal_axes=False, title='', width=400, height=300):
+    """
+    Create a scatter plot with optional regression line and equation.
+    :param df: dataframe with x and y columns
+    :param x: x column name
+    :param y: y column name
+    :param c: color column name
+    :param reg: None for no regression line (default), 'linear', 'log', 'exp' or 'pow'
+    :param equal_axes: True for x and y axes ranging from 0 to their higher maximum (useful for predicted vs. observed plots) (default)
+    :param title: plot title
+    :param width: plot width
+    :param height: plot height
+    :return: altair chart
+    """
+    
     maxX = df[x].max()
     maxY = df[y].max()
     domain_max = max(maxX, maxY) * 1.05
@@ -31,18 +45,25 @@ def scatter_chart(df, x, y, c=False, equal_axes=False, title='', width=400, heig
     else: scatter = base
 
     RegLine = base.transform_regression(
-        x, y, method="linear",
+        x, y, method=reg,
     ).mark_line()
 
+    R2_string = '"R² = " + round(datum.rSquared * 100)/100 + "      y = "'
+    coef0_string = 'round(datum.coef[0] * 10)/10'
+    coef1_string = 'round(datum.coef[1] * 10)/10'
+    reg_eq = {'linear': f'{R2_string} + {coef1_string} + " * x + " + {coef0_string}',
+              'log': f'{R2_string} + {coef1_string} + " * log(x) + " + {coef0_string}',
+              'exp': f'{R2_string} + {coef0_string} + " * e ^ (" + {coef1_string} + " x)"',
+              'pow': f'{R2_string} + {coef0_string} + " * x^" + {coef1_string}'}
+
     RegParams = base.transform_regression(
-        x, y, method="linear", params=True
+        x, y, method=reg, params=True
     ).mark_text(align='left', lineBreak='\n').encode(
         x=alt.value(width / 4),  # pixels from left
         y=alt.value(height / 20),  # pixels from top
         text='params:N'
     ).transform_calculate(
-        params='"R² = " + round(datum.rSquared * 100)/100 + \
-        "      y = " + round(datum.coef[1] * 100)/100 + "x" + " + " + round(datum.coef[0] * 10)/10'
+        params=reg_eq[reg]
     )
 
     chart = alt.layer(scatter, RegLine, RegParams).properties(width=width, height=height).properties(title=title)

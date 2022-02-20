@@ -13,7 +13,7 @@ from settings import Config, shortnames
 
 st.set_page_config(layout="wide")
 
-featurelist = ['Frequency', 'Concentration', 'MP_D50',  # endogs
+featurelist = ['Frequency', 'Concentration', 'MassConcentration', 'MP_D50',  # endogs
                'ConcentrationA500', 'pred_Ord_Poly_ConcentrationA500', 'pred_TMP_ConcentrationA500','pred_Paint_ConcentrationA500', 'ConcentrationB500',  # endogs derivatives
                'Split', 'Mass', 'GPS_LONs', 'GPS_LATs', 'Depth', 'Dist_Marina', 'Dist_WWTP', 'regio_sep',  # sampling related exogs
                'PC1', 'PC2',   # sediment size PCOA outputs
@@ -84,14 +84,18 @@ def main():
     sizedim = st.sidebar.radio('Select size dimension', ['size_geom_mean', 'Size_1_[µm]', 'Size_2_[µm]'])
     Config.size_dim = sizedim
     size_lims = floor(mp_pdd[Config.size_dim].min() / 10) * 10, ceil(mp_pdd[Config.size_dim].max() / 10) * 10
-    sizefilter = st.sidebar.slider('MP size range', size_lims[0], size_lims[1], list(size_lims), step=10)
-    Config.lower_size_limit = sizefilter[0]
-    Config.upper_size_limit = sizefilter[1]
+    # sizefilter = st.sidebar.slider('MP size range', size_lims[0], size_lims[1], list(size_lims), step=10)
+    # Config.lower_size_limit = sizefilter[0]
+    # Config.upper_size_limit = sizefilter[1]
+    Config.lower_size_limit = st.sidebar.number_input('Lower size limit', value=size_lims[0], step=100)
+    Config.upper_size_limit = st.sidebar.number_input('Upper size limit', value=size_lims[1], step=100)
 
     density_lims = mp_pdd.density.min().astype(int).item(), mp_pdd.density.max().astype(int).item()
-    densityfilter = st.sidebar.slider('MP density range', density_lims[0], density_lims[1], list(density_lims), step=1)
-    Config.lower_density_limit = densityfilter[0]
-    Config.upper_density_limit = densityfilter[1]
+    # densityfilter = st.sidebar.slider('MP density range', density_lims[0], density_lims[1], list(density_lims), step=1)
+    # Config.lower_density_limit = densityfilter[0]
+    # Config.upper_density_limit = densityfilter[1]
+    Config.lower_density_limit = st.sidebar.number_input('Lower density limit', value=density_lims[0], step=10)
+    Config.upper_density_limit = st.sidebar.number_input('Upper density limit', value=density_lims[1], step=10)
 
     samplefilter = st.sidebar.multiselect('Select samples:', mp_pdd.Sample.unique(), default=mp_pdd.Sample.unique())
     shapefilter = st.sidebar.multiselect('Select shapes:', ['irregular', 'fibre'], default=['irregular', 'fibre'])
@@ -175,8 +179,9 @@ def main():
     predx = st.selectbox('x-Values:', featurelist, index=featurelist.index('Depth'))
     predy = st.selectbox('y-Values:', featurelist, index=featurelist.index('Concentration'))
     c = st.selectbox('Color:', featurelist, index=featurelist.index('Dist_WWTP'))
+    reg=st.radio('Regression type:', ['linear', 'log', 'exp', 'pow'], index=0)
 
-    st.write(scatter_chart(df, predx, predy, c, title='', width=800, height=600))
+    st.write(scatter_chart(df, predx, predy, c, reg, title='', width=800, height=600))
 
     # TODO: temporary check for r-values (remove later)
     from scipy.stats import pearsonr
