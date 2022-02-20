@@ -38,7 +38,8 @@ def data_load_and_prep():
     mp_pdd = pd.read_csv('../data/env_MP_clean_list_SchleiSediments.csv', index_col=0)
     mp_pdd = prepare_data.mass_conversion(mp_pdd)  # calculate particle weights
     mp_pdd['polymer_type'] = mp_pdd['polymer_type'].map(shortnames).fillna(mp_pdd['polymer_type'])  # use abbreviations for polymer names but retain original names for polymers not present in shortnames
-    
+    mp_pdd.columns = mp_pdd.columns.str.replace("[\[( )\]]", "")  # remove brackets and spaces from column names
+
     # Also import sediment data (sediment frequencies per size bin from master sizer export)
     grainsize_iow = pd.read_csv('../data/sediment_grainsize_IOW_vol_log-cau_not-closed.csv')
     # Get the binning structure of the imported sediment data and optionally rebin it (make binning coarser) for faster computation
@@ -76,26 +77,38 @@ def pdd2sdd(mp_pdd, regions):
 
 def main():
     mp_pdd, scor = data_load_and_prep()  # load data
-    
-    st.write(mp_pdd)
-    st.write(mp_pdd.shape)
 
-    st.write(mp_pdd[Config.size_dim].dtypes)
-    sizedim = st.sidebar.radio('Select size dimension', ['size_geom_mean', 'Size_1_[µm]', 'Size_2_[µm]'])
+    raw_data_checkbox = st.sidebar.checkbox('Show raw data')
+    if raw_data_checkbox:
+        with st.expander("Original particle domain data"):
+            st.write(mp_pdd)
+            st.write('Shape: ', mp_pdd.shape)
+
+    sizedim = st.sidebar.radio('Select size dimension', ['size_geom_mean', 'Size_1_µm', 'Size_2_µm'])
     Config.size_dim = sizedim
     size_lims = floor(mp_pdd[Config.size_dim].min() / 10) * 10, ceil(mp_pdd[Config.size_dim].max() / 10) * 10
-    # sizefilter = st.sidebar.slider('MP size range', size_lims[0], size_lims[1], list(size_lims), step=10)
-    # Config.lower_size_limit = sizefilter[0]
-    # Config.upper_size_limit = sizefilter[1]
-    Config.lower_size_limit = st.sidebar.number_input('Lower size limit', value=size_lims[0], step=100)
-    Config.upper_size_limit = st.sidebar.number_input('Upper size limit', value=size_lims[1], step=100)
+    Config.lower_size_limit = st.sidebar.number_input('Lower size limit',
+                                                      value=size_lims[0],
+                                                      min_value=size_lims[0],
+                                                      max_value=size_lims[1],
+                                                      step=100)
+    Config.upper_size_limit = st.sidebar.number_input('Upper size limit',
+                                                      value=size_lims[1],
+                                                      min_value=size_lims[0],
+                                                      max_value=size_lims[1],
+                                                      step=100)
 
     density_lims = mp_pdd.density.min().astype(int).item(), mp_pdd.density.max().astype(int).item()
-    # densityfilter = st.sidebar.slider('MP density range', density_lims[0], density_lims[1], list(density_lims), step=1)
-    # Config.lower_density_limit = densityfilter[0]
-    # Config.upper_density_limit = densityfilter[1]
-    Config.lower_density_limit = st.sidebar.number_input('Lower density limit', value=density_lims[0], step=10)
-    Config.upper_density_limit = st.sidebar.number_input('Upper density limit', value=density_lims[1], step=10)
+    Config.lower_density_limit = st.sidebar.number_input('Lower density limit',
+                                                         value=density_lims[0],
+                                                         min_value=density_lims[0],
+                                                         max_value=density_lims[1],
+                                                         step=100)
+    Config.upper_density_limit = st.sidebar.number_input('Upper density limit',
+                                                         value=density_lims[1],
+                                                         min_value=density_lims[0],
+                                                         max_value=density_lims[1],
+                                                         step=100)
 
     samplefilter = st.sidebar.multiselect('Select samples:', mp_pdd.Sample.unique(), default=mp_pdd.Sample.unique())
     shapefilter = st.sidebar.multiselect('Select shapes:', ['irregular', 'fibre'], default=['irregular', 'fibre'])
@@ -112,27 +125,41 @@ def main():
 
     regionfilter = st.sidebar.multiselect('Select regions:', ['WWTP', 'inner', 'middle', 'outer', 'river'],
                                           default=['WWTP', 'inner', 'middle', 'outer', 'river'])
+
     mp_added_sed_sdd = pdd2sdd(mp_pdd, regionfilter)
+    df = scor.merge(mp_added_sed_sdd, left_index=True, right_on='Sample')
+
+    if raw_data_checkbox:
+        with st.expander("Filtered particle domain data"):
+            st.write(mp_pdd)
+            st.write('Shape: ', mp_pdd.shape)
+            st.write(mp_pdd.dtypes)
+
+        with st.expander("Sample domain data"):
+            st.write(df)
+            st.write('Shape: ', df.shape)
+            st.write(df.dtypes)
 
     st.title('Microplastics and sediment analysis')
     st.markdown('___', unsafe_allow_html=True)
-    # station_map(mp_pdd)  # plot map
-    st.text("")  # empty line to make some distance
+
+    # if st.checkbox('Plot map'):
+    #     station_map(mp_pdd)  # plot map
+    # st.markdown('___', unsafe_allow_html=True)
+    # st.text("")  # empty line to make some distance
 
     st.subheader('MP size histograms')
-    st.write(histograms(mp_pdd))
-
-    st.markdown('___', unsafe_allow_html=True)
-
-    st.subheader('Polymer composition')
-    # st.markdown("Some text that describes what's going on here", unsafe_allow_html=True)
-
-    st.write(poly_comp_chart(mp_pdd, mp_added_sed_sdd))
-
+    if st.checkbox('Size histogram'):
+        st.write(histograms(mp_pdd))
     st.markdown('___', unsafe_allow_html=True)
     st.text("")  # empty line to make some distance
 
-    df = scor.merge(mp_added_sed_sdd, left_index=True, right_on='Sample')
+    st.subheader('Polymer composition')
+    if st.checkbox('Polymer composition'):
+        st.write(poly_comp_chart(mp_pdd, df))
+    st.markdown('___', unsafe_allow_html=True)
+    st.text("")  # empty line to make some distance
+
 
     st.subheader('GLM')
     if st.checkbox('Calculate GLM'):
@@ -180,8 +207,9 @@ def main():
     predy = st.selectbox('y-Values:', featurelist, index=featurelist.index('Concentration'))
     c = st.selectbox('Color:', featurelist, index=featurelist.index('Dist_WWTP'))
     reg=st.radio('Regression type:', ['linear', 'log', 'exp', 'pow'], index=0)
+    labels = st.checkbox('Show data labels')
 
-    st.write(scatter_chart(df, predx, predy, c, reg, title='', width=800, height=600))
+    st.write(scatter_chart(df, predx, predy, c, 'Sample' if labels else None, reg, title='', width=800, height=600))
 
     # TODO: temporary check for r-values (remove later)
     from scipy.stats import pearsonr

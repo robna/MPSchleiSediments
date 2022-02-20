@@ -4,3 +4,5 @@ primaryColor="#5c5648"
 backgroundColor="#404554"
 textColor="#ffffff"
 
+[global]
+dataFrameSerialization = "legacy"  # TODO: this is needed temporarily for streamlit 0.85 due to a bug in pyarrow

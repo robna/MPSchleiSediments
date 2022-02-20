@@ -34,8 +34,8 @@ def aggregate_SDD(mp_pdd):
         Frequency=('Site_name', 'count'),
         FrequencyA500=('size_geom_mean', lambda x: (x >= 500).sum()),
         FrequencyB500=('size_geom_mean', lambda x: (x < 500).sum()),
-        MPmass=('particle_mass_[µg]', 'sum'),
-        Mass=('Sampling_weight_[kg]', np.mean),
+        MPmass=('particle_mass_µg', 'sum'),
+        Mass=('Sampling_weight_kg', np.mean),
         # using "mean" here is actually weird as all entries are the same. Is there something like "first"?
         GPS_LONs=('GPS_LON', np.mean),
         GPS_LATs=('GPS_LAT', np.mean),

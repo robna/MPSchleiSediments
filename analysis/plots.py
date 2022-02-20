@@ -10,13 +10,14 @@ from settings import Config
 import prepare_data
 
 
-def scatter_chart(df, x, y, c=False, reg=None, equal_axes=False, title='', width=400, height=300):
+def scatter_chart(df, x, y, c=False, l=None, reg=None, equal_axes=False, title='', width=400, height=300):
     """
     Create a scatter plot with optional regression line and equation.
     :param df: dataframe with x and y columns
     :param x: x column name
     :param y: y column name
     :param c: color column name
+    :param l: label column name (prints label on each point), None if no label (default)
     :param reg: None for no regression line (default), 'linear', 'log', 'exp' or 'pow'
     :param equal_axes: True for x and y axes ranging from 0 to their higher maximum (useful for predicted vs. observed plots) (default)
     :param title: plot title
@@ -24,7 +25,7 @@ def scatter_chart(df, x, y, c=False, reg=None, equal_axes=False, title='', width
     :param height: plot height
     :return: altair chart
     """
-    
+
     maxX = df[x].max()
     maxY = df[y].max()
     domain_max = max(maxX, maxY) * 1.05
@@ -33,43 +34,57 @@ def scatter_chart(df, x, y, c=False, reg=None, equal_axes=False, title='', width
     base = alt.Chart(df).mark_point().encode(
         x=x,
         y=y,
-        tooltip=['Sample', x, y])
-    
+        tooltip=[l, x, y])
+
+    if c:
+        scatter = base.encode(alt.Color(c, scale=alt.Scale(
+            scheme='cividis')))  # TODO: only ordinal works with categorical and quantiative data and also shows regrassion, when not specifying data type it works fully for categorical data, but stops showing the regression when quantitative data is chosen for color.
+    else:
+        scatter = base
+
+    if l:
+        scatter = scatter + scatter.mark_text(
+            align='left',
+            baseline='middle',
+            dx=7
+        ).encode(
+            text=f'{l}:N'
+        )
+
     if equal_axes:
         base = base.encode(
             x=alt.X(x, scale=alt.Scale(domain=[0, domain_max])),
             y=alt.X(y, scale=alt.Scale(domain=[0, domain_max])))
 
-    if c:
-        scatter = base.encode(alt.Color(c, scale=alt.Scale(scheme='cividis')))  # TODO: only ordinal works with categorical and quantiative data and also shows regrassion, when not specifying data type it works fully for categorical data, but stops showing the regression when quantitative data is chosen for color.
-    else: scatter = base
+    if reg is not None:
+        RegLine = base.transform_regression(
+            x, y, method=reg,
+        ).mark_line()
 
-    RegLine = base.transform_regression(
-        x, y, method=reg,
-    ).mark_line()
+        R2_string = '"R² = " + round(datum.rSquared * 100)/100 + "      y = "'
+        coef0_string = 'round(datum.coef[0] * 10)/10'
+        coef1_string = 'round(datum.coef[1] * 10)/10'
+        reg_eq = {'linear': f'{R2_string} + {coef1_string} + " * x + " + {coef0_string}',
+                  'log': f'{R2_string} + {coef1_string} + " * log(x) + " + {coef0_string}',
+                  'exp': f'{R2_string} + {coef0_string} + " * e ^ (" + {coef1_string} + " x)"',
+                  'pow': f'{R2_string} + {coef0_string} + " * x^" + {coef1_string}'}
 
-    R2_string = '"R² = " + round(datum.rSquared * 100)/100 + "      y = "'
-    coef0_string = 'round(datum.coef[0] * 10)/10'
-    coef1_string = 'round(datum.coef[1] * 10)/10'
-    reg_eq = {'linear': f'{R2_string} + {coef1_string} + " * x + " + {coef0_string}',
-              'log': f'{R2_string} + {coef1_string} + " * log(x) + " + {coef0_string}',
-              'exp': f'{R2_string} + {coef0_string} + " * e ^ (" + {coef1_string} + " x)"',
-              'pow': f'{R2_string} + {coef0_string} + " * x^" + {coef1_string}'}
+        RegParams = base.transform_regression(
+            x, y, method=reg, params=True
+        ).mark_text(align='left', lineBreak='\n').encode(
+            x=alt.value(width / 4),  # pixels from left
+            y=alt.value(height / 20),  # pixels from top
+            text='params:N'
+        ).transform_calculate(
+            params=reg_eq[reg]
+        )
 
-    RegParams = base.transform_regression(
-        x, y, method=reg, params=True
-    ).mark_text(align='left', lineBreak='\n').encode(
-        x=alt.value(width / 4),  # pixels from left
-        y=alt.value(height / 20),  # pixels from top
-        text='params:N'
-    ).transform_calculate(
-        params=reg_eq[reg]
-    )
+        chart = alt.layer(scatter, RegLine, RegParams).properties(width=width, height=height, title=title)
+    else:
+        chart = alt.layer(scatter).properties(width=width, height=height, title=title)
 
-    chart = alt.layer(scatter, RegLine, RegParams).properties(width=width, height=height).properties(title=title)
-    
     chart.save('../plots/scatter_chart.html')  # activate save chart to html file
-    
+
     return chart
 
 
@@ -88,8 +103,8 @@ def poly_comp_chart(mp_pdd, mp_added_sed_sdd):
     ).add_selection(
         selection
     )
-    
-    chart_rel = chart_abs.encode(y=alt.Y('Concentration',stack='normalize'))
+
+    chart_rel = chart_abs.encode(y=alt.Y('Concentration', stack='normalize'))
 
     chart_tot = chart_rel.mark_bar().encode(
         x=alt.value(10),
@@ -139,35 +154,7 @@ def station_map(data):
 
 
 def histograms(df):
-
     brush = alt.selection_interval(encodings=['x'])
-    #
-    # base = alt.Chart(df).properties(
-    #     width=800,
-    #     height=200
-    # )
-    #
-    # bar = base.mark_bar().encode(
-    #     y='count():Q'
-    # )
-    #
-    # rule = bar.mark_rule(color='red', y='height').encode(  # TODO: rule not yet scaling with changing y-axis
-    #     x=f'median({Config.size_dim}):Q',
-    #     size=alt.value(5)
-    # )
-    #
-    # chart = alt.vconcat(
-    #     # bar.encode(
-    #     #     alt.X(Config.size_dim,
-    #     #           bin=alt.Bin(maxbins=30, extent=brush),
-    #     #           scale=alt.Scale(domain=brush)
-    #     #           ), tooltip='count():Q',
-    #     # ), #+ rule,
-    #     bar.encode(
-    #         alt.X(Config.size_dim, bin=alt.Bin(maxbins=30)),
-    #     ).add_selection(brush) + rule
-    # )
-
     base = alt.Chart(df).properties(width=1000, height=200)
 
     bar = base.mark_bar().encode(
@@ -192,7 +179,8 @@ def histograms(df):
     return chart
 
 
-def biplot(scor, load, expl, discr, x, y, sc, lc, ntf=5, normalise=False, figsize=(800,600)):  # TODO: normalisation not yet implemented
+def biplot(scor, load, expl, discr, x, y, sc, lc, ntf=5, normalise=False,
+           figsize=(800, 600)):  # TODO: normalisation not yet implemented
     """
     Create the Biplot based on the PCoA or PCA scores and loadings.
 
@@ -215,13 +203,13 @@ def biplot(scor, load, expl, discr, x, y, sc, lc, ntf=5, normalise=False, figsiz
     altair figure, as html and inline
     """
 
-    dfl = load.head(ntf).append(load.head(ntf)-load.head(ntf)).reset_index()
+    dfl = load.head(ntf).append(load.head(ntf) - load.head(ntf)).reset_index()
     # dfl = (dfl / dfl.max(numeric_only=True).max(numeric_only=True))  # normalise values to range [-1,1]
 
     dfl2 = load.head(ntf).reset_index()
     # dfl2 = (dfl2 / dfl2.max().max())
 
-    dfs = scor.reset_index().rename(columns={'index':'Sample'}).merge(discr[['Sample', 'Dist_WWTP', 'regio_sep']])
+    dfs = scor.reset_index().rename(columns={'index': 'Sample'}).merge(discr[['Sample', 'Dist_WWTP', 'regio_sep']])
     # dfs = (dfs / dfs.max(numeric_only=True).max(numeric_only=True))
 
     lines = alt.Chart(dfl).mark_line(opacity=0.3).encode(
@@ -235,26 +223,25 @@ def biplot(scor, load, expl, discr, x, y, sc, lc, ntf=5, normalise=False, figsiz
         y=y,
         color=alt.Color('polymer_type', legend=None)
     )
-    
-    text = heads.mark_text(dx=-25,dy=19, fontSize=12).encode(
+
+    text = heads.mark_text(dx=-25, dy=19, fontSize=12).encode(
         text='polymer_type'
     )
 
     scatter = alt.Chart(dfs).mark_point(strokeWidth=3).encode(
         x=x,
         y=y,
-        color=alt.Color('regio_sep',scale=alt.Scale(scheme='dark2')),
+        color=alt.Color('regio_sep', scale=alt.Scale(scheme='dark2')),
         tooltip='Sample'
     )
 
     figure = alt.layer(lines, heads, text, scatter
-    ).resolve_scale(color='independent'
-    ).interactive(
+                       ).resolve_scale(color='independent'
+                                       ).interactive(
     ).properties(
-        width=figsize[0],height=figsize[1]
+        width=figsize[0], height=figsize[1]
     )
 
     figure.save('../plots/biplot.html')
 
     return figure
-    
