@@ -34,7 +34,7 @@ def scatter_chart(df, x, y, c=False, l=None, reg=None, equal_axes=False, title='
     base = alt.Chart(df).mark_point().encode(
         x=x,
         y=y,
-        tooltip=[l, x, y])
+        tooltip=[df.columns[1], x, y])
 
     if c:
         scatter = base.encode(alt.Color(c, scale=alt.Scale(

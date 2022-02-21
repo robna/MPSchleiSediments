@@ -127,7 +127,7 @@ def main():
                                           default=['WWTP', 'inner', 'middle', 'outer', 'river'])
 
     mp_added_sed_sdd = pdd2sdd(mp_pdd, regionfilter)
-    df = scor.merge(mp_added_sed_sdd, left_index=True, right_on='Sample')
+    df = mp_added_sed_sdd.merge(scor, right_index=True, left_on='Sample')
 
     if raw_data_checkbox:
         with st.expander("Filtered particle domain data"):
