@@ -71,7 +71,7 @@ def scatter_chart(df, x, y, c=False, l=None, reg=None, equal_axes=False, title='
 
         RegParams = base.transform_regression(
             x, y, method=reg, params=True
-        ).mark_text(align='left', lineBreak='\n').encode(
+        ).mark_text(align='left', lineBreak='\n', fontSize = 18).encode(
             x=alt.value(width / 4),  # pixels from left
             y=alt.value(height / 20),  # pixels from top
             text='params:N'
@@ -79,7 +79,7 @@ def scatter_chart(df, x, y, c=False, l=None, reg=None, equal_axes=False, title='
             params=reg_eq[reg]
         )
 
-        chart = alt.layer(scatter, RegLine, RegParams).properties(width=width, height=height, title=title)
+        chart = alt.layer(scatter, RegLine, RegParams).properties(width=width, height=height).properties(title=title).configure_axis(labelFontSize = 18, titleFontSize = 28)
     else:
         chart = alt.layer(scatter).properties(width=width, height=height, title=title)
 

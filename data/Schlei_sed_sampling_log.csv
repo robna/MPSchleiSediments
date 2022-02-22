@@ -1,38 +1,38 @@
-ID,Sample,Date,Arrival,Sediment,CTD,Departure,GPS LAT,GPS LON,Depth,Comments,Closest_Marina,Dist_Marina,Dist_WWTP
-S01,Schlei_S1,14-05-18,16:48:00,17:04:00,17:06:00,17:45:00,54° 30.45’,09° 33.43’,2.7,"Innere Schlei west; 2 sediment samples taken from Frahm core (0-5 cm, 10-15 cm)",Schlei Segel Club,505,4490
-S01d,Schlei_S1_15cm,14-05-18,16:48:00,17:04:00,17:06:00,17:45:00,54° 30.45’,09° 33.43’,2.7,"Innere Schlei west; 2 sediment samples taken from Frahm core (0-5 cm, 10-15 cm)",Schlei Segel Club,505,4490
-S02,Schlei_S2,14-05-18,18:50:00,18:50:00,18:58:00,18:58:00,54° 30.462’,09° 35.433’,3.6,Fahrdorf und Offizierskasino,Fahrdorfer Segelverein,546,2468
-S02d,Schlei_S2_15cm,14-05-18,18:50:00,18:50:00,18:58:00,18:58:00,54° 30.462’,09° 35.433’,3.6,Fahrdorf und Offizierskasino,Fahrdorfer Segelverein,546,2468
-S03,Schlei_S3,14-05-18,19:08:00,,19:18:00,,54° 30.519’,09° 36.039’,3.8,zw. Fahrdorf und Windmühle,Fahrdorfer Segelverein,1123,2068
-S04,Schlei_S4,15-05-18,,08:55:00,09:00:00,09:03:00,54° 31.153’,09° 37.431’,2.8,westl. Reesholm,Stollerwerft,1014,1497
-S04d,Schlei_S4_15cm,15-05-18,,08:55:00,09:00:00,09:03:00,54° 31.153’,09° 37.431’,2.8,westl. Reesholm,Stollerwerft,1014,1497
-S05,Schlei_S5,15-05-18,09:10:00,09:13:00,09:14:00,09:16:00,54° 31.794’,09° 37.595’,1.4,Füsinger Au,Stollerwerft,761,1602
-S06,Schlei_S6,15-05-18,09:25:00,09:27:00,09:29:00,09:30:00,54° 31.323’,09° 37.029’,3,"Kleine Breite Ost, zw. Reesholm und Freiheit",Stollerwerft,564,974
-S07,Schlei_S7,15-05-18,09:34:00,09:38:00,09:37:00,,54° 31.096’,09° 36.721’,3.2,Kleine Breite Mitte,Stollerwerft,1011,1006
-S08,Schlei_S8,15-05-18,10:00:00,10:02:00,10:04:00,,54° 31.516’,09° 36.387’,2,Auslauf Klärwerk,Stollerwerft,643,211
-S09,Schlei_S9,15-05-18,10:08:00,10:10:00,10:14:00,,54° 31.514’,09° 36.251’,1,Klärwerksauslauf 2,Stollerwerft,785,66.8
-S10,Schlei_S10,15-05-18,10:20:00,,,,54° 31.516’,09° 36.213’,0.8,Klärwerk 3 (direkt am Auslauf),Stollerwerft,824,27.5
-S10d,Schlei_S10_15cm,15-05-18,10:20:00,,,,54° 31.516’,09° 36.213’,0.8,Klärwerk 3 (direkt am Auslauf),Stollerwerft,824,27.5
-S11,Schlei_S11,15-05-18,10:30:00,10:32:00,10:33:00,,54° 31.426’,09° 36.865’,2.9,,Stollerwerft,379,750
-S12,Schlei_S12,15-05-18,10:45:00,10:46:00,10:47:00,,54° 31.126’,09° 36.072’,2.4,Auslauf Zuckerkai,Stollerwerft,1326,1137
-S13,Schlei_S13,15-05-18,12:32:00,12:33:00,12:35:00,,54° 30.94’,09° 37.292’,3,,Stollerwerft,1320,1605
-S14,Schlei_S14,15-05-18,13:30:00,13:31:00,13:33:00,13:36:00,54° 31.030’,09° 38.331’,2.3,Nordwestl. Stexwiger Enge,kl. Hafen Stexwig+3,950,2933
-S15,Schlei_S15,15-05-18,13:42:00,13:46:00,13:47:00,,54° 31.203’,09° 38.745’,2.2,Große Breite Nord West,kl. Hafen Stexwig+3,1382,3455
-S16,Schlei_S16,15-05-18,14:00:00,14:01:00,14:02:00,14:06:00,54° 30.838’,09° 40.202’,3.5,,Wassersport Borgwedel,1500,4729
-S17,Schlei_S17,15-05-18,14:10:00,14:12:00,14:14:00,14:15:00,54° 30.433’,09° 40.979’,2.3,,Wassersport Borgwedel,1126,5643
-S18,Schlei_S18,15-05-18,14:20:00,14:22:00,14:23:00,,54° 30.098’,09° 41.528’,3.2,,Wassersport Fleckeby,1199,6391
-S18d,Schlei_S18_15cm,15-05-18,14:20:00,14:22:00,14:23:00,,54° 30.098’,09° 41.528’,3.2,,Wassersport Fleckeby,1199,6391
-S19,Schlei_S19,15-05-18,14:45:00,14:00:00,15:20:00,,54° 30.753’,09° 42.157’,0.6,,Wassersport Fleckeby,2375,6836
-S20,Schlei_S20,15-05-18,,,,16:15:00,54° 31.311’,09° 41.482’,3.5,,Marina Brodersby,1436,6230
-S21,Schlei_S21,15-05-18,17:30:00,17:31:00,17:33:00,17:35:00,54° 31.654’,09° 43.871’,2.1,Missunder Noor,Campingplatz Wees,523,9723
-S22,Schlei_S22,15-05-18,18:02:00,18:06:00,18:09:00,,54° 33.605’,09° 46.132’,4,Ulsnis,(Bootsclub Ulnis-Steinfeld),537,14087
-S23,Schlei_S23,15-05-18,18:49:00,,,,54° 34.329’,09° 46.865’,3.1,Gummeby?,(Bootsclub Ulnis-Steinfeld),1797,15662
-S24,Schlei_S24,15-05-18,19:06:00,19:06:00,,,54° 34.620’,09° 48.741’,4.7,Lindaunis,Lindaunis Campingplpatz,892,17538
-S25,Schlei_S25,15-05-18,19:37:00,19:37:00,,,54° 36.857’,09° 53.229’,3,Faullück,(Karschau),473,24017
-S26,Schlei_S26,15-05-18,20:28:00,20:30:00,,,54° 37.483’,09° 55.42’,2.3,,"Arnis, Fähre, Häfen",927,26567
-S27,Schlei_S27,15-05-18,20:47:00,,,,54° 38.155’,09° 55.992’,1.2,,Wassersport Arnis-Grödersby,195,28534
-S28,Schlei_S28,16-05-18,09:12:00,09:10:00,09:14:00,,54° 39.797’,09° 56.184’,4.2,Kappeln,Hafen Kappeln,209,31457
-S29,Schlei_S29,16-05-18,09:25:00,,09:26:00,09:27:00,54° 39.798’,09° 56.391’,1.2,Kappeln gegenüber Fischerkai?,Ancker Yachting,344,31509
-S30,Schlei_S30,16-05-18,09:37:00,09:40:00,,,54° 40.317’,09° 56.671’,12.1,,Bootswerft Stapelfeldt,403,32502
-S31,Schlei_S31,16-05-18,10:45:00,,,,54° 40.542’,10° 01.118’,4,,Schleimünde Campingplatz,1462,37475
-S32,Schlei_S32,16-05-18,11:06:00,11:07:00,,,54° 41.241’,09° 59.195’,2.1,,Bootswerft Modersitzki,170,36158
+ID,Sample,Date,Arrival,Sediment,CTD,Departure,GPS LAT,GPS LON,Depth,Comments,Closest_Marina,Dist_Marina,Dist_WWTP,Dist_WWTP2
+S01,Schlei_S1,14-05-18,16:48:00,17:04:00,17:06:00,17:45:00,54° 30.45’,09° 33.43’,2.7,"Innere Schlei west; 2 sediment samples taken from Frahm core (0-5 cm, 10-15 cm)",Schlei Segel Club,505,4490,4490
+S01d,Schlei_S1_15cm,14-05-18,16:48:00,17:04:00,17:06:00,17:45:00,54° 30.45’,09° 33.43’,2.7,"Innere Schlei west; 2 sediment samples taken from Frahm core (0-5 cm, 10-15 cm)",Schlei Segel Club,505,4490,4490
+S02,Schlei_S2,14-05-18,18:50:00,18:50:00,18:58:00,18:58:00,54° 30.462’,09° 35.433’,3.6,Fahrdorf und Offizierskasino,Fahrdorfer Segelverein,546,2468,2468
+S02d,Schlei_S2_15cm,14-05-18,18:50:00,18:50:00,18:58:00,18:58:00,54° 30.462’,09° 35.433’,3.6,Fahrdorf und Offizierskasino,Fahrdorfer Segelverein,546,2468,2468
+S03,Schlei_S3,14-05-18,19:08:00,,19:18:00,,54° 30.519’,09° 36.039’,3.8,zw. Fahrdorf und Windmühle,Fahrdorfer Segelverein,1123,2068,2068
+S04,Schlei_S4,15-05-18,,08:55:00,09:00:00,09:03:00,54° 31.153’,09° 37.431’,2.8,westl. Reesholm,Stollerwerft,1014,1497,1497
+S04d,Schlei_S4_15cm,15-05-18,,08:55:00,09:00:00,09:03:00,54° 31.153’,09° 37.431’,2.8,westl. Reesholm,Stollerwerft,1014,1497,1497
+S05,Schlei_S5,15-05-18,09:10:00,09:13:00,09:14:00,09:16:00,54° 31.794’,09° 37.595’,1.4,Füsinger Au,Stollerwerft,761,1602,1602
+S06,Schlei_S6,15-05-18,09:25:00,09:27:00,09:29:00,09:30:00,54° 31.323’,09° 37.029’,3,"Kleine Breite Ost, zw. Reesholm und Freiheit",Stollerwerft,564,974,974
+S07,Schlei_S7,15-05-18,09:34:00,09:38:00,09:37:00,,54° 31.096’,09° 36.721’,3.2,Kleine Breite Mitte,Stollerwerft,1011,1006,1006
+S08,Schlei_S8,15-05-18,10:00:00,10:02:00,10:04:00,,54° 31.516’,09° 36.387’,2,Auslauf Klärwerk,Stollerwerft,643,211,211
+S09,Schlei_S9,15-05-18,10:08:00,10:10:00,10:14:00,,54° 31.514’,09° 36.251’,1,Klärwerksauslauf 2,Stollerwerft,785,66.8,66.8
+S10,Schlei_S10,15-05-18,10:20:00,,,,54° 31.516’,09° 36.213’,0.8,Klärwerk 3 (direkt am Auslauf),Stollerwerft,824,27.5,27.5
+S10d,Schlei_S10_15cm,15-05-18,10:20:00,,,,54° 31.516’,09° 36.213’,0.8,Klärwerk 3 (direkt am Auslauf),Stollerwerft,824,27.5,27.5
+S11,Schlei_S11,15-05-18,10:30:00,10:32:00,10:33:00,,54° 31.426’,09° 36.865’,2.9,,Stollerwerft,379,750,750
+S12,Schlei_S12,15-05-18,10:45:00,10:46:00,10:47:00,,54° 31.126’,09° 36.072’,2.4,Auslauf Zuckerkai,Stollerwerft,1326,1137,1137
+S13,Schlei_S13,15-05-18,12:32:00,12:33:00,12:35:00,,54° 30.94’,09° 37.292’,3,,Stollerwerft,1320,1605,1605
+S14,Schlei_S14,15-05-18,13:30:00,13:31:00,13:33:00,13:36:00,54° 31.030’,09° 38.331’,2.3,Nordwestl. Stexwiger Enge,kl. Hafen Stexwig+3,950,2933,2933
+S15,Schlei_S15,15-05-18,13:42:00,13:46:00,13:47:00,,54° 31.203’,09° 38.745’,2.2,Große Breite Nord West,kl. Hafen Stexwig+3,1382,3455,3455
+S16,Schlei_S16,15-05-18,14:00:00,14:01:00,14:02:00,14:06:00,54° 30.838’,09° 40.202’,3.5,,Wassersport Borgwedel,1500,4729,4729
+S17,Schlei_S17,15-05-18,14:10:00,14:12:00,14:14:00,14:15:00,54° 30.433’,09° 40.979’,2.3,,Wassersport Borgwedel,1126,5643,5643
+S18,Schlei_S18,15-05-18,14:20:00,14:22:00,14:23:00,,54° 30.098’,09° 41.528’,3.2,,Wassersport Fleckeby,1199,6391,6391
+S18d,Schlei_S18_15cm,15-05-18,14:20:00,14:22:00,14:23:00,,54° 30.098’,09° 41.528’,3.2,,Wassersport Fleckeby,1199,6391,6391
+S19,Schlei_S19,15-05-18,14:45:00,14:00:00,15:20:00,,54° 30.753’,09° 42.157’,0.6,,Wassersport Fleckeby,2375,6836,6836
+S20,Schlei_S20,15-05-18,,,,16:15:00,54° 31.311’,09° 41.482’,3.5,,Marina Brodersby,1436,6230,6230
+S21,Schlei_S21,15-05-18,17:30:00,17:31:00,17:33:00,17:35:00,54° 31.654’,09° 43.871’,2.1,Missunder Noor,Campingplatz Wees,523,9723,9723
+S22,Schlei_S22,15-05-18,18:02:00,18:06:00,18:09:00,,54° 33.605’,09° 46.132’,4,Ulsnis,(Bootsclub Ulnis-Steinfeld),537,14087,14087
+S23,Schlei_S23,15-05-18,18:49:00,,,,54° 34.329’,09° 46.865’,3.1,Gummeby?,(Bootsclub Ulnis-Steinfeld),1797,15662,14154
+S24,Schlei_S24,15-05-18,19:06:00,19:06:00,,,54° 34.620’,09° 48.741’,4.7,Lindaunis,Lindaunis Campingplpatz,892,17538,12124
+S25,Schlei_S25,15-05-18,19:37:00,19:37:00,,,54° 36.857’,09° 53.229’,3,Faullück,(Karschau),473,24017,5771
+S26,Schlei_S26,15-05-18,20:28:00,20:30:00,,,54° 37.483’,09° 55.42’,2.3,,"Arnis, Fähre, Häfen",927,26567,3088
+S27,Schlei_S27,15-05-18,20:47:00,,,,54° 38.155’,09° 55.992’,1.2,,Wassersport Arnis-Grödersby,195,28534,1435
+S28,Schlei_S28,16-05-18,09:12:00,09:10:00,09:14:00,,54° 39.797’,09° 56.184’,4.2,Kappeln,Hafen Kappeln,209,31457,1669
+S29,Schlei_S29,16-05-18,09:25:00,,09:26:00,09:27:00,54° 39.798’,09° 56.391’,1.2,Kappeln gegenüber Fischerkai?,Ancker Yachting,344,31509,1729
+S30,Schlei_S30,16-05-18,09:37:00,09:40:00,,,54° 40.317’,09° 56.671’,12.1,,Bootswerft Stapelfeldt,403,32502,2750
+S31,Schlei_S31,16-05-18,10:45:00,,,,54° 40.542’,10° 01.118’,4,,Schleimünde Campingplatz,1462,37475,7860
+S32,Schlei_S32,16-05-18,11:06:00,11:07:00,,,54° 41.241’,09° 59.195’,2.1,,Bootswerft Modersitzki,170,36158,6130

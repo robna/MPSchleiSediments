@@ -32,8 +32,8 @@ def aggregate_SDD(mp_pdd):
 
     mp_sdd = mp_pdd.agg(
         Frequency=('Site_name', 'count'),
-        FrequencyA500=('size_geom_mean', lambda x: (x >= 500).sum()),
-        FrequencyB500=('size_geom_mean', lambda x: (x < 500).sum()),
+        FrequencyA500=('Size_1_µm', lambda x: (x >= 500).sum()),
+        FrequencyB500=('Size_1_µm', lambda x: (x < 500).sum()),
         MPmass=('particle_mass_µg', 'sum'),
         Mass=('Sampling_weight_kg', np.mean),
         # using "mean" here is actually weird as all entries are the same. Is there something like "first"?
@@ -48,6 +48,7 @@ def aggregate_SDD(mp_pdd):
     mp_sdd['Concentration'] = round(mp_sdd['Frequency'] / mp_sdd['Mass'])
     mp_sdd['ConcentrationA500'] = round(mp_sdd['FrequencyA500'] / mp_sdd['Mass'])
     mp_sdd['ConcentrationB500'] = round(mp_sdd['FrequencyB500'] / mp_sdd['Mass'])
+    mp_sdd['ConcentrationA500_div_B500'] = mp_sdd['ConcentrationA500'] / mp_sdd['ConcentrationB500']
     mp_sdd['MassConcentration'] = round(mp_sdd['MPmass'] / mp_sdd['Mass'])
     return mp_sdd
 
@@ -72,10 +73,10 @@ def add_sediment(mp_sdd):
 
     # merge with mp per station
     mp_added_predictors_sdd = pd.merge(mp_sdd, slogs.reset_index()[
-        ['Sample', 'Depth', 'Dist_Marina', 'Dist_WWTP']], on=['Sample'], how='left').merge(  # add metadata
+        ['Sample', 'Depth', 'Dist_Marina', 'Dist_WWTP','Dist_WWTP2']], on=['Sample'], how='left').merge(  # add metadata
         # sed_d50.reset_index(), on=['Sample'], how='left').merge(  # add sediment D50
         sed_gradistat.reset_index(), on=['Sample'], how='left').merge(  # add sediment gradistat
-        sed_om.reset_index()[['Sample', 'OM_D50', 'TOC', 'Hg']], on=['Sample'], how='left').merge(  # add OM data
+        sed_om.reset_index()[['Sample', 'OM_D50', 'TOC', 'Hg', 'TIC']], on=['Sample'], how='left').merge(  # add OM data
         # dist_wwtp.reset_index(), on=['Sample'], how='left').merge(  # add distance to WWTP
         pd.DataFrame.from_dict(regio_sep, orient='index', columns=['regio_sep']),left_on='Sample', right_index=True)  # add flags for regions
 

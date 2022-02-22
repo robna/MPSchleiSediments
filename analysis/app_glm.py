@@ -14,8 +14,8 @@ from settings import Config, shortnames
 st.set_page_config(layout="wide")
 
 featurelist = ['Frequency', 'Concentration', 'MassConcentration', 'MP_D50',  # endogs
-               'ConcentrationA500', 'pred_Ord_Poly_ConcentrationA500', 'pred_TMP_ConcentrationA500','pred_Paint_ConcentrationA500', 'ConcentrationB500',  # endogs derivatives
-               'Split', 'Mass', 'GPS_LONs', 'GPS_LATs', 'Depth', 'Dist_Marina', 'Dist_WWTP', 'regio_sep',  # sampling related exogs
+               'ConcentrationA500', 'pred_Ord_Poly_ConcentrationA500', 'pred_TMP_ConcentrationA500','pred_Paint_ConcentrationA500', 'ConcentrationB500', 'ConcentrationA500_div_B500', # endogs derivatives
+               'Split', 'Mass', 'GPS_LONs', 'GPS_LATs', 'Depth', 'Dist_Marina', 'Dist_WWTP', 'Dist_WWTP2', 'regio_sep',  # sampling related exogs
                'PC1', 'PC2',   # sediment size PCOA outputs
                # 'MoM_ari_MEAN', 'MoM_ari_SORTING', 'MoM_ari_SKEWNESS', 'MoM_ari_KURTOSIS',  # sediments (gradistat) exogs
                # 'MoM_geo_MEAN', 'MoM_geo_SORTING', 'MoM_geo_SKEWNESS', 'MoM_geo_KURTOSIS',
@@ -28,7 +28,7 @@ featurelist = ['Frequency', 'Concentration', 'MassConcentration', 'MP_D50',  # e
                'perc GRAVEL', 'perc SAND', 'perc MUD', 'perc CLAY', 
                # 'perc V COARSE SAND', 'perc COARSE SAND', 'perc MEDIUM SAND', 'perc FINE SAND', 'perc V FINE SAND',
                # 'perc V COARSE SILT', 'perc COARSE SILT', 'perc MEDIUM SILT', 'perc FINE SILT', 'perc V FINE SILT',
-               'OM_D50', 'TOC', 'Hg',  # other exogs
+               'OM_D50', 'TOC', 'Hg', 'TIC'  # other exogs
                ]
 
 
@@ -59,18 +59,17 @@ def pdd2sdd(mp_pdd, regions):
         mp_added_sed_sdd.regio_sep.isin(regions)]  # filter based on selected regions
 
     mp_added_sed_sdd['pred_Ord_Poly_ConcentrationA500'] = np.exp(
-         0.505 + 0.0452 * mp_added_sed_sdd['perc MUD'] + 0.0249 * 2.22 * mp_added_sed_sdd[
-        'TOC'])  # TODO: temporarily added to compare to the prediction from Kristinas Warnow paper
-        #-0.2425 + 0.0683 * mp_added_sed_sdd['perc MUD'] - 0.0001 * mp_added_sed_sdd['Dist_WWTP']         + 0.0205 * 2.22 * mp_added_sed_sdd['TOC']
+         0.505 + 0.0452 * mp_added_sed_sdd['perc MUD'] + 0.0249 * 2.22 * mp_added_sed_sdd['TOC'])  # TODO: temporarily added to compare to the prediction from Kristinas Warnow paper
+        #-0.2425 + 0.0683 * mp_added_sed_sdd['perc MUD'] - 0.0001 * mp_added_sed_sdd['Dist_WWTP']+ 0.0205 * 2.22 * mp_added_sed_sdd['TOC']
        
     
     mp_added_sed_sdd['pred_Paint_ConcentrationA500'] = np.exp(
         2.352 + 0.032 * mp_added_sed_sdd['perc MUD'] - 0.003 * mp_added_sed_sdd['Dist_Marina'])  
         
-        #TODO: temporarily added to compare to the prediction from Kristinas Warnow paper
+ #TODO: temporarily added to compare to the prediction from Kristinas Warnow paper
 
     mp_added_sed_sdd['pred_TMP_ConcentrationA500'] = np.exp(
-        -0.4207 + 0.0826 * mp_added_sed_sdd['perc MUD'] - 0.0002 * mp_added_sed_sdd['Dist_WWTP'])  
+        -0.4207 + 0.0826 * mp_added_sed_sdd['perc MUD'] + 0.056 * 8.33 * mp_added_sed_sdd['TIC'] - 0.0002 * mp_added_sed_sdd['Dist_WWTP'])  
         #2.4491 + 0.0379 * mp_added_sed_sdd['perc MUD'])
     return mp_added_sed_sdd
 
@@ -122,6 +121,8 @@ def main():
                         & (mp_pdd.density >= Config.lower_density_limit)
                         & (mp_pdd.density <= Config.upper_density_limit)
                         ]  # filter mp_pdd based on selected values
+    st.write(mp_pdd)
+    st.write(mp_pdd.shape)
 
     regionfilter = st.sidebar.multiselect('Select regions:', ['WWTP', 'inner', 'middle', 'outer', 'river'],
                                           default=['WWTP', 'inner', 'middle', 'outer', 'river'])
@@ -217,6 +218,9 @@ def main():
     st.write(f'Pearson r: {r}, p: {p}')
     from sklearn.metrics import r2_score
     st.write(f'R2: {r2_score(df[predx], df[predy])}')
+    
+    st.write('Sum: ',df.ConcentrationA500.sum())
+    st.write('Mean_A500: ',df.ConcentrationA500.mean())
 
     st.markdown('___', unsafe_allow_html=True)
     st.text("")  # empty line to make some distance

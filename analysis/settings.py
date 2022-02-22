@@ -57,7 +57,7 @@ regio_sep = {
     'Schlei_S3': 'inner',
     'Schlei_S4': 'inner',
     'Schlei_S4_15cm': 'inner',
-    'Schlei_S5': 'river',
+    'Schlei_S5': 'inner',
     'Schlei_S6': 'inner',
     'Schlei_S7': 'inner',
     'Schlei_S8': 'WWTP',

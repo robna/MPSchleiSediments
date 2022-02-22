@@ -1,8 +1,8 @@
 [theme]
-base="dark"
+base="light"
 primaryColor="#5c5648"
-backgroundColor="#404554"
-textColor="#ffffff"
+secondaryBackgroundColor="#d2d2de"
+textColor="#000000"
 
 [global]
 dataFrameSerialization = "legacy"  # TODO: this is needed temporarily for streamlit 0.85 due to a bug in pyarrow
