@@ -54,7 +54,7 @@ def pdd2sdd(mp_pdd, regions):
     # ...some data wrangling to prepare particle domain data and sample domain data for MP and combine with certain sediment aggregates.
     mp_sdd = prepare_data.aggregate_SDD(mp_pdd)
 
-    mp_added_sed_sdd = prepare_data.add_sediment(mp_sdd)
+    mp_added_sed_sdd = prepare_data.additional_sdd_merging(mp_sdd)
     mp_added_sed_sdd = mp_added_sed_sdd.loc[
         mp_added_sed_sdd.regio_sep.isin(regions)]  # filter based on selected regions
 
@@ -124,11 +124,11 @@ def main():
     st.write(mp_pdd)
     st.write(mp_pdd.shape)
 
-    regionfilter = st.sidebar.multiselect('Select regions:', ['WWTP', 'inner', 'middle', 'outer', 'river'],
-                                          default=['WWTP', 'inner', 'middle', 'outer', 'river'])
+    regionfilter = st.sidebar.multiselect('Select regions:', ['WWTP', 'inner', 'middle', 'outer', 'river', 'warnow'],
+                                          default=['WWTP', 'inner', 'middle', 'outer', 'river', 'warnow'])
 
     mp_added_sed_sdd = pdd2sdd(mp_pdd, regionfilter)
-    df = mp_added_sed_sdd.merge(scor, right_index=True, left_on='Sample')
+    df = mp_added_sed_sdd.merge(scor, right_index=True, left_on='Sample', how='left')
 
     if raw_data_checkbox:
         with st.expander("Filtered particle domain data"):

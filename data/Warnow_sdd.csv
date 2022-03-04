@@ -1,0 +1,11 @@
+ID,Sample,Concentration,Concentration_paint,Concentration_PS_Beads,Concentration_ord_poly,Concentration_irregular,Dist_WWTP,Dist_Marina,D50 (µm),TOC,perc MUD,regio_sep
+W1,Warnow_S1,93,0.00001,85,8,85,5220,1428,28.2,18.59,65.85,warnow
+W2,Warnow_S2,75,49,35,4,75,1980,85,49.1025,13.45,56.98,warnow
+W3,Warnow_S3,97,5,0,93,88,230,501,70.005,8.32,48.115,warnow
+W4,Warnow_S4,104,85,0,19,94,1040,43,49.48,2.94,56.38,warnow
+W5,Warnow_S5,346,10,317,19,346,2970,440,53.72,3.41,57.43,warnow
+W6,Warnow_S6,12,7,0,6,8,4530,372,89.415,4.36,38.66,warnow
+W7,Warnow_S7,15,6,0,9,12,6000,610,65.71,2.75,48.31,warnow
+W8,Warnow_S8,2,2,0,0,2,8770,2373,112.06,2.80,29.77,warnow
+W9,Warnow_S9,2,1,0,1,2,11180,63,137,0.21,7.325,warnow
+W10,Warnow_S10,381,210,0,176,274,11180,1,9.65,4.88,95.75,warnow

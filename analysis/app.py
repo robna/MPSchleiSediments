@@ -30,7 +30,7 @@ def data_load_and_prep():
     sed_size_freqs, sed_x_d = KDE_prepare_data.sediment_preps(sed_size_freqs, rebinning=False)
 
     sdd_MP = KDE_prepare_data.aggregate_SDD(pdd_MP)
-    sdd_MP_sed = KDE_prepare_data.add_sediment(sdd_MP)
+    sdd_MP_sed = KDE_prepare_data.additional_sdd_merging(sdd_MP)
     pdd_sdd_MP = KDE_prepare_data.sdd2pdd(sdd_MP_sed, pdd_MP)
 
     size_pdfs = KDE_utils.per_sample_kde(pdd_sdd_MP, x_d=sed_x_d)

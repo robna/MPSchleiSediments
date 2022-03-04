@@ -6,27 +6,32 @@ from settings import densities, regio_sep, Config
 
 def mass_conversion(df):
     """Adds MP density, volume and mass to each particle"""
-    
-    df['density'] = df['polymer_type'].map(densities)
-    df['density'].fillna(densities['generic'], inplace=True)  # assume a general average density where exact density is not available, ref: https://doi.org/10.1021/acs.est.0c02982
 
-    df['Size_3_[µm]'] = 0.312 * df['size_geom_mean'] + 3.706  # calculates the 3rd dimension, according to Kristinas correlation between size_geom_mean and manually measured height (n=116, R²=0.49)
+    df['density'] = df['polymer_type'].map(densities)
+    df['density'].fillna(densities['generic'],
+                         inplace=True)  # assume a general average density where exact density is not available, ref: https://doi.org/10.1021/acs.est.0c02982
+
+    df['Size_3_[µm]'] = 0.312 * df[
+        'size_geom_mean'] + 3.706  # calculates the 3rd dimension, according to Kristinas correlation between size_geom_mean and manually measured height (n=116, R²=0.49)
 
     # Estimate volumes, ref: # from https://doi.org/10.1016/j.watres.2018.05.019  -> not used anymore, as Kristina showed it to be inaccurate
     # df['size_dimension_decrease_factor'] = df.loc[df.Shape == 'irregular', 'Size_2_[µm]'] / df.loc[df.Shape == 'irregular', 'Size_1_[µm]']  # calculates the factor, by which size dimishes from 1st to 2nd dimension
-    #df.loc[df['Shape'] == 'irregular', 'particle_volume_[µm3]'] = 4/3 * np.pi * (df['Size_1_[µm]']/2) * (df['Size_2_[µm]']/2)**2 * df['size_dimension_decrease_factor']  # ellipsoid volume with 3rd dim = 2nd dim * (2nd dim / 1st dim)
+    # df.loc[df['Shape'] == 'irregular', 'particle_volume_[µm3]'] = 4/3 * np.pi * (df['Size_1_[µm]']/2) * (df['Size_2_[µm]']/2)**2 * df['size_dimension_decrease_factor']  # ellipsoid volume with 3rd dim = 2nd dim * (2nd dim / 1st dim)
 
-    df.loc[df['Shape'] == 'irregular', 'particle_volume_[µm3]'] = 4/3 * np.pi * (df['Size_1_[µm]']/2) * (df['Size_2_[µm]']/2) * (df['Size_3_[µm]']/2)  # ellipsoid volume with 3rd dim = 2nd dim * (2nd dim / 1st dim)
-    df.loc[df['Shape'] == 'fibre', 'particle_volume_[µm3]'] = np.pi * df['Size_1_[µm]'] * (df['Size_2_[µm]']/2)**2  # because of they way how Gepard detects MP we do not assume a fibre void fraction here
-    
+    df.loc[df['Shape'] == 'irregular', 'particle_volume_[µm3]'] = 4 / 3 * np.pi * (df['Size_1_[µm]'] / 2) * (
+                df['Size_2_[µm]'] / 2) * (df[
+                                              'Size_3_[µm]'] / 2)  # ellipsoid volume with 3rd dim = 2nd dim * (2nd dim / 1st dim)
+    df.loc[df['Shape'] == 'fibre', 'particle_volume_[µm3]'] = np.pi * df['Size_1_[µm]'] * (df[
+                                                                                               'Size_2_[µm]'] / 2) ** 2  # because of they way how Gepard detects MP we do not assume a fibre void fraction here
+
     df['particle_mass_[µg]'] = df['particle_volume_[µm3]'] * df['density'] * 1e-9
-    
+
     return df
 
 
 def aggregate_SDD(mp_pdd):
     """Calculates certain Sample domain data (SDD) aggregation from the particle domain data (PDD)"""
-    
+
     if isinstance(mp_pdd, pd.DataFrame):  # if raw DF is submitted instead of groupby object, then group first
         mp_pdd = mp_pdd.groupby(['Sample'])
 
@@ -53,9 +58,9 @@ def aggregate_SDD(mp_pdd):
     return mp_sdd
 
 
-def add_sediment(mp_sdd):
+def additional_sdd_merging(mp_sdd):
     """Takes SDD and amends it with corresponding sediment data"""
-    
+
     # import d50 values  # TODO: commented out, as we use D50 and <63 from Gradistat; may be deleted (also in merge section)
     # sed_d50 = pd.read_csv('../csv/Schlei_Sed_D50_<63.csv', index_col=0)
 
@@ -71,18 +76,24 @@ def add_sediment(mp_sdd):
     # # import distance to waste water treatment plant  # TODO: can be removed (also in merge section): Dist_WWTP now included in slogs
     # dist_wwtp = pd.read_csv('../data/Schlei_Sed_Dist_WWTP.csv', index_col=0)
 
+    # import sampling log data
+    warnow = pd.read_csv('../data/Warnow_sdd.csv', index_col=0)
+
     # merge with mp per station
-    mp_added_predictors_sdd = pd.merge(mp_sdd, slogs.reset_index()[
-        ['Sample', 'Depth', 'Dist_Marina', 'Dist_WWTP','Dist_WWTP2']], on=['Sample'], how='left').merge(  # add metadata
+    mp_sdd_amended = pd.merge(mp_sdd, slogs.reset_index()[
+        ['Sample', 'Depth', 'Dist_Marina', 'Dist_WWTP', 'Dist_WWTP2']], on=['Sample'], how='left').merge(  # add metadata
         # sed_d50.reset_index(), on=['Sample'], how='left').merge(  # add sediment D50
         sed_gradistat.reset_index(), on=['Sample'], how='left').merge(  # add sediment gradistat
         sed_om.reset_index()[['Sample', 'OM_D50', 'TOC', 'Hg', 'TIC']], on=['Sample'], how='left').merge(  # add OM data
         # dist_wwtp.reset_index(), on=['Sample'], how='left').merge(  # add distance to WWTP
-        pd.DataFrame.from_dict(regio_sep, orient='index', columns=['regio_sep']),left_on='Sample', right_index=True)  # add flags for regions
+        pd.DataFrame.from_dict(regio_sep, orient='index', columns=['regio_sep']), left_on='Sample', right_index=True)  # add flags for regions
+
+    # concatenate with Warnow data
+    mp_sdd_amended = pd.concat([mp_sdd_amended, warnow], sort=False)
 
     # optionally: uncomment to export the final data
     # mp_added_sed_sdd.to_csv('../csv/MP_Stats_SchleiSediments.csv')
-    return mp_added_predictors_sdd
+    return mp_sdd_amended
 
 
 # def sdd2pdd(mp_sdd, mp_pdd):  # TODO: not used, remove?
@@ -167,7 +178,7 @@ def equalise_mp_and_sed(mp, sed):
     # In this case values will continue to represent concentrations.
     if not Config.bin_conc:
         mp = mp.apply(lambda x: x / x.sum() * 100, axis=1)
-        
+
     mp_sed_melt = merge_size_ranges(mp, 'MP', sed, 'SED')
 
     return mp, sed, mp_sed_melt
@@ -205,20 +216,21 @@ def sediment_preps(sed_df):
 
     sed_df = sed_df.groupby('Sample').mean()  # average all repeated Master Sizer measurements on individual samples
     # sed_df.rename(columns={'0.01': '0'}, inplace=True)  # renaming lowest size bin to 0
-    sed_df = sed_df.loc[:, pd.to_numeric(sed_df.columns, errors='coerce') > 0]  # only keep columns that hold size bin data
+    sed_df = sed_df.loc[:,
+             pd.to_numeric(sed_df.columns, errors='coerce') > 0]  # only keep columns that hold size bin data
     sed_df.columns = sed_df.columns.astype(float)
 
     # TODO: check if this is necessary...
     # sed_df = sed_df.loc[:, (sed_df.columns.astype('float') >= Config.lower_size_limit) &
     #                     (sed_df.columns.astype('float') <= Config.upper_size_limit)]  # truncate to relevant size range
-    
+
     if Config.rebinning:
         sed_df = rebin(sed_df)
 
     sed_lower_boundaries = sed_df.columns.values  # write the size bins lower boundaries in an array
 
     sed_df = complete_index_labels(sed_df)
-    
+
     if Config.closing:
         sed_df[:] = closure(sed_df.to_numpy()) * Config.closing  # close compositional data
 
