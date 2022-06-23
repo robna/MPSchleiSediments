@@ -1,7 +1,41 @@
 import numpy as np
 import pandas as pd
 from skbio.stats.composition import closure
-from settings import densities, regio_sep, Config
+from settings import densities, regio_sep, shortnames, Config
+import outliers
+
+
+def get_pdd():
+    """
+    Reads the MP particle domain data (PDD) from the CSV file and does some preprocessing
+    """
+    
+    mp_pdd = pd.read_csv('../data/env_MP_clean_list_SchleiSediments.csv', index_col=0)
+    mp_pdd = mass_conversion(mp_pdd)  # calculate particle weights
+    mp_pdd, gpn = outliers.low_freq_out(mp_pdd)  # remove low frequency outliers
+    # mp_pdd = mp_pdd.loc[mp_pdd.Shape=='irregular']  # filter to only use fibres or irregulars
+    mp_pdd['polymer_type'] = mp_pdd['polymer_type'].map(shortnames).fillna(mp_pdd['polymer_type'])  # use abbreviations for polymer names but retain original names for polymers not present in shortnames
+    mp_pdd.columns = mp_pdd.columns.str.replace("[\[( )\]]", "")  # remove brackets from column names
+
+    # mp_pdd = mp_pdd.loc[~mp_pdd.polymer_type.isin(['AcrR', 'AlkR', 'EPX'])]  # exclude paint flakes
+
+    return mp_pdd
+
+
+def get_grainsizes():
+    """
+    Reads the sediment grainsize data from the CSV file and does some preprocessing
+    """
+
+    grainsize_iow = pd.read_csv('../data/sediment_grainsize_IOW_vol_log-cau_not-closed.csv')
+    grainsize_cau = pd.read_csv('../data/sediment_grainsize_CAU_vol_log-cau_closed.csv')
+    grainsize_cau.dropna(subset=grainsize_cau.iloc[:,1:].columns, how='all', inplace=True)  # CAU sediment data contains empty sammples which are dropped here
+
+    # Get the binning structure of the imported sediment data and optionally rebin it (make binning coarser) for faster computation
+    grainsize_iow, sed_lower_boundaries = sediment_preps(grainsize_iow)
+    grainsize_cau, _ = sediment_preps(grainsize_cau)
+
+    return grainsize_iow, grainsize_cau, sed_lower_boundaries
 
 
 def mass_conversion(df):
@@ -42,8 +76,8 @@ def aggregate_SDD(mp_pdd):
         MPmass=('particle_mass_µg', 'sum'),
         Mass=('Sampling_weight_kg', np.mean),
         # using "mean" here is actually weird as all entries are the same. Is there something like "first"?
-        GPS_LONs=('GPS_LON', np.mean),
-        GPS_LATs=('GPS_LAT', np.mean),
+        LON=('GPS_LON', np.mean),
+        LAT=('GPS_LAT', np.mean),
         Split=('Fraction_analysed', np.mean),
         MP_D50=('size_geom_mean', np.median)
         ##MP_D50_A500 = ('size_geom_mean' >= 500.median()),
@@ -71,13 +105,10 @@ def additional_sdd_merging(mp_sdd):
     sed_om = pd.read_csv('../data/Schlei_OM.csv', index_col=0)
 
     # import sampling log data
-    slogs = pd.read_csv('../data/Schlei_sed_sampling_log.csv', index_col=0)
+    slogs = pd.read_csv('../data/Metadata_IOW_sampling_log.csv', index_col=0)
 
     # # import distance to waste water treatment plant  # TODO: can be removed (also in merge section): Dist_WWTP now included in slogs
     # dist_wwtp = pd.read_csv('../data/Schlei_Sed_Dist_WWTP.csv', index_col=0)
-
-    # import sampling log data
-    warnow = pd.read_csv('../data/Warnow_sdd.csv', index_col=0)
 
     # merge with mp per station
     mp_sdd_amended = pd.merge(mp_sdd, slogs.reset_index()[
@@ -88,28 +119,13 @@ def additional_sdd_merging(mp_sdd):
         # dist_wwtp.reset_index(), on=['Sample'], how='left').merge(  # add distance to WWTP
         pd.DataFrame.from_dict(regio_sep, orient='index', columns=['regio_sep']), left_on='Sample', right_index=True)  # add flags for regions
 
-    # concatenate with Warnow data
-    mp_sdd_amended = pd.concat([mp_sdd_amended, warnow], sort=False)
-
+    # concatenate with Warnow data: only activate if you want to use Warnow data for comparison
+    # warnow = pd.read_csv('../data/Warnow_sdd.csv', index_col=0)
+    # mp_sdd_amended = pd.concat([mp_sdd_amended, warnow], sort=False)
+    
     # optionally: uncomment to export the final data
-    # mp_added_sed_sdd.to_csv('../csv/MP_Stats_SchleiSediments.csv')
+    # sdd_iow.to_csv('../csv/MP_Stats_SchleiSediments.csv')
     return mp_sdd_amended
-
-
-# def sdd2pdd(mp_sdd, mp_pdd):  # TODO: not used, remove?
-#     """
-#     Some of the SDD data are merged onto the PDD df,
-#     meaning their values get repeated for each particle of a sample
-#     """
-
-#     mp_added_predictors_pdd = mp_pdd.merge(mp_sdd[['Sample', 'TOC', 'regio_sep']], on='Sample')
-#     mp_added_predictors_pdd.rename(columns={'TOC': 'TOCs', 'Sampling_weight_[kg]': 'Sampling_weight'}, inplace=True)
-
-#     # the PDD df get very large, so we drop certain data columns that are not needed for the plots
-#     mp_added_predictors_pdd.drop(['Site_name', 'GPS_LON', 'GPS_LAT', 'Compartment',
-#                      'Contributor', 'Project', 'Size_1_[µm]', 'Size_2_[µm]', 'Shape', 'Colour',
-#                      'polymer_type', 'library_entry', 'lab_blank_ID', 'sample_ID'], axis=1, inplace=True)
-#     return mp_added_predictors_pdd
 
 
 def melt_size_ranges(df, value_name):

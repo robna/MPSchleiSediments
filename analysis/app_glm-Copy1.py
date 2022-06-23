@@ -48,10 +48,10 @@ def pdd2sdd(mp_pdd, regions):
     # ...some data wrangling to prepare particle domain data and sample domain data for MP and combine with certain sediment aggregates.
     mp_sdd = prepare_data.aggregate_SDD(mp_pdd)
     
-    mp_added_sed_sdd = prepare_data.additional_sdd_merging(mp_sdd)
-    mp_added_sed_sdd = mp_added_sed_sdd.loc[mp_added_sed_sdd.regio_sep.isin(regions)]  # filter based on selected regions
+    sdd_iow = prepare_data.additional_sdd_merging(mp_sdd)
+    sdd_iow = sdd_iow.loc[sdd_iow.regio_sep.isin(regions)]  # filter based on selected regions
 
-    return mp_added_sed_sdd
+    return sdd_iow
 
 
 # def station_map(data):
@@ -85,9 +85,9 @@ def pdd2sdd(mp_pdd, regions):
 #     st.write(r)
 
 
-def poly_comp_chart(mp_pdd, mp_added_sed_sdd):
+def poly_comp_chart(mp_pdd, sdd_iow):
     poly_comp = prepare_data.aggregate_SDD(mp_pdd.groupby(['Sample', 'polymer_type']))
-    poly_comp = poly_comp.merge(mp_added_sed_sdd[['Sample', 'Dist_WWTP', 'perc MUD']], on='Sample')
+    poly_comp = poly_comp.merge(sdd_iow[['Sample', 'Dist_WWTP', 'perc MUD']], on='Sample')
     selection = alt.selection_multi(fields=['polymer_type'], bind='legend')
     
     chart1 = alt.Chart(poly_comp.reset_index()).mark_bar().encode(
@@ -155,7 +155,7 @@ def main():
                         & mp_pdd.Sample.isin(samplefilter)]  # filter mp_pdd based on selected response features
     
     regionfilter = st.sidebar.multiselect('Select regions:', ['WWTP', 'inner', 'middle', 'outer', 'river'], default=['WWTP', 'inner', 'middle', 'outer', 'river'])
-    mp_added_sed_sdd = pdd2sdd(mp_pdd, regionfilter)
+    sdd_iow = pdd2sdd(mp_pdd, regionfilter)
            
     st.title('Microplastics and sediment analysis')
     st.markdown('___', unsafe_allow_html=True)
@@ -165,12 +165,12 @@ def main():
     st.subheader('Polymer composition')
     # st.markdown("Some text that describes what's going on here", unsafe_allow_html=True)
     
-    st.write(poly_comp_chart(mp_pdd, mp_added_sed_sdd))
+    st.write(poly_comp_chart(mp_pdd, sdd_iow))
             
     st.markdown('___', unsafe_allow_html=True)
     st.text("")  # empty line to make some distance
     
-    df = scor.merge(mp_added_sed_sdd, left_index=True, right_on='Sample')
+    df = scor.merge(sdd_iow, left_index=True, right_on='Sample')
     
     st.subheader('GLM')
     if st.checkbox('Calculate GLM'):

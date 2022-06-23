@@ -15,7 +15,7 @@ st.set_page_config(layout="wide")
 
 featurelist = ['Frequency', 'Concentration', 'MassConcentration', 'MP_D50',  # endogs
                'ConcentrationA500', 'pred_Ord_Poly_ConcentrationA500', 'pred_TMP_ConcentrationA500','pred_Paint_ConcentrationA500', 'ConcentrationB500', 'ConcentrationA500_div_B500', # endogs derivatives
-               'Split', 'Mass', 'GPS_LONs', 'GPS_LATs', 'Depth', 'Dist_Marina', 'Dist_WWTP', 'Dist_WWTP2', 'regio_sep',  # sampling related exogs
+               'Split', 'Mass', 'LON', 'LAT', 'Depth', 'Dist_Marina', 'Dist_WWTP', 'Dist_WWTP2', 'regio_sep',  # sampling related exogs
                'PC1', 'PC2',   # sediment size PCOA outputs
                # 'MoM_ari_MEAN', 'MoM_ari_SORTING', 'MoM_ari_SKEWNESS', 'MoM_ari_KURTOSIS',  # sediments (gradistat) exogs
                # 'MoM_geo_MEAN', 'MoM_geo_SORTING', 'MoM_geo_SKEWNESS', 'MoM_geo_KURTOSIS',
@@ -34,16 +34,11 @@ featurelist = ['Frequency', 'Concentration', 'MassConcentration', 'MP_D50',  # e
 
 @st.cache()
 def data_load_and_prep():
-    # What happened so far: DB extract and blank procedure. Now import resulting MP data from csv
-    mp_pdd = pd.read_csv('../data/env_MP_clean_list_SchleiSediments.csv', index_col=0)
-    mp_pdd = prepare_data.mass_conversion(mp_pdd)  # calculate particle weights
-    mp_pdd['polymer_type'] = mp_pdd['polymer_type'].map(shortnames).fillna(mp_pdd['polymer_type'])  # use abbreviations for polymer names but retain original names for polymers not present in shortnames
-    mp_pdd.columns = mp_pdd.columns.str.replace("[\[( )\]]", "")  # remove brackets and spaces from column names
+    mp_pdd = prepare_data.get_pdd()
 
     # Also import sediment data (sediment frequencies per size bin from master sizer export)
-    grainsize_iow = pd.read_csv('../data/sediment_grainsize_IOW_vol_log-cau_not-closed.csv')
-    # Get the binning structure of the imported sediment data and optionally rebin it (make binning coarser) for faster computation
-    grainsize_iow, _ = prepare_data.sediment_preps(grainsize_iow)
+    grainsize_iow = prepare_data.get_grainsizes()[0]  # get_grainsizes returns 3 objects: iow, cau and sed_lower_boundaries
+
     scor, load, expl = PCOA(grainsize_iow, 2)
 
     return mp_pdd, scor
@@ -54,24 +49,24 @@ def pdd2sdd(mp_pdd, regions):
     # ...some data wrangling to prepare particle domain data and sample domain data for MP and combine with certain sediment aggregates.
     mp_sdd = prepare_data.aggregate_SDD(mp_pdd)
 
-    mp_added_sed_sdd = prepare_data.additional_sdd_merging(mp_sdd)
-    mp_added_sed_sdd = mp_added_sed_sdd.loc[
-        mp_added_sed_sdd.regio_sep.isin(regions)]  # filter based on selected regions
+    sdd_iow = prepare_data.additional_sdd_merging(mp_sdd)
+    sdd_iow = sdd_iow.loc[
+        sdd_iow.regio_sep.isin(regions)]  # filter based on selected regions
 
-    mp_added_sed_sdd['pred_Ord_Poly_ConcentrationA500'] = np.exp(
-         0.505 + 0.0452 * mp_added_sed_sdd['perc MUD'] + 0.0249 * 2.22 * mp_added_sed_sdd['TOC'])  # TODO: temporarily added to compare to the prediction from Kristinas Warnow paper
-        #-0.2425 + 0.0683 * mp_added_sed_sdd['perc MUD'] - 0.0001 * mp_added_sed_sdd['Dist_WWTP']+ 0.0205 * 2.22 * mp_added_sed_sdd['TOC']
+    sdd_iow['pred_Ord_Poly_ConcentrationA500'] = np.exp(
+         0.505 + 0.0452 * sdd_iow['perc MUD'] + 0.0249 * 2.22 * sdd_iow['TOC'])  # TODO: temporarily added to compare to the prediction from Kristinas Warnow paper
+        #-0.2425 + 0.0683 * sdd_iow['perc MUD'] - 0.0001 * sdd_iow['Dist_WWTP']+ 0.0205 * 2.22 * sdd_iow['TOC']
        
     
-    mp_added_sed_sdd['pred_Paint_ConcentrationA500'] = np.exp(
-        2.352 + 0.032 * mp_added_sed_sdd['perc MUD'] - 0.003 * mp_added_sed_sdd['Dist_Marina'])  
+    sdd_iow['pred_Paint_ConcentrationA500'] = np.exp(
+        2.352 + 0.032 * sdd_iow['perc MUD'] - 0.003 * sdd_iow['Dist_Marina'])  
         
  #TODO: temporarily added to compare to the prediction from Kristinas Warnow paper
 
-    mp_added_sed_sdd['pred_TMP_ConcentrationA500'] = np.exp(
-        -0.4207 + 0.0826 * mp_added_sed_sdd['perc MUD'] + 0.056 * 8.33 * mp_added_sed_sdd['TIC'] - 0.0002 * mp_added_sed_sdd['Dist_WWTP'])  
-        #2.4491 + 0.0379 * mp_added_sed_sdd['perc MUD'])
-    return mp_added_sed_sdd
+    sdd_iow['pred_TMP_ConcentrationA500'] = np.exp(
+        -0.4207 + 0.0826 * sdd_iow['perc MUD'] + 0.056 * 8.33 * sdd_iow['TIC'] - 0.0002 * sdd_iow['Dist_WWTP'])  
+        #2.4491 + 0.0379 * sdd_iow['perc MUD'])
+    return sdd_iow
 
 
 def main():
@@ -121,14 +116,12 @@ def main():
                         & (mp_pdd.density >= Config.lower_density_limit)
                         & (mp_pdd.density <= Config.upper_density_limit)
                         ]  # filter mp_pdd based on selected values
-    st.write(mp_pdd)
-    st.write(mp_pdd.shape)
 
     regionfilter = st.sidebar.multiselect('Select regions:', ['WWTP', 'inner', 'middle', 'outer', 'river', 'warnow'],
                                           default=['WWTP', 'inner', 'middle', 'outer', 'river', 'warnow'])
 
-    mp_added_sed_sdd = pdd2sdd(mp_pdd, regionfilter)
-    df = mp_added_sed_sdd.merge(scor, right_index=True, left_on='Sample', how='left')
+    sdd_iow = pdd2sdd(mp_pdd, regionfilter)
+    df = sdd_iow.merge(scor, right_index=True, left_on='Sample', how='left')
 
     if raw_data_checkbox:
         with st.expander("Filtered particle domain data"):

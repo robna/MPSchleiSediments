@@ -88,9 +88,9 @@ def scatter_chart(df, x, y, c=False, l=None, reg=None, equal_axes=False, title='
     return chart
 
 
-def poly_comp_chart(mp_pdd, mp_added_sed_sdd):
+def poly_comp_chart(mp_pdd, sdd_iow):
     poly_comp = prepare_data.aggregate_SDD(mp_pdd.groupby(['Sample', 'polymer_type']))
-    poly_comp = poly_comp.merge(mp_added_sed_sdd[['Sample', 'Dist_WWTP', 'perc MUD']], on='Sample')
+    poly_comp = poly_comp.merge(sdd_iow[['Sample', 'Dist_WWTP', 'perc MUD']], on='Sample')
     selection = alt.selection_multi(fields=['polymer_type'], bind='legend')
 
     chart_abs = alt.Chart(poly_comp.reset_index()).mark_bar().encode(
@@ -143,7 +143,7 @@ def station_map(data):
 
     layer = pdk.Layer(
         "GridLayer", data, pickable=True, extruded=True, cell_size=200, elevation_scale=4,
-        get_position=["GPS_LONs", "GPS_Lats"],
+        get_position=["LON", "LAT"],
     )
 
     view_state = pdk.ViewState(latitude=54.5770, longitude=9.8124, zoom=11, bearing=0, pitch=45)
