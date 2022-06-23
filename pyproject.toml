@@ -1,0 +1,41 @@
+[project]
+name = ""
+version = ""
+description = ""
+authors = [
+    {name = "Robin Lenz", email = "robin.lenz@io-warnemuende.de"},
+]
+dependencies = [
+    "altair-transform @ git+https://github.com/altair-viz/altair-transform.git",
+    "altair-viewer",
+    "mysql-connector-python",
+    "seaborn",
+    "statsmodels",
+    "vega-datasets",
+    "streamlit-vega-lite",
+    "rpy2",
+    "plotly",
+    "pydeck",
+    "scikit-bio",
+    "xgboost",
+    "scipy>=1.8",
+    "pysal>=2.6.0",
+]
+requires-python = ">=3.8,<3.10"
+license = {text = "GPL-3.0-or-later"}
+
+[tool.pdm]
+[[tool.pdm.source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+[[tool.pdm.source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+[tool.pdm.dev-dependencies]
+dev = []
+
+[build-system]
+requires = ["pdm-pep517"]
+build-backend = "pdm.pep517.api"

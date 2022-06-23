@@ -13,12 +13,11 @@ vega-datasets = "*"
 streamlit-vega-lite = "*"
 rpy2 = "*"
 plotly = "*"
-pydeck = "*"
 scikit-bio = "*"
 xgboost = "*"
-shapash = "*"
+pysal = "*"
 
 [dev-packages]
 
 [requires]
-python_version = "3.9"
+python_version = "3.9.13"
