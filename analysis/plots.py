@@ -1,7 +1,16 @@
 import altair as alt
-
 alt.data_transformers.disable_max_rows()
 # alt.renderers.enable('altair_viewer')  # use to display altair charts externally in browser instead of inline (only activate in non-vega-compatible IDE like pycharm)
+
+import seaborn as sns
+sns.set_style('darkgrid')
+
+from matplotlib.colors import LogNorm
+from matplotlib import pyplot as plt
+
+import plotly.graph_objects as go
+import plotly.express as px
+    
 import pydeck as pdk
 import streamlit as st
 # from streamlit_vega_lite import altair_component
@@ -245,3 +254,168 @@ def biplot(scor, load, expl, discr, x, y, sc, lc, ntf=5, normalise=False,
     figure.save('../plots/biplot.html')
 
     return figure
+
+
+## Create a function that uses plotly graphobjects Histogram2dContour to create a contour plot of size vs. density
+def plotly_contour_plot(x,y, nbins=100, ncontours=10, figsize=(800, 600)):
+    """
+    Create a contour plot of size vs. density.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame containing the data
+    x_var : column of df to plot on the x-axis
+    y_var : column of df to plot on the y-axis
+    nbins : number of bins to use, default = 100
+    ncontours : number of contours to use, default = 10
+    figsize : (float, float), optional, default: 800, 600
+
+    Returns
+    -------
+    plotly figure, as html and inline
+    """
+    
+    fig = go.Figure()
+    fig.add_trace(go.Histogram2dContour(
+            x = x,
+            y = y,
+            colorscale = 'Blues',
+            reversescale = False,
+            xaxis = 'x',
+            yaxis = 'y'
+        ))
+    fig.add_trace(go.Scatter(
+            x = x,
+            y = y,
+            xaxis = 'x',
+            yaxis = 'y',
+            mode = 'markers',
+            marker = dict(
+                color = 'rgba(0,0,0,0.3)',
+                size = 3
+            )
+        ))
+    fig.add_trace(go.Histogram(
+            y = y,
+            xaxis = 'x2',
+            marker = dict(
+                color = 'rgba(0,0,0,1)'
+            )
+        ))
+    fig.add_trace(go.Histogram(
+            x = x,
+            yaxis = 'y2',
+            marker = dict(
+                color = 'rgba(0,0,0,1)'
+            )
+        ))
+
+    fig.update_layout(
+        autosize = False,
+        xaxis = dict(
+            zeroline = False,
+            domain = [0,0.85],
+            showgrid = False
+        ),
+        yaxis = dict(
+            zeroline = False,
+            domain = [0,0.85],
+            showgrid = False
+        ),
+        xaxis2 = dict(
+            zeroline = False,
+            domain = [0.85,1],
+            showgrid = False
+        ),
+        yaxis2 = dict(
+            zeroline = False,
+            domain = [0.85,1],
+            showgrid = False
+        ),
+        height = 600,
+        width = 600,
+        bargap = 0,
+        hovermode = 'closest',
+        showlegend = False
+    )
+
+    #fig.update_yaxes(type="log", range=[0,4])  # log range: 10^0=1, 10^5=100000
+
+    return fig
+
+
+def px_contour_plot(df,x,y):
+    """
+    Create a contour plot of size vs. density.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame containing the data
+    x_var : column of df to plot on the x-axis
+    y_var : column of df to plot on the y-axis
+    nbins : number of bins to use, default = 100
+    ncontours : number of contours to use, default = 10
+    figsize : (float, float), optional, default: 800, 600
+
+    Returns
+    -------
+    plotly figure
+    """
+
+    fig = px.density_contour(df, x=x, y=y, log_y=False)
+    fig.update_traces(contours_coloring="fill", contours_showlabels = True)
+    return fig
+
+
+## Create a seaborn contour plot
+def sns_contour_plot(data,x,y,hue,xlim=False,ylim=False,log=(False,False),figsize=(5,5)):
+    """
+    Create a contour plot using seaborn.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame containing the data
+    x : column for x-axis (continuous data)
+    y : column for y-axis (continuous data)
+    hue : column for color (categorical data)
+    xlim : (float, float), optional
+    ylim : (float, float), optional
+    log : boolean tuple, (xlog,ylog), optional, default: False
+    figsize : (float, float), optional, default: 5, 5
+    
+    Returns
+    -------
+    seaborn contour + scatter plot with marginal histograms
+    """
+
+    # fig, ax = plt.subplots(figsize=(10,10))
+    # ax.set(ylim=(10, 1000))
+
+    # sns.kdeplot(x=x, y=y, log_scale=(xlog,ylog), cmap=cmap, fill=True, thresh=thresh, levels=5, alpha=0.8) #, norm=LogNorm())
+    # return sns.scatterplot(x=x, y=y, s=10, color='black')
+
+    # sns.kdeplot(ax=ax, data=data, x=x, y=y, hue=hue, log_scale=(xlog,ylog), fill=True, thresh=thresh, levels=5, alpha=0.8) #, norm=LogNorm())
+    # p = sns.JointGrid(data=data, x=x, y=y, hue=hue)
+
+    # p.plot(sns.scatterplot, sns.histplot)
+
+    p = sns.jointplot(x=x, y=y, data=data, hue=hue, kind='scatter', alpha=0.4, s=2).plot_joint(sns.kdeplot, levels=5, alpha=0.8, thresh=0, log_scale=log)
+    if xlim:
+        p.ax_joint.set_xlim(xlim)
+    if ylim:
+        p.ax_joint.set_ylim(ylim)
+    if log[0]:
+        p.ax_joint.set_xscale('log')
+    if log[1]:
+        p.ax_joint.set_yscale('log')
+    p.fig.set_size_inches(figsize[0], figsize[1])
+
+    return p
+
+
+def dist_hist(prop, particle_type, dist_name, x, pdf, r, plot_bins):
+    fig, ax = plt.subplots(1, 1)
+    ax.plot(x, pdf, 'r-', lw=5, alpha=0.6, label=f'{dist_name} pdf, {prop} of {particle_type}')
+    ax.hist(r, bins=plot_bins, density=True, alpha=0.5)
+    ax.legend(loc='best', frameon=False)
+    plt.show()

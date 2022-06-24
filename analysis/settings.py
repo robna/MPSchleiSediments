@@ -151,7 +151,7 @@ shortnames = {
 }
 
 densities = {  # Polymer densities in kg m⁻³
-    'generic': 1141,
+    'generic': 1141,  # assume a general average density where exact density is not available, ref: https://doi.org/10.1021/acs.est.0c02982
     'Acrylic resin': None,
     'Acrylnitril-Butadien-Styrol-Copolymer': 1040,
     'Alkyd resin': None,
@@ -175,4 +175,13 @@ densities = {  # Polymer densities in kg m⁻³
     'Silicone-rubber': None,
     'Styrene-butadiene-styrene block copolymer': None,
     'Unknown': None
+}
+
+dist_params = {  # paramters of particle properties for generating distributions, reference: https://doi.org/10.1038/s41578-021-00411-y 
+    'particle_type': ['SED',     'SED',    'SED',       'POM',     'POM',    'POM',       'MP',                  'MP',      'MP'       ],
+    'prop':          ['density', 'size',   'longevity', 'density', 'size',   'longevity', 'density',             'size',    'longevity'],
+    'dist_name':     ['triang',  'triang', 'triang',    'triang',  'triang', 'triang',    'triang',              'triang',  'triang'   ],
+    'low':           [ 1100,      0.06,     10**4.3,     800,       0.2,      10**1.2,     800,                   1,         10**1.8   ],
+    'peak':          [ 2650,      30,       10**6.3,     1000,      5,        10**3.1,     densities['generic'],  20,        10**5     ],
+    'high':          [ 2800,      2000,     10**9,       1600,      2500,     10**4.5,     2000,                  5000,      10**7.2   ]
 }
