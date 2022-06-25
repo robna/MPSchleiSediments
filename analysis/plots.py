@@ -256,118 +256,6 @@ def biplot(scor, load, expl, discr, x, y, sc, lc, ntf=5, normalise=False,
     return figure
 
 
-## Create a function that uses plotly graphobjects Histogram2dContour to create a contour plot of size vs. density
-def plotly_contour_plot(x,y, nbins=100, ncontours=10, figsize=(800, 600)):
-    """
-    Create a contour plot of size vs. density.
-
-    Parameters
-    ----------
-    df : pandas.DataFrame containing the data
-    x_var : column of df to plot on the x-axis
-    y_var : column of df to plot on the y-axis
-    nbins : number of bins to use, default = 100
-    ncontours : number of contours to use, default = 10
-    figsize : (float, float), optional, default: 800, 600
-
-    Returns
-    -------
-    plotly figure, as html and inline
-    """
-    
-    fig = go.Figure()
-    fig.add_trace(go.Histogram2dContour(
-            x = x,
-            y = y,
-            colorscale = 'Blues',
-            reversescale = False,
-            xaxis = 'x',
-            yaxis = 'y'
-        ))
-    fig.add_trace(go.Scatter(
-            x = x,
-            y = y,
-            xaxis = 'x',
-            yaxis = 'y',
-            mode = 'markers',
-            marker = dict(
-                color = 'rgba(0,0,0,0.3)',
-                size = 3
-            )
-        ))
-    fig.add_trace(go.Histogram(
-            y = y,
-            xaxis = 'x2',
-            marker = dict(
-                color = 'rgba(0,0,0,1)'
-            )
-        ))
-    fig.add_trace(go.Histogram(
-            x = x,
-            yaxis = 'y2',
-            marker = dict(
-                color = 'rgba(0,0,0,1)'
-            )
-        ))
-
-    fig.update_layout(
-        autosize = False,
-        xaxis = dict(
-            zeroline = False,
-            domain = [0,0.85],
-            showgrid = False
-        ),
-        yaxis = dict(
-            zeroline = False,
-            domain = [0,0.85],
-            showgrid = False
-        ),
-        xaxis2 = dict(
-            zeroline = False,
-            domain = [0.85,1],
-            showgrid = False
-        ),
-        yaxis2 = dict(
-            zeroline = False,
-            domain = [0.85,1],
-            showgrid = False
-        ),
-        height = 600,
-        width = 600,
-        bargap = 0,
-        hovermode = 'closest',
-        showlegend = False
-    )
-
-    #fig.update_yaxes(type="log", range=[0,4])  # log range: 10^0=1, 10^5=100000
-
-    return fig
-
-
-def px_contour_plot(df,x,y):
-    """
-    Create a contour plot of size vs. density.
-
-    Parameters
-    ----------
-    df : pandas.DataFrame containing the data
-    x_var : column of df to plot on the x-axis
-    y_var : column of df to plot on the y-axis
-    nbins : number of bins to use, default = 100
-    ncontours : number of contours to use, default = 10
-    figsize : (float, float), optional, default: 800, 600
-
-    Returns
-    -------
-    plotly figure
-    """
-
-    fig = px.density_contour(df, x=x, y=y, log_y=False)
-    fig.update_traces(contours_coloring="fill", contours_showlabels = True)
-    return fig
-
-
-## Create a seaborn contour plot
 def sns_contour_plot(data,x,y,hue,xlim=False,ylim=False,log=(False,False),figsize=(5,5)):
     """
     Create a contour plot using seaborn.
@@ -388,18 +276,16 @@ def sns_contour_plot(data,x,y,hue,xlim=False,ylim=False,log=(False,False),figsiz
     seaborn contour + scatter plot with marginal histograms
     """
 
-    # fig, ax = plt.subplots(figsize=(10,10))
-    # ax.set(ylim=(10, 1000))
-
-    # sns.kdeplot(x=x, y=y, log_scale=(xlog,ylog), cmap=cmap, fill=True, thresh=thresh, levels=5, alpha=0.8) #, norm=LogNorm())
-    # return sns.scatterplot(x=x, y=y, s=10, color='black')
-
-    # sns.kdeplot(ax=ax, data=data, x=x, y=y, hue=hue, log_scale=(xlog,ylog), fill=True, thresh=thresh, levels=5, alpha=0.8) #, norm=LogNorm())
-    # p = sns.JointGrid(data=data, x=x, y=y, hue=hue)
-
-    # p.plot(sns.scatterplot, sns.histplot)
-
-    p = sns.jointplot(x=x, y=y, data=data, hue=hue, kind='scatter', alpha=0.4, s=2).plot_joint(sns.kdeplot, levels=5, alpha=0.8, thresh=0, log_scale=log)
+    p = sns.jointplot(
+        x=x, y=y, data=data,
+        hue=hue, kind='scatter',
+        alpha=0.4, s=2).plot_joint(
+            sns.kdeplot,
+            alpha=0.8,
+            fill=False,
+            thresh=0.01,
+            levels=5,  # [0.0001, 0.25, 0.5, 0.75, 0.9999],
+            log_scale=log)
     if xlim:
         p.ax_joint.set_xlim(xlim)
     if ylim:

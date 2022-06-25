@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 from scipy import stats
-from matplotlib import pyplot as plt
 
 from settings import dist_params
 from plots import dist_hist

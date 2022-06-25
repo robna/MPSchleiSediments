@@ -16,6 +16,7 @@ plotly = "*"
 scikit-bio = "*"
 xgboost = "*"
 pysal = "*"
+hvplot = "*"
 
 [dev-packages]
 
