@@ -1,19 +1,18 @@
-"""
-Source: https://github.com/bmurauer/pipelinehelper
-Selects elements from a scikit pipeline with a working parametergrid.
-"""
-
+import pandas as pd
 from collections import defaultdict
 
-from sklearn.base import BaseEstimator
-from sklearn.base import ClassifierMixin
-from sklearn.base import TransformerMixin
+from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin, RegressorMixin
 from sklearn.model_selection import ParameterGrid
 from sklearn.utils.metaestimators import available_if
+
+from statsmodels.formula.api import glm as glm_sm
 
 
 class PipelineHelper(BaseEstimator, TransformerMixin, ClassifierMixin):
     """
+    Source: https://github.com/bmurauer/pipelinehelper
+    Original author: bmurauer
+    License: GPLv3
     This class can be used in scikit pipelines to select elements.
     In addition to the "replace_estimator" functionality of scikit itself,
     this class allows to set specified parameters for each option in the list.
@@ -180,3 +179,61 @@ class PipelineHelper(BaseEstimator, TransformerMixin, ClassifierMixin):
         if hasattr(self.selected_model, 'classes_'):
             return self.selected_model.classes_
         raise ValueError('selected model does not provide classes_')
+
+
+# This is an example wrapper for statsmodels GLM
+class SMWrapper(BaseEstimator, RegressorMixin):
+    """
+    Wrapper for statsmodels GLM (used with formula API) to be incorporated in a sklearn pipeline.
+    In addition to the sklearn interface, it has also the statsmodels function summary(),
+    which gives the info about p-values, R2 and other statistics.
+    Source: https://stackoverflow.com/a/59100482/10381546 and https://stackoverflow.com/a/60234758/10381546
+
+    Example of use:
+
+        cols = ['feature1','feature2']
+        X_train = df_train[cols].values
+        X_test = df_test[cols].values
+        y_train = df_train['label']
+        y_test = df_test['label']
+        model = SMWrapper()
+        model.fit(X_train, y_train)
+        model.summary()
+        model.predict(X_test)
+
+
+    If you want to show the names of the columns, you can call:
+
+        model.fit(X_train, y_train, column_names=cols)
+
+
+    To use it in cross_validation:
+
+        from sklearn.model_selection import cross_val_score
+        scores = cross_val_score(MSMWrapper(), X_train, y_train, cv=10, scoring='neg_mean_squared_error')
+        scores
+    """
+
+    def __init__(self, family, formula, alpha, L1_wt):
+        self.family = family
+        self.formula = formula
+        self.alpha = alpha
+        self.L1_wt = L1_wt
+        self.model = None
+        self.result = None
+    
+    def fit(self, X, y):
+        data = pd.concat([pd.DataFrame(X), pd.Series(y)], axis=1)
+        data.columns = X.columns.tolist() + ['y']
+        self.model = glm_sm(self.formula, data, family=self.family)
+        self.result = self.model.fit_regularized(alpha=self.alpha, L1_wt=self.L1_wt, refit=True)
+        return self.result
+    
+    def predict(self, X):
+        return self.result.predict(X)
+
+    def get_params(self, deep = False):
+        return {'fit_intercept':self.fit_intercept}
+
+    def summary(self):
+        print(self.results_.summary())
