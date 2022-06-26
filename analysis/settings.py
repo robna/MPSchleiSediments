@@ -8,7 +8,7 @@ predictors = ['Dist_WWTP', 'TOC', 'Q("D50 (µm)")"', 'PC1', 'PC2']  # columns to
 
 
 class Config:
-    min_part_count: float = 19  # how many MP particles are required to be considered as a valid sample 
+    min_part_count: float = 0  # how many MP particles are required to be considered as a valid sample 
 
     rebinning: bool = False  # whether or not to aggregate sizes to coarser bins
     closing: int = 100 # make comp data closed to int value: 0 for no closure, 1 for fraction, 100 for percentages
@@ -183,5 +183,5 @@ dist_params = {  # paramters of particle properties for generating distributions
     'dist_name':     ['triang',  'triang', 'triang',    'triang',  'triang', 'triang',    'triang',              'triang',  'triang'   ],
     'low':           [ 1100,      0.06,     10**4.3,     800,       0.2,      10**1.2,     800,                   1,         10**1.8   ],
     'peak':          [ 2650,      30,       10**6.3,     1000,      5,        10**3.1,     densities['generic'],  20,        10**5     ],
-    'high':          [ 2800,      2000,     10**9,       1600,      2500,     10**4.5,     2000,                  5000,      10**7.2   ]
+    'high':          [ 2800,      2000,     10**9,       1600,      2500,     10**4.5,     2000,                  1000,      10**7.2   ]
 }

@@ -3,7 +3,7 @@ alt.data_transformers.disable_max_rows()
 # alt.renderers.enable('altair_viewer')  # use to display altair charts externally in browser instead of inline (only activate in non-vega-compatible IDE like pycharm)
 
 import seaborn as sns
-sns.set_style('darkgrid')
+sns.set_style('whitegrid')
 
 from matplotlib.colors import LogNorm
 from matplotlib import pyplot as plt
@@ -256,6 +256,14 @@ def biplot(scor, load, expl, discr, x, y, sc, lc, ntf=5, normalise=False,
     return figure
 
 
+def dist_hist(prop, particle_type, dist_name, x, pdf, r, plot_bins):
+    fig, ax = plt.subplots(1, 1)
+    ax.plot(x, pdf, 'r-', lw=5, alpha=0.6, label=f'{dist_name} pdf, {prop} of {particle_type}')
+    ax.hist(r, bins=plot_bins, density=True, alpha=0.5)
+    ax.legend(loc='best', frameon=False)
+    plt.show()
+
+
 def sns_contour_plot(data,x,y,hue,xlim=False,ylim=False,log=(False,False),figsize=(5,5)):
     """
     Create a contour plot using seaborn.
@@ -279,13 +287,16 @@ def sns_contour_plot(data,x,y,hue,xlim=False,ylim=False,log=(False,False),figsiz
     p = sns.jointplot(
         x=x, y=y, data=data,
         hue=hue, kind='scatter',
-        alpha=0.4, s=2).plot_joint(
+        alpha=0.4, s=1
+        ).plot_joint(
             sns.kdeplot,
             alpha=0.8,
             fill=False,
-            thresh=0.01,
-            levels=5,  # [0.0001, 0.25, 0.5, 0.75, 0.9999],
-            log_scale=log)
+            bw_adjust=.85,
+            thresh=0.05,
+            levels=4,  # [0.0001, 0.25, 0.5, 0.75, 0.9999],
+            log_scale=log,
+            common_norm=False)
     if xlim:
         p.ax_joint.set_xlim(xlim)
     if ylim:
@@ -296,12 +307,88 @@ def sns_contour_plot(data,x,y,hue,xlim=False,ylim=False,log=(False,False),figsiz
         p.ax_joint.set_yscale('log')
     p.fig.set_size_inches(figsize[0], figsize[1])
 
+    p.savefig('../plots/sns_contour_plot.svg')
+
     return p
 
 
-def dist_hist(prop, particle_type, dist_name, x, pdf, r, plot_bins):
-    fig, ax = plt.subplots(1, 1)
-    ax.plot(x, pdf, 'r-', lw=5, alpha=0.6, label=f'{dist_name} pdf, {prop} of {particle_type}')
-    ax.hist(r, bins=plot_bins, density=True, alpha=0.5)
-    ax.legend(loc='best', frameon=False)
-    plt.show()
+def plotly_contour_plot(df, x, y, color, nbins=100, ncontours=10, figsize=(800, 600)):
+    """
+    Create a contour plot of size vs. density.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame containing the data
+    x_var : column of df to plot on the x-axis
+    y_var : column of df to plot on the y-axis
+    nbins : number of bins to use, default = 100
+    ncontours : number of contours to use, default = 10
+    figsize : (float, float), optional, default: 800, 600
+
+    Returns
+    -------
+    plotly figure, as html and inline
+    """
+    
+    fig = go.Figure()
+    fig.add_trace(px.scatter(df,
+    x=x,
+    y=y,
+    color=color,
+    color_discrete_sequence=px.colors.qualitative.D3
+    ))
+    fig.add_trace(go.Histogram2dContour(
+            x = df[x],
+            y = df[y],
+            colorscale = 'Blues',
+            reversescale = False,
+            xaxis = x,
+            yaxis = 'y'
+        ))
+    fig.add_trace(go.Histogram(
+            y = y,
+            xaxis = 'x2',
+            marker = dict(
+                color = 'rgba(0,0,0,1)'
+            )
+        ))
+    fig.add_trace(go.Histogram(
+            x = x,
+            yaxis = 'y2',
+            marker = dict(
+                color = 'rgba(0,0,0,1)'
+            )
+        ))
+
+    fig.update_layout(
+        autosize = False,
+        xaxis = dict(
+            zeroline = False,
+            domain = [0,0.85],
+            showgrid = False
+        ),
+        yaxis = dict(
+            zeroline = False,
+            domain = [0,0.85],
+            showgrid = False
+        ),
+        xaxis2 = dict(
+            zeroline = False,
+            domain = [0.85,1],
+            showgrid = False
+        ),
+        yaxis2 = dict(
+            zeroline = False,
+            domain = [0.85,1],
+            showgrid = False
+        ),
+        height = 600,
+        width = 600,
+        bargap = 0,
+        hovermode = 'closest',
+        showlegend = False
+    )
+
+    #fig.update_yaxes(type="log", range=[0,4])  # log range: 10^0=1, 10^5=100000
+
+    return fig
