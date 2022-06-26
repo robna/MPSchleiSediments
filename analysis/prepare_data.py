@@ -76,8 +76,8 @@ def aggregate_SDD(mp_pdd):
         MPmass=('particle_mass_µg', 'sum'),
         Mass=('Sampling_weight_kg', np.mean),
         # using "mean" here is actually weird as all entries are the same. Is there something like "first"?
-        LON=('GPS_LON', np.mean),
-        LAT=('GPS_LAT', np.mean),
+        # LON=('GPS_LON', np.mean),  # TODO: switched to geodata from sampling log
+        # LAT=('GPS_LAT', np.mean),  # TODO: switched to geodata from sampling log
         Split=('Fraction_analysed', np.mean),
         MP_D50=('size_geom_mean', np.median)
         ##MP_D50_A500 = ('size_geom_mean' >= 500.median()),
@@ -92,7 +92,7 @@ def aggregate_SDD(mp_pdd):
     return mp_sdd
 
 
-def additional_sdd_merging(mp_sdd):
+def additional_sdd_merging(mp_sdd, how='left'):
     """Takes SDD and amends it with corresponding sediment data"""
 
     # import d50 values  # TODO: commented out, as we use D50 and <63 from Gradistat; may be deleted (also in merge section)
@@ -112,12 +112,12 @@ def additional_sdd_merging(mp_sdd):
 
     # merge with mp per station
     mp_sdd_amended = pd.merge(mp_sdd, slogs.reset_index()[
-        ['Sample', 'Depth', 'Dist_Marina', 'Dist_WWTP', 'Dist_WWTP2']], on=['Sample'], how='left').merge(  # add metadata
-        # sed_d50.reset_index(), on=['Sample'], how='left').merge(  # add sediment D50
-        sed_gradistat.reset_index(), on=['Sample'], how='left').merge(  # add sediment gradistat
-        sed_om.reset_index()[['Sample', 'OM_D50', 'TOC', 'Hg', 'TIC']], on=['Sample'], how='left').merge(  # add OM data
-        # dist_wwtp.reset_index(), on=['Sample'], how='left').merge(  # add distance to WWTP
-        pd.DataFrame.from_dict(regio_sep, orient='index', columns=['regio_sep']), left_on='Sample', right_index=True)  # add flags for regions
+        ['Sample', 'Depth', 'LON', 'LAT', 'Dist_Marina', 'Dist_WWTP', 'Dist_WWTP2']], on=['Sample'], how=how).merge(  # add metadata
+        # sed_d50.reset_index(), on=['Sample'], how=how).merge(  # add sediment D50
+        sed_gradistat.reset_index(), on=['Sample'], how=how).merge(  # add sediment gradistat
+        sed_om.reset_index()[['Sample', 'OM_D50', 'TOC', 'Hg', 'TIC']], on=['Sample'], how=how).merge(  # add OM data
+        # dist_wwtp.reset_index(), on=['Sample'], how=how).merge(  # add distance to WWTP
+        pd.DataFrame.from_dict(regio_sep, orient='index', columns=['regio_sep']), left_on='Sample', right_index=True, how=how)  # add flags for regions
 
     # concatenate with Warnow data: only activate if you want to use Warnow data for comparison
     # warnow = pd.read_csv('../data/Warnow_sdd.csv', index_col=0)
