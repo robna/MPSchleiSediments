@@ -210,7 +210,7 @@ class SMWrapper(BaseEstimator, RegressorMixin):
     To use it in cross_validation:
 
         from sklearn.model_selection import cross_val_score
-        scores = cross_val_score(MSMWrapper(), X_train, y_train, cv=10, scoring='neg_mean_squared_error')
+        scores = cross_val_score(SMWrapper(), X_train, y_train, cv=10, scoring='neg_mean_squared_error')
         scores
     """
 
