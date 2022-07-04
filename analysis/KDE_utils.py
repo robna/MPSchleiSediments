@@ -71,7 +71,7 @@ def probDens2conc(size_pdfs, sdd_MP):
     """
     Converts df of probability densities into df of concentrations per size bins.
     Size bins are represented by their lower boundary as the df's index (inclusive)
-    and reach upt to the next index (exclusive). Both boundary are named in the final index labels.
+    and reach up to the next index (exclusive). Both boundaries are named in the final index labels.
     """
 
     steps = size_pdfs.T.reset_index().x_d.shift(-1) - size_pdfs.T.reset_index().x_d
