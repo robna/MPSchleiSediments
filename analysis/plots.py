@@ -19,14 +19,14 @@ from settings import Config
 import prepare_data
 
 
-def scatter_chart(df, x, y, c=False, l=None, reg=None, equal_axes=False, title='', width=400, height=300):
+def scatter_chart(df, x, y, color=False, labels=None, reg=None, equal_axes=False, title='', width=400, height=300):
     """
     Create a scatter plot with optional regression line and equation.
     :param df: dataframe with x and y columns
     :param x: x column name
     :param y: y column name
-    :param c: color column name
-    :param l: label column name (prints label on each point), None if no label (default)
+    :param color: color column name
+    :param labels: label column name (prints label on each point), None if no label (default)
     :param reg: None for no regression line (default), 'linear', 'log', 'exp' or 'pow'
     :param equal_axes: True for x and y axes ranging from 0 to their higher maximum (useful for predicted vs. observed plots) (default)
     :param title: plot title
@@ -45,19 +45,19 @@ def scatter_chart(df, x, y, c=False, l=None, reg=None, equal_axes=False, title='
         y=y,
         tooltip=[df.columns[1], x, y])
 
-    if c:
-        scatter = base.encode(alt.Color(c, scale=alt.Scale(
+    if color:
+        scatter = base.encode(alt.Color(color, scale=alt.Scale(
             scheme='cividis')))  # TODO: only ordinal works with categorical and quantiative data and also shows regrassion, when not specifying data type it works fully for categorical data, but stops showing the regression when quantitative data is chosen for color.
     else:
         scatter = base
 
-    if l:
+    if labels:
         scatter = scatter + scatter.mark_text(
             align='left',
             baseline='middle',
             dx=7
         ).encode(
-            text=f'{l}:N'
+            text=f'{labels}:N'
         )
 
     if equal_axes:
