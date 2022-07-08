@@ -75,7 +75,7 @@ regio_sep = {
     'Schlei_S18_15cm': 'inner',
     'Schlei_S19': 'inner',
     'Schlei_S20': 'inner',
-    'Schlei_S21': 'middle',
+    'Schlei_S21': 'middle', 
     'Schlei_S22': 'middle',
     'Schlei_S23': 'middle',
     'Schlei_S24': 'middle',
