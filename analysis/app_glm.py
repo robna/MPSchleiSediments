@@ -197,13 +197,16 @@ def main():
     st.text("")  # empty line to make some distance
     st.subheader('Single predictor correlation and colinearity check')
 
-    predx = st.selectbox('x-Values:', featurelist, index=featurelist.index('Depth'))
-    predy = st.selectbox('y-Values:', featurelist, index=featurelist.index('Concentration'))
-    c = st.selectbox('Color:', featurelist, index=featurelist.index('Dist_WWTP'))
-    reg=st.radio('Regression type:', ['linear', 'log', 'exp', 'pow'], index=0)
-    labels = st.checkbox('Show data labels')
+    col1, col2, col3 = st.columns(3)
+    predx = col1.selectbox('x-Values:', featurelist, index=featurelist.index('D50 (µm)'))
+    predy = col1.selectbox('y-Values:', featurelist, index=featurelist.index('Concentration'))
+    c = col1.selectbox('Color:', featurelist, index=featurelist.index('Dist_WWTP'))
+    reg = col2.radio('Regression type:', [None, 'linear', 'log', 'exp', 'pow'], index=0)
+    xscale = col3.radio('X-Axis type:', ['linear', 'log', 'sqrt'], index=0)
+    yscale = col3.radio('Y-Axis type:', ['linear', 'log', 'sqrt'], index=0)
+    labels = col3.checkbox('Show data labels')
 
-    st.write(scatter_chart(df, predx, predy, c, 'Sample' if labels else None, reg, title='', width=800, height=600))
+    st.write(scatter_chart(df, predx, predy, c, 'Sample' if labels else None, reg, xscale=xscale, yscale=yscale, title='', width=800, height=600))
 
     # TODO: temporary check for r-values (remove later)
     from scipy.stats import pearsonr

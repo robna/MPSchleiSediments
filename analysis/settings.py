@@ -81,7 +81,7 @@ regio_sep = {
     'Schlei_S24': 'middle',
     'Schlei_S25': 'middle',
     'Schlei_S26': 'middle',
-    'Schlei_S27': 'WWTP',
+    'Schlei_S27': 'outer',
     'Schlei_S29': 'outer',
     'Schlei_S30': 'outer',
     'Schlei_S31': 'outer',

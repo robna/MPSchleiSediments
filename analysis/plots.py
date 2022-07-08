@@ -19,7 +19,7 @@ from settings import Config
 import prepare_data
 
 
-def scatter_chart(df, x, y, color=False, labels=None, reg=None, equal_axes=False, title='', width=400, height=300):
+def scatter_chart(df, x, y, c=False, l=None, reg=None, equal_axes=False, xscale='linear', yscale='linear', title='', width=400, height=300):
     """
     Create a scatter plot with optional regression line and equation.
     :param df: dataframe with x and y columns
@@ -28,7 +28,11 @@ def scatter_chart(df, x, y, color=False, labels=None, reg=None, equal_axes=False
     :param color: color column name
     :param labels: label column name (prints label on each point), None if no label (default)
     :param reg: None for no regression line (default), 'linear', 'log', 'exp' or 'pow'
-    :param equal_axes: True for x and y axes ranging from 0 to their higher maximum (useful for predicted vs. observed plots) (default)
+    :param equal_axes: True for x and y axes ranging from 0 to their higher maximum (useful for predicted vs. observed plots) (default=False)
+    :param xscale: scale to use on x axis, str, any of
+                 ['linear', 'log', 'pow', 'sqrt', 'symlog', 'identity', 'sequential', 'time', 'utc', 'quantile', 'quantize', 'threshold', 'bin-ordinal', 'ordinal', 'point', 'band']
+    :param yscale: scale to use on y axis, str, any of
+                 ['linear', 'log', 'pow', 'sqrt', 'symlog', 'identity', 'sequential', 'time', 'utc', 'quantile', 'quantize', 'threshold', 'bin-ordinal', 'ordinal', 'point', 'band']
     :param title: plot title
     :param width: plot width
     :param height: plot height
@@ -41,8 +45,8 @@ def scatter_chart(df, x, y, color=False, labels=None, reg=None, equal_axes=False
 
     df = df.reset_index()
     base = alt.Chart(df).mark_point().encode(
-        x=x,
-        y=y,
+        x=alt.X(x, scale=alt.Scale(type=xscale)),
+        y=alt.Y(y, scale=alt.Scale(type=yscale)),
         tooltip=[df.columns[1], x, y])
 
     if color:
@@ -62,12 +66,12 @@ def scatter_chart(df, x, y, color=False, labels=None, reg=None, equal_axes=False
 
     if equal_axes:
         base = base.encode(
-            x=alt.X(x, scale=alt.Scale(domain=[0, domain_max])),
-            y=alt.X(y, scale=alt.Scale(domain=[0, domain_max])))
+            x=alt.X(x, scale=alt.Scale(domain=[0, domain_max], scale=alt.Scale(type=xscale))),
+            y=alt.Y(y, scale=alt.Scale(domain=[0, domain_max], scale=alt.Scale(type=yscale))))
 
     if reg is not None:
         RegLine = base.transform_regression(
-            x, y, method=reg,
+            x, y, method=reg, groupby=[None],
         ).mark_line()
 
         R2_string = '"R² = " + round(datum.rSquared * 100)/100 + "      y = "'
