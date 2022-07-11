@@ -8,7 +8,7 @@ import prepare_data
 import glm
 import cv
 from components import PCOA
-from plots import scatter_chart, poly_comp_chart, histograms, station_map, logdata_multireg
+from plots import scatter_chart, poly_comp_chart, histograms, station_map
 from settings import Config, shortnames, regio_sep
 
 st.set_page_config(layout="wide")
@@ -117,8 +117,8 @@ def main():
                         & (mp_pdd.density <= Config.upper_density_limit)
                         ]  # filter mp_pdd based on selected values
 
-    regionfilter = st.sidebar.multiselect('Select regions:', Config.regio_sep,
-                                          default=['WWTP', 'inner', 'middle', 'outer', 'river', 'warnow'])
+    regionfilter = st.sidebar.multiselect('Select regions:', set(regio_sep.values()),
+                                          default=set(regio_sep.values()))
 
     sdd_iow = pdd2sdd(mp_pdd, regionfilter)
     df = sdd_iow.merge(scor, right_index=True, left_on='Sample', how='left')
@@ -180,10 +180,10 @@ def main():
         df['yhat'] = glm_res.mu
         df['pearson_resid'] = glm_res.resid_pearson
         col2.write(scatter_chart(df, 'yhat', Config.glm_formula.split(' ~')[0],
-                                 c='regio_sep', equal_axes=True,
+                                 color='regio_sep', equal_axes=True,
                                  title='GLM --- y vs. yhat'))
         col3.write(scatter_chart(df, 'yhat', 'pearson_resid',
-                                 c='regio_sep', title='GLM --- Pearson residuals'))
+                                 color='regio_sep', title='GLM --- Pearson residuals'))
 
         resid = glm_res.resid_deviance.copy()
         col3.pyplot(qqplot(resid, line='r'))
@@ -198,33 +198,36 @@ def main():
     st.subheader('Single predictor correlation and colinearity check')
 
     col1, col2, col3 = st.columns(3)
-    predx = col1.selectbox('x-Values:', featurelist, index=featurelist.index('D50 (µm)'))
+    predx = col1.selectbox('x-Values:', featurelist, index=featurelist.index('perc MUD'))
     predy = col1.selectbox('y-Values:', featurelist, index=featurelist.index('Concentration'))
-    c = col1.selectbox('Color:', featurelist, index=featurelist.index('Dist_WWTP'))
+    c = col1.selectbox('Color:', featurelist, index=featurelist.index('regio_sep'))
+    xtrans = col2. checkbox('Log transform x-data')
+    ytrans = col2. checkbox('Log transform y-data')
     reg = col2.radio('Regression type:', [None, 'linear', 'log', 'exp', 'pow'], index=0)
+    reg_groups = col2.checkbox('Calculate separate regressions by color?')
     xscale = col3.radio('X-Axis type:', ['linear', 'log', 'sqrt'], index=0)
     yscale = col3.radio('Y-Axis type:', ['linear', 'log', 'sqrt'], index=0)
     labels = col3.checkbox('Show data labels')
 
-    st.write(scatter_chart(df, predx, predy, c, 'Sample' if labels else None, reg, xscale=xscale, yscale=yscale, title='', width=800, height=600))
+    scatters, reg_params = scatter_chart(
+        df, predx, predy, c,  # define data source, x, y, color
+        'Sample' if labels else None,  # define labels
+        reg, reg_groups,  # define regression type and whether to calculate separate regs by color
+        xtransform=xtrans, ytransform=ytrans,  # transform x and y data
+        xscale=xscale, yscale=yscale,
+        title='', width=800, height=600)
+    col1.write(scatters)
+    col3.write(reg_params)
 
     # TODO: temporary check for r-values (remove later)
-    from scipy.stats import pearsonr
-    r, p = pearsonr(df[predx], df[predy])
-    st.write(f'Pearson r: {r}, p: {p}')
-    from sklearn.metrics import r2_score
-    st.write(f'R2: {r2_score(df[predx], df[predy])}')
+    # from scipy.stats import pearsonr
+    # r, p = pearsonr(df[predx], df[predy])
+    # st.write(f'Pearson r: {r}, p: {p}')
+    # from sklearn.metrics import r2_score
+    # st.write(f'R2: {r2_score(df[predx], df[predy])}')
     
-    st.write('Sum: ',df.ConcentrationA500.sum())
-    st.write('Mean_A500: ',df.ConcentrationA500.mean())
-
     st.markdown('___', unsafe_allow_html=True)
     st.text("")  # empty line to make some distance
-    
-    st.subheader('Plot regressions of grouped log-data')
-    
-    st.write(logdata_multireg(df, predx, predy, c, opacity='Dist_WWTP', width=800, height=600))
-
 
 if __name__ == "__main__":
     main()
