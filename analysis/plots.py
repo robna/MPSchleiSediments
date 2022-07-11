@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 import altair as alt
 alt.data_transformers.disable_max_rows()
@@ -22,7 +23,7 @@ from settings import Config
 import prepare_data
 
 
-def scatter_chart(df, x, y, color=False, labels=None, reg=None, equal_axes=False, xscale='linear', yscale='linear', title='', width=400, height=300): #TODO: c, l: change to color, label?
+def scatter_chart(df, x, y, color=False, labels=None, reg=None, reg_groups=False, equal_axes=False, xtransform=False, ytransform=False, xscale='linear', yscale='linear', title='', width=400, height=300): #TODO: c, l: change to color, label?
     """
     Create a scatter plot with optional regression line and equation.
     :param df: dataframe with x and y columns
@@ -30,31 +31,52 @@ def scatter_chart(df, x, y, color=False, labels=None, reg=None, equal_axes=False
     :param y: y column name
     :param color: color column name, default: False (means no colored groups)
     :param labels: label column name (prints label on each point), None if no label (default)
-    :param reg: None for no regression line (default), 'linear', 'log', 'exp' or 'pow'
+    :param reg: None (or False) for no regression line (default), 'linear', 'log', 'exp' or 'pow'
+    :param reg_groups: True for regression line for each colored group (default: False)
     :param equal_axes: True for x and y axes ranging from 0 to their higher maximum (useful for predicted vs. observed plots) (default=False)
+    :param xtransform: when True take np.log10 of x-values before plotting, be carful when also using non-linear axis scales (default=False)
+    :param ytransform: when True take np.log10 of y-values before plotting, be carful when also using non-linear axis scales (default=False)
     :param xscale: scale to use on x axis, str, any of
                  ['linear', 'log', 'pow', 'sqrt', 'symlog', 'identity', 'sequential', 'time', 'utc', 'quantile', 'quantize', 'threshold', 'bin-ordinal', 'ordinal', 'point', 'band']
-    :param yscale: scale to use on y axis, str, any of
-                 ['linear', 'log', 'pow', 'sqrt', 'symlog', 'identity', 'sequential', 'time', 'utc', 'quantile', 'quantize', 'threshold', 'bin-ordinal', 'ordinal', 'point', 'band']
+    :param yscale: scale to use on y axis, str, see xscale for options
     :param title: plot title
     :param width: plot width
     :param height: plot height
-    :return: altair chart
+    :return: altair chart and df of regression parameter (None if reg=None)
     """
+    
+    df = df.copy()  # avoid changing original dataframe
+
+    if xtransform:
+        df[x] = np.log10(df[x])
+    
+    if ytransform:
+        df[y] = np.log10(df[y])
 
     maxX = df[x].max()
     maxY = df[y].max()
     domain_max = max(maxX, maxY) * 1.05
 
+    df['common_group'] = 'all'  # generate a common group for all points
     df = df.reset_index()
-    base = alt.Chart(df).mark_point().encode(
-        x=alt.X(x, scale=alt.Scale(type=xscale)),
-        y=alt.Y(y, scale=alt.Scale(type=yscale)),
+
+    base = alt.Chart(df).mark_circle(size=100).encode(
+        x=alt.X(x, scale=alt.Scale(type=xscale), axis= alt.Axis(title = f'log10 of {x}') if xtransform else alt.Axis(title = x)),
+        y=alt.Y(y, scale=alt.Scale(type=yscale), axis= alt.Axis(title = f'log10 of {y}') if ytransform else alt.Axis(title = y)),
         tooltip=[df.columns[1], x, y])
 
+    if equal_axes:
+        base = base.encode(
+            x=alt.X(x, scale=alt.Scale(domain=[0, domain_max])),
+            y=alt.Y(y, scale=alt.Scale(domain=[0, domain_max])))
+
     if color:
-        scatter = base.encode(alt.Color(color, scale=alt.Scale(
-            scheme='cividis')))  # TODO: only ordinal works with categorical and quantiative data and also shows regrassion, when not specifying data type it works fully for categorical data, but stops showing the regression when quantitative data is chosen for color.
+        scatter = base.encode(
+            alt.Color(
+                color,
+                # scale=alt.Scale(scheme='cividis')
+                )
+                )  # TODO: only ordinal works with categorical and quantiative data and also shows regrassion, when not specifying data type it works fully for categorical data, but stops showing the regression when quantitative data is chosen for color.
     else:
         scatter = base
 
@@ -67,41 +89,55 @@ def scatter_chart(df, x, y, color=False, labels=None, reg=None, equal_axes=False
             text=f'{labels}:N'
         )
 
-    if equal_axes:
-        base = base.encode(
-            x=alt.X(x, scale=alt.Scale(domain=[0, domain_max], scale=alt.Scale(type=xscale))),
-            y=alt.Y(y, scale=alt.Scale(domain=[0, domain_max], scale=alt.Scale(type=yscale))))
+    if reg:
 
-    if reg is not None:
-        RegLine = base.transform_regression(
-            x, y, method=reg, groupby=[None],
-        ).mark_line()
+        if reg_groups:
+            R2_string = '"y = "'
+            coef0_string = '"a"'
+            coef1_string = '"b"'
 
-        R2_string = '"R² = " + round(datum.rSquared * 100)/100 + "      y = "'
-        coef0_string = 'round(datum.coef[0] * 10)/10'
-        coef1_string = 'round(datum.coef[1] * 10)/10'
+        else:
+            R2_string = '"R² = " + round(datum.rSquared * 100)/100 + "      y = "'
+            coef0_string = 'round(datum.coef[0] * 1000)/1000'
+            coef1_string = 'round(datum.coef[1] * 1000)/1000'
+
         reg_eq = {'linear': f'{R2_string} + {coef1_string} + " * x + " + {coef0_string}',
                   'log': f'{R2_string} + {coef1_string} + " * log(x) + " + {coef0_string}',
                   'exp': f'{R2_string} + {coef0_string} + " * e ^ (" + {coef1_string} + " x)"',
                   'pow': f'{R2_string} + {coef0_string} + " * x^" + {coef1_string}'}
+        
+        RegLine = base.mark_line().transform_regression(
+            x, y, method=reg, groupby=[color if reg_groups else 'common_group']
+        ).encode(
+        color=alt.Color(color, legend=None)
+        )
 
         RegParams = base.transform_regression(
-            x, y, method=reg, params=True
-        ).mark_text(align='left', lineBreak='\n', fontSize = 18).encode(
-            x=alt.value(width / 4),  # pixels from left
+            x, y, method=reg, groupby=[color if reg_groups else 'common_group'], params=True
+        )
+        
+        RegEq = RegParams.mark_text(align='left', lineBreak='\n', fontSize = 18).encode(
+            x=alt.value(width / 5),  # pixels from left
             y=alt.value(height / 20),  # pixels from top
+            color=alt.Color(color, legend=None),
             text='params:N'
         ).transform_calculate(
             params=reg_eq[reg]
         )
 
-        chart = alt.layer(scatter, RegLine, RegParams).properties(width=width, height=height).properties(title=title).configure_axis(labelFontSize = 18, titleFontSize = 28)
+        chart = alt.layer(scatter, RegLine, RegEq)
+        params = altair_transform.extract_data(RegParams)
+        params = pd.concat([pd.DataFrame(params.coef.tolist(), columns=['a', 'b']), params[['rSquared', 'keys']]], axis=1)
+
     else:
-        chart = alt.layer(scatter).properties(width=width, height=height, title=title)
+        chart = alt.layer(scatter)
+        params= None
 
-    chart.save('../plots/scatter_chart.html')  # activate save chart to html file
+    chart = chart.resolve_scale(color='independent').configure_axis(labelFontSize = 18, titleFontSize = 20).properties(width=width, height=height, title=title)
 
-    return chart
+    # chart.save('../plots/scatter_chart.html')  # activate save chart to html file
+
+    return chart, params
 
 
 def poly_comp_chart(mp_pdd, sdd_iow):
@@ -399,50 +435,3 @@ def plotly_contour_plot(df, x, y, color, nbins=100, ncontours=10, figsize=(800, 
     #fig.update_yaxes(type="log", range=[0,4])  # log range: 10^0=1, 10^5=100000
 
     return fig
-
-
-def logdata_multireg(df, x, y, group, opacity, width=400, height=300):
-    
-    # Scatter plot of MP against Sediment-proxy with multi-regression grouped by region
-    
-    df['log_y'] = np.log10(df[y])
-
-    chart = alt.Chart(df).mark_circle().encode(
-        x=x,
-        y= alt.Y('log_y',scale = alt.Scale(type= 'linear'), axis = alt.Axis(title = f'log10 of {y}')),
-        color= group,
-        opacity= opacity,
-        tooltip = ["Sample", x, y, 'log_y']
-    )
-
-    Reg_Line = chart.transform_regression(
-        x, 'log_y',
-        method="linear",
-        groupby=[group]
-    ).mark_line(
-    ).encode(
-        color=alt.Color(group, legend=None)
-    )
-
-    Reg_Params = chart.transform_regression(
-        x, 'log_y',
-        method="linear",
-        groupby=[group],
-        params=True
-    )
-    
-    Reg_Eq = Reg_Params.mark_text(align='left', lineBreak='\n'
-    ).encode(
-        x=alt.value(150),  # pixels from left
-        y=alt.value(250),  # pixels from top
-        color=alt.Color(group, legend=None),
-        text='params:N'
-    ).transform_calculate(
-        params='"r² = " + round(datum.rSquared * 100)/100 + \
-        "      y = " + round(datum.coef[0] * 10)/10 + " e ^ (" + \
-        round(datum.coef[1] * 10000)/10000 + "x" + ")" + \n + " "'
-    )
-
-    #print(altair_transform.extract_data(Reg_Params))
-    return (chart + Reg_Line + Reg_Eq).resolve_scale(color='independent')
-

@@ -85,7 +85,8 @@ regio_sep = {
     'Schlei_S29': 'outer',
     'Schlei_S30': 'outer',
     'Schlei_S31': 'outer',
-    'Schlei_S32': 'outlier'
+    'Schlei_S32': 'outlier',
+    'warnow': 'warnow'
 }
 
 shortnames = {
