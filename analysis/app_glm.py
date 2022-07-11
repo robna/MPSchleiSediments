@@ -8,8 +8,8 @@ import prepare_data
 import glm
 import cv
 from components import PCOA
-from plots import scatter_chart, poly_comp_chart, histograms, station_map
-from settings import Config, shortnames
+from plots import scatter_chart, poly_comp_chart, histograms, station_map, logdata_multireg
+from settings import Config, shortnames, regio_sep
 
 st.set_page_config(layout="wide")
 
@@ -117,7 +117,7 @@ def main():
                         & (mp_pdd.density <= Config.upper_density_limit)
                         ]  # filter mp_pdd based on selected values
 
-    regionfilter = st.sidebar.multiselect('Select regions:', ['WWTP', 'inner', 'middle', 'outer', 'river', 'warnow'],
+    regionfilter = st.sidebar.multiselect('Select regions:', Config.regio_sep,
                                           default=['WWTP', 'inner', 'middle', 'outer', 'river', 'warnow'])
 
     sdd_iow = pdd2sdd(mp_pdd, regionfilter)
@@ -220,6 +220,10 @@ def main():
 
     st.markdown('___', unsafe_allow_html=True)
     st.text("")  # empty line to make some distance
+    
+    st.subheader('Plot regressions of grouped log-data')
+    
+    st.write(logdata_multireg(df, predx, predy, c, opacity='Dist_WWTP', width=800, height=600))
 
 
 if __name__ == "__main__":

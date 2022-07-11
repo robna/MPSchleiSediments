@@ -1,6 +1,9 @@
+import numpy as np
+
 import altair as alt
 alt.data_transformers.disable_max_rows()
 # alt.renderers.enable('altair_viewer')  # use to display altair charts externally in browser instead of inline (only activate in non-vega-compatible IDE like pycharm)
+import altair_transform
 
 import seaborn as sns
 sns.set_style('whitegrid')
@@ -19,13 +22,13 @@ from settings import Config
 import prepare_data
 
 
-def scatter_chart(df, x, y, c=False, l=None, reg=None, equal_axes=False, xscale='linear', yscale='linear', title='', width=400, height=300):
+def scatter_chart(df, x, y, color=False, labels=None, reg=None, equal_axes=False, xscale='linear', yscale='linear', title='', width=400, height=300): #TODO: c, l: change to color, label?
     """
     Create a scatter plot with optional regression line and equation.
     :param df: dataframe with x and y columns
     :param x: x column name
     :param y: y column name
-    :param color: color column name
+    :param color: color column name, default: False (means no colored groups)
     :param labels: label column name (prints label on each point), None if no label (default)
     :param reg: None for no regression line (default), 'linear', 'log', 'exp' or 'pow'
     :param equal_axes: True for x and y axes ranging from 0 to their higher maximum (useful for predicted vs. observed plots) (default=False)
@@ -396,3 +399,50 @@ def plotly_contour_plot(df, x, y, color, nbins=100, ncontours=10, figsize=(800, 
     #fig.update_yaxes(type="log", range=[0,4])  # log range: 10^0=1, 10^5=100000
 
     return fig
+
+
+def logdata_multireg(df, x, y, group, opacity, width=400, height=300):
+    
+    # Scatter plot of MP against Sediment-proxy with multi-regression grouped by region
+    
+    df['log_y'] = np.log10(df[y])
+
+    chart = alt.Chart(df).mark_circle().encode(
+        x=x,
+        y= alt.Y('log_y',scale = alt.Scale(type= 'linear'), axis = alt.Axis(title = f'log10 of {y}')),
+        color= group,
+        opacity= opacity,
+        tooltip = ["Sample", x, y, 'log_y']
+    )
+
+    Reg_Line = chart.transform_regression(
+        x, 'log_y',
+        method="linear",
+        groupby=[group]
+    ).mark_line(
+    ).encode(
+        color=alt.Color(group, legend=None)
+    )
+
+    Reg_Params = chart.transform_regression(
+        x, 'log_y',
+        method="linear",
+        groupby=[group],
+        params=True
+    )
+    
+    Reg_Eq = Reg_Params.mark_text(align='left', lineBreak='\n'
+    ).encode(
+        x=alt.value(150),  # pixels from left
+        y=alt.value(250),  # pixels from top
+        color=alt.Color(group, legend=None),
+        text='params:N'
+    ).transform_calculate(
+        params='"r² = " + round(datum.rSquared * 100)/100 + \
+        "      y = " + round(datum.coef[0] * 10)/10 + " e ^ (" + \
+        round(datum.coef[1] * 10000)/10000 + "x" + ")" + \n + " "'
+    )
+
+    #print(altair_transform.extract_data(Reg_Params))
+    return (chart + Reg_Line + Reg_Eq).resolve_scale(color='independent')
+
