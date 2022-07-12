@@ -71,15 +71,20 @@ def pdd2sdd(mp_pdd, regions):
 
 def main():
     mp_pdd, scor = data_load_and_prep()  # load data
-
+    
+    st.title('Microplastics and sediment analysis')
+    st.markdown('___', unsafe_allow_html=True)
+    
     raw_data_checkbox = st.sidebar.checkbox('Show raw data')
     if raw_data_checkbox:
         with st.expander("Original particle domain data"):
             st.write(mp_pdd)
             st.write('Shape: ', mp_pdd.shape)
+            col1, col2 = st.columns([1,3])
+            col1.write(mp_pdd.dtypes)
+            col2.write(mp_pdd.describe())
 
-    sizedim = st.sidebar.radio('Select size dimension', ['size_geom_mean', 'Size_1_µm', 'Size_2_µm'])
-    Config.size_dim = sizedim
+    Config.size_dim = st.sidebar.radio('Select size dimension', ['size_geom_mean', 'Size_1_µm', 'Size_2_µm'])
     size_lims = floor(mp_pdd[Config.size_dim].min() / 10) * 10, ceil(mp_pdd[Config.size_dim].max() / 10) * 10
     Config.lower_size_limit = st.sidebar.number_input('Lower size limit',
                                                       value=size_lims[0],
@@ -127,14 +132,17 @@ def main():
         with st.expander("Filtered particle domain data"):
             st.write(mp_pdd)
             st.write('Shape: ', mp_pdd.shape)
-            st.write(mp_pdd.dtypes)
+            col1, col2 = st.columns([1,3])
+            col1.write(mp_pdd.dtypes)
+            col2.write(mp_pdd.describe())
 
         with st.expander("Sample domain data"):
             st.write(df)
             st.write('Shape: ', df.shape)
-            st.write(df.dtypes)
+            col1, col2 = st.columns([1,3])
+            col1.write(df.dtypes)
+            col2.write(df.describe())
 
-    st.title('Microplastics and sediment analysis')
     st.markdown('___', unsafe_allow_html=True)
 
     # if st.checkbox('Plot map'):
