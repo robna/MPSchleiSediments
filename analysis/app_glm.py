@@ -215,12 +215,16 @@ def main():
     reg_groups = col2.checkbox('Calculate separate regressions by color?')
     xscale = col3.radio('X-Axis type:', ['linear', 'log', 'sqrt'], index=0)
     yscale = col3.radio('Y-Axis type:', ['linear', 'log', 'sqrt'], index=0)
+    equal_axes = col3.checkbox('Equal axes?')
+    identity = col3.checkbox('Show identity line (dashed)?')
     labels = col3.checkbox('Show data labels')
 
     scatters, reg_params = scatter_chart(
         df, predx, predy, c,  # define data source, x, y, color
         'Sample' if labels else None,  # define labels
         reg, reg_groups,  # define regression type and whether to calculate separate regs by color
+        equal_axes = equal_axes,  # define whether to equalize axes
+        identity=identity,  # whether to show identity line
         xtransform=xtrans, ytransform=ytrans,  # transform x and y data
         xscale=xscale, yscale=yscale,
         title='', width=800, height=600)

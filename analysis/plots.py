@@ -23,7 +23,7 @@ from settings import Config
 import prepare_data
 
 
-def scatter_chart(df, x, y, color=False, labels=None, reg=None, reg_groups=False, equal_axes=False, xtransform=False, ytransform=False, xscale='linear', yscale='linear', title='', width=400, height=300): #TODO: c, l: change to color, label?
+def scatter_chart(df, x, y, color=False, labels=None, reg=None, reg_groups=False, equal_axes=False, identity=False, xtransform=False, ytransform=False, xscale='linear', yscale='linear', title='', width=400, height=300):
     """
     Create a scatter plot with optional regression line and equation.
     :param df: dataframe with x and y columns
@@ -34,6 +34,7 @@ def scatter_chart(df, x, y, color=False, labels=None, reg=None, reg_groups=False
     :param reg: None (or False) for no regression line (default), 'linear', 'log', 'exp' or 'pow'
     :param reg_groups: True for regression line for each colored group (default: False)
     :param equal_axes: True for x and y axes ranging from 0 to their higher maximum (useful for predicted vs. observed plots) (default=False)
+    :param identity: True for showing identity line (default=False)
     :param xtransform: when True take np.log10 of x-values before plotting, be carful when also using non-linear axis scales (default=False)
     :param ytransform: when True take np.log10 of y-values before plotting, be carful when also using non-linear axis scales (default=False)
     :param xscale: scale to use on x axis, str, any of
@@ -56,6 +57,9 @@ def scatter_chart(df, x, y, color=False, labels=None, reg=None, reg_groups=False
     maxX = df[x].max()
     maxY = df[y].max()
     domain_max = max(maxX, maxY) * 1.05
+
+    minX = df[x].min()
+    minY = df[y].min()
 
     df['common_group'] = 'all'  # generate a common group for all points
     df = df.reset_index()
@@ -133,7 +137,31 @@ def scatter_chart(df, x, y, color=False, labels=None, reg=None, reg_groups=False
         chart = alt.layer(scatter)
         params= None
 
-    chart = chart.resolve_scale(color='independent').configure_axis(labelFontSize = 18, titleFontSize = 20).properties(width=width, height=height, title=title)
+    if identity:
+        identityLine = base.mark_line(
+            color= 'black',
+            strokeDash=[3,8],
+            strokeWidth=0.6,
+            clip=True
+        ).encode(
+            x=alt.X(x, scale=alt.Scale(domain=[minX, maxX])),
+            y=alt.Y(x, scale=alt.Scale(domain=[minY, maxY]))
+        )
+
+        chart = alt.layer(chart, identityLine)
+    
+    chart = chart.resolve_scale(
+        color='independent'
+    ).configure_axis(
+        labelFontSize=18,
+        titleFontSize=20
+    ).configure_legend(
+        orient='top'
+    ).properties(
+        width=width,
+        height=height,
+        title=title
+    ).interactive()
 
     # chart.save('../plots/scatter_chart.html')  # activate save chart to html file
 
