@@ -51,7 +51,7 @@ def per_sample_kde(pdd_MP, x_d):
     kde_results = pd.DataFrame({'x_d': x_d}).T  # initialise results df to be filled in loop
 
     for SampleName, SampleGroup in pdd_MP.groupby(['Sample']):
-        x = SampleGroup.size_geom_mean.values
+        x = SampleGroup[Config.size_dim].values
         kde_result, bw = calculate_kde(x, x_d)
 
         kde_results.loc[SampleName] = kde_result

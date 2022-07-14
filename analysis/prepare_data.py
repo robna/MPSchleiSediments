@@ -42,21 +42,35 @@ def mass_conversion(df):
     """Adds MP density, volume and mass to each particle"""
 
     df['density'] = df['polymer_type'].map(densities)
-    df['density'].fillna(densities['generic'],
-                         inplace=True)  # assume a general average density where exact density is not available, ref: https://doi.org/10.1021/acs.est.0c02982
+    df['density'].fillna(
+        densities['generic'],
+        inplace=True)  # assume a general average density where exact density is not available, ref: https://doi.org/10.1021/acs.est.0c02982
 
-    df['Size_3_[µm]'] = 0.312 * df[
-        'size_geom_mean'] + 3.706  # calculates the 3rd dimension, according to Kristinas correlation between size_geom_mean and manually measured height (n=116, R²=0.49)
+    df.loc[df['Shape'] == 'irregular', 'Size_3_[µm]'] = (
+        0.312 *
+        df['size_geom_mean'] +
+        3.706
+      )  # calculates the 3rd dimension of non-fibres, according to Kristinas correlation between size_geom_mean and manually measured height (n=116, R²=0.49)
+    
+    df.loc[df['Shape'] == 'fibre', 'Size_3_[µm]'] = df['Size_2_[µm]'] # fibre height is just the same as fibre width
 
     # Estimate volumes, ref: # from https://doi.org/10.1016/j.watres.2018.05.019  -> not used anymore, as Kristina showed it to be inaccurate
     # df['size_dimension_decrease_factor'] = df.loc[df.Shape == 'irregular', 'Size_2_[µm]'] / df.loc[df.Shape == 'irregular', 'Size_1_[µm]']  # calculates the factor, by which size dimishes from 1st to 2nd dimension
     # df.loc[df['Shape'] == 'irregular', 'particle_volume_[µm3]'] = 4/3 * np.pi * (df['Size_1_[µm]']/2) * (df['Size_2_[µm]']/2)**2 * df['size_dimension_decrease_factor']  # ellipsoid volume with 3rd dim = 2nd dim * (2nd dim / 1st dim)
 
-    df.loc[df['Shape'] == 'irregular', 'particle_volume_[µm3]'] = 4 / 3 * np.pi * (df['Size_1_[µm]'] / 2) * (
-                df['Size_2_[µm]'] / 2) * (df[
-                                              'Size_3_[µm]'] / 2)  # ellipsoid volume with 3rd dim = 2nd dim * (2nd dim / 1st dim)
-    df.loc[df['Shape'] == 'fibre', 'particle_volume_[µm3]'] = np.pi * df['Size_1_[µm]'] * (df[
-                                                                                               'Size_2_[µm]'] / 2) ** 2  # because of they way how Gepard detects MP we do not assume a fibre void fraction here
+    df.loc[df['Shape'] == 'irregular', 'particle_volume_[µm3]'] = (  # ellipsoid volume: 4/3 * π * (a/2) * (b/2) * (c/2)
+        4 / 3 * np.pi *
+        (df['Size_1_[µm]'] / 2) *
+        (df['Size_2_[µm]'] / 2) *
+        (df['Size_3_[µm]'] / 2)
+     )
+    
+    df.loc[df['Shape'] == 'fibre', 'particle_volume_[µm3]'] = (  # elliptical cylinder volume: π * (a/2) * (b/2) * (length)
+        np.pi *
+        (df['Size_2_[µm]'] / 2) *
+        (df['Size_3_[µm]'] / 2) *
+        df['Size_1_[µm]']
+     )  # because of they way how Gepard detects MP we do not assume a fibre void fraction here
 
     df['particle_mass_[µg]'] = df['particle_volume_[µm3]'] * df['density'] * 1e-9
 

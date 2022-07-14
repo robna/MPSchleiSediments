@@ -1,3 +1,4 @@
+from itertools import groupby
 import numpy as np
 import pandas as pd
 from math import floor, ceil
@@ -208,7 +209,7 @@ def main():
     col1, col2, col3 = st.columns(3)
     predx = col1.selectbox('x-Values:', featurelist, index=featurelist.index('perc MUD'))
     predy = col1.selectbox('y-Values:', featurelist, index=featurelist.index('Concentration'))
-    c = col1.selectbox('Color:', featurelist, index=featurelist.index('regio_sep'))
+    color = col1.selectbox('Color:', [None, *featurelist], index=featurelist.index('regio_sep')+1)
     xtrans = col2. checkbox('Log transform x-data')
     ytrans = col2. checkbox('Log transform y-data')
     reg = col2.radio('Regression type:', [None, 'linear', 'log', 'exp', 'pow'], index=0)
@@ -217,17 +218,21 @@ def main():
     yscale = col3.radio('Y-Axis type:', ['linear', 'log', 'sqrt'], index=0)
     equal_axes = col3.checkbox('Equal axes?')
     identity = col3.checkbox('Show identity line (dashed)?')
+    mix_lines = col3.checkbox('Show conservative mixing lines?')
     labels = col3.checkbox('Show data labels')
 
     scatters, reg_params = scatter_chart(
-        df, predx, predy, c,  # define data source, x, y, color
+        df, predx, predy, color,  # define data source, x, y, color
         'Sample' if labels else None,  # define labels
         reg, reg_groups,  # define regression type and whether to calculate separate regs by color
         equal_axes = equal_axes,  # define whether to equalize axes
         identity=identity,  # whether to show identity line
+        mix_lines=mix_lines,  # whether to show conservative mixing lines
         xtransform=xtrans, ytransform=ytrans,  # transform x and y data
         xscale=xscale, yscale=yscale,
-        title='', width=800, height=600)
+        title='', width=800, height=600
+    )
+
     col1.write(scatters)
     col3.write(reg_params)
 

@@ -23,7 +23,82 @@ from settings import Config
 import prepare_data
 
 
-def scatter_chart(df, x, y, color=False, labels=None, reg=None, reg_groups=False, equal_axes=False, identity=False, xtransform=False, ytransform=False, xscale='linear', yscale='linear', title='', width=400, height=300):
+def conserv_mixin_lines(df, predx, predy, color):
+    """
+    As an addon for scatter_chart, this plots
+    straight lines between the data points with
+    the smallest and largest values of the
+    x-variable within coloured groups.
+    Can be used to show conservative mixing
+    lines of property-property plots.
+
+    :param df: dataframe with x and y variables
+    :param predx: name of x variable
+    :param predy: name of y variable
+    :param color: variable which is used for grouping
+    :return: chart object
+    """
+
+    if color:
+        lst = []
+        for groupname, group in df.groupby([color]):
+            lsmin = {
+                color: groupname,
+                predx: group[predx].min(),
+                predy: float(group.loc[group[predx] == group[predx].min(), predy].values)
+                }
+            lsmax = {
+                color: groupname,
+                predx: group[predx].max(),
+                predy: float(group.loc[group[predx] == group[predx].max(), predy].values)
+                }
+            lst.append(lsmin)
+            lst.append(lsmax)
+            
+        df2 = pd.DataFrame(lst)
+
+    else:
+        df2 = pd.DataFrame({
+            predx: [
+                df[predx].min(),
+                df[predx].max()
+                ],
+            predy: [
+                float(df.loc[df[predx] == df[predx].min(), predy].values),
+                float(df.loc[df[predx] == df[predx].max(), predy].values)
+                ]
+            })
+      
+    conserv_mix = alt.Chart(df2).mark_line(strokeDash=[3,8]).encode(
+        x=predx,
+        y=predy,
+        color=alt.Color(color, legend=None) if color else alt.value('black') # all below is not working, eg. no groupby in altair filter or calculate transform, hence the workaround via pandas groupby above...
+    # ).transform_joinaggregate(
+    #     x = f'if(datum.{predx} < max(datum.{predx}), min(datum.{predx}), max(datum.{predx}))',
+    #     y = f'if(datum.{predx} < max(datum.{predx}), min(datum.{predy}), max(datum.{predy}))',
+    #     groupby = [c]
+    # ).transform_filter(
+    #     alt.FieldOneOfPredicate(field=predx, oneOf=[df[predx].min(), df[predx].max()])
+    # ).transform_calculate(
+    #     # x = f'datum.{predx} < max(datum.{predx}) ? min(datum.{predx}) : max(datum.{predx})',
+    #     # y = f'datum.{predx} < max(datum.{predx}) ? min(datum.{predy}) : max(datum.{predy})'
+    #     x = f'if(datum.{predx} < max(datum.{predx}), min(datum.{predx}), max(datum.{predx}))',
+    #     y = f'if(datum.{predx} < max(datum.{predx}), min(datum.{predy}), max(datum.{predy}))'
+    )
+
+    return conserv_mix
+
+
+def scatter_chart(
+    df, x, y,
+    color=False, labels=None,
+    reg=None, reg_groups=False,
+    equal_axes=False,
+    identity=False,
+    mix_lines=False,
+    xtransform=False, ytransform=False, xscale='linear', yscale='linear',
+    title='', width=400, height=300):
+
     """
     Create a scatter plot with optional regression line and equation.
     :param df: dataframe with x and y columns
@@ -35,6 +110,7 @@ def scatter_chart(df, x, y, color=False, labels=None, reg=None, reg_groups=False
     :param reg_groups: True for regression line for each colored group (default: False)
     :param equal_axes: True for x and y axes ranging from 0 to their higher maximum (useful for predicted vs. observed plots) (default=False)
     :param identity: True for showing identity line (default=False)
+    :param mix_lines: True for showing conservative mixing lines (default=False)
     :param xtransform: when True take np.log10 of x-values before plotting, be carful when also using non-linear axis scales (default=False)
     :param ytransform: when True take np.log10 of y-values before plotting, be carful when also using non-linear axis scales (default=False)
     :param xscale: scale to use on x axis, str, any of
@@ -149,6 +225,11 @@ def scatter_chart(df, x, y, color=False, labels=None, reg=None, reg_groups=False
         )
 
         chart = alt.layer(chart, identityLine)
+
+    if mix_lines:
+        chart = alt.layer(chart, conserv_mixin_lines(df, x, y, color)).resolve_scale(
+        color='independent'
+    )
     
     chart = chart.resolve_scale(
         color='independent'
