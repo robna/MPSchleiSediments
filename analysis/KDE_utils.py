@@ -8,7 +8,7 @@ from settings import Config
 import prepare_data
 
 
-def optimise_bandwidth(data):
+def optimise_bandwidth(data, weights):
     """
     Finds an "optimised" kernel bandwidth for the data
     using sklearn GridSearchCrossValidation and LeaveOneOut algorithms
@@ -17,23 +17,23 @@ def optimise_bandwidth(data):
     grid = GridSearchCV(KernelDensity(kernel=Config.kernel),
                         {'bandwidth': Config.bandwidths},
                         cv=LeaveOneOut())
-    grid.fit(data[:, None])
+    grid.fit(data[:, None], sample_weight=weights)
     bw = grid.best_params_['bandwidth']
     return bw
 
 
-def calculate_kde(data, x_d):
+def calculate_kde(data, x_d, weights):
     """
     Makes a kernel density estimation using parameters from the Config class in settings.py.
     Data should be a 1D np-array, x_d is the discrete values where the probability density is evaluated,
     bw is the bandwidth to be used for the kernels
     """
 
-    bw = optimise_bandwidth(data) if Config.optimise_bw else Config.fixed_bw
+    bw = optimise_bandwidth(data, weights) if Config.optimise_bw else Config.fixed_bw
 
     # instantiate and fit the KDE model
     kde = KernelDensity(bandwidth=bw, kernel=Config.kernel)
-    kde.fit(data[:, None])
+    kde.fit(data[:, None], sample_weight=weights)
     # score_samples returns the log of the probability density
     logprob = kde.score_samples(x_d[:, None])
     kde_result = np.exp(logprob)
@@ -41,7 +41,7 @@ def calculate_kde(data, x_d):
     return kde_result, bw
 
 
-def per_sample_kde(pdd_MP, x_d):
+def per_sample_kde(pdd_MP, x_d, weight_col=None):
     """
     Loop through the MP df (grouped by samples) and calculate one kde per sample.
     Returns a df with the x-values in the first column
@@ -51,8 +51,11 @@ def per_sample_kde(pdd_MP, x_d):
     kde_results = pd.DataFrame({'x_d': x_d}).T  # initialise results df to be filled in loop
 
     for SampleName, SampleGroup in pdd_MP.groupby(['Sample']):
+        if weight_col is not None:
+            weights = SampleGroup[weight_col].values
+
         x = SampleGroup[Config.size_dim].values
-        kde_result, bw = calculate_kde(x, x_d)
+        kde_result, bw = calculate_kde(x, x_d, weights)
 
         kde_results.loc[SampleName] = kde_result
 

@@ -46,7 +46,7 @@ class Config:
 # creates the x-axis data for the prob. dist. func.
 # Config.x_d: np.array = np.linspace(Config.lower_size_limit, Config.upper_size_limit, Config.kde_steps)  # TODO: can this be deleted?
 
-Config.bandwidths: np.array = 10 ** np.linspace(0, 2,
+Config.bandwidths: np.array = 10 ** np.linspace(-1, 2,
                                                 Config.bws_to_test)  # creates the range of bandwidths to be tested
 
 regio_sep = {

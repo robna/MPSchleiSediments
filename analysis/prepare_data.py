@@ -74,6 +74,13 @@ def mass_conversion(df):
 
     df['particle_mass_[µg]'] = df['particle_volume_[µm3]'] * df['density'] * 1e-9
 
+    # calculate volume and mass share of each particle grouped by Sample
+    for sample_name, Sample in df.groupby(['Sample'], sort=False):
+        Sample['particle_volume_share'] = Sample['particle_volume_[µm3]'] / Sample['particle_volume_[µm3]'].sum()
+        df.loc[Sample.index, 'particle_volume_share'] = Sample['particle_volume_share']
+        Sample['particle_mass_share'] = Sample['particle_mass_[µg]'] / Sample['particle_mass_[µg]'].sum()
+        df.loc[Sample.index, 'particle_mass_share'] = Sample['particle_mass_share']
+
     return df
 
 
