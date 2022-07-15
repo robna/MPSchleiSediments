@@ -17,6 +17,8 @@ scikit-bio = "*"
 xgboost = "*"
 pysal = "*"
 hvplot = "*"
+pyqt5 = "*"
+scikit-image = "*"
 
 [dev-packages]
 
