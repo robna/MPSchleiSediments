@@ -1,8 +1,10 @@
 import numpy as np
 import pandas as pd
+import geopandas as gpd
 from skbio.stats.composition import closure
 from settings import densities, regio_sep, shortnames, Config
 import outliers
+import geo
 
 
 def get_pdd():
@@ -32,10 +34,10 @@ def get_grainsizes():
     grainsize_cau.dropna(subset=grainsize_cau.iloc[:,1:].columns, how='all', inplace=True)  # CAU sediment data contains empty sammples which are dropped here
 
     # Get the binning structure of the imported sediment data and optionally rebin it (make binning coarser) for faster computation
-    grainsize_iow, sed_lower_boundaries = sediment_preps(grainsize_iow)
+    grainsize_iow, boundaries = sediment_preps(grainsize_iow)
     grainsize_cau, _ = sediment_preps(grainsize_cau)
 
-    return grainsize_iow, grainsize_cau, sed_lower_boundaries
+    return grainsize_iow, grainsize_cau, boundaries
 
 
 def mass_conversion(df):
@@ -140,6 +142,9 @@ def additional_sdd_merging(mp_sdd, how='left'):
         # dist_wwtp.reset_index(), on=['Sample'], how=how).merge(  # add distance to WWTP
         pd.DataFrame.from_dict(regio_sep, orient='index', columns=['regio_sep']), left_on='Sample', right_index=True, how=how)  # add flags for regions
 
+    # calculate distance from shore
+    mp_sdd_amended['Dist_Land'] = geo.get_distance_to_shore(mp_sdd_amended['LON'], mp_sdd_amended['LAT'])
+    
     # concatenate with Warnow data: only activate if you want to use Warnow data for comparison
     warnow = pd.read_csv('../data/Warnow_sdd.csv', index_col=0)
     warnow["ConcentrationA500"] = warnow["Concentration"]
@@ -265,18 +270,23 @@ def sediment_preps(sed_df):
     if Config.rebinning:
         sed_df = rebin(sed_df)
 
-    sed_lower_boundaries = sed_df.columns.values  # write the size bins lower boundaries in an array
+    # sed_lower_boundaries = sed_df.columns.values  # write the size bins lower boundaries in an array
 
     sed_df = complete_index_labels(sed_df)
+
+    lowers = sed_df.columns.str.split('_').str[0].astype(float).values  # extract size bin lower boundaries from column names
+    uppers = sed_df.columns.str.split('_').str[1].astype(float).values  # extract size bin upper boundaries from column names
+    centers = (lowers + uppers) / 2  # calculate size bin centers from lower and upper boundaries
 
     if Config.closing:
         sed_df[:] = closure(sed_df.to_numpy()) * Config.closing  # close compositional data
 
-    non_zero_counts = sed_df.fillna(1).astype(bool).sum(axis=0)  # count number of non-zero-values in each column
-    sed_df = sed_df.loc[:, non_zero_counts[non_zero_counts >= int(
-        (1 - Config.allowed_zeros) * sed_df.shape[0])].index.values]  # drop columns with too many zeros
+    # TODO: check if this is still necessary...
+    # non_zero_counts = sed_df.fillna(1).astype(bool).sum(axis=0)  # count number of non-zero-values in each column
+    # sed_df = sed_df.loc[:, non_zero_counts[non_zero_counts >= int(
+    #     (1 - Config.allowed_zeros) * sed_df.shape[0])].index.values]  # drop columns with too many zeros
 
-    return sed_df, sed_lower_boundaries
+    return sed_df, {'lower': lowers, 'center': centers, 'upper': uppers}
 
 
 def combination_sums(df):  # TODO: convert to samples-in-rows-format

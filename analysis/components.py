@@ -6,7 +6,7 @@ from skbio.diversity import beta_diversity
 from skbio.stats.ordination import pcoa, pcoa_biplot
 
 
-def PCA(df, num=0.95):  # TODO: rephrase docstring as it is not specific to sediments (now also used for composition)
+def pca(df, num=0.95):  # TODO: rephrase docstring as it is not specific to sediments (now also used for composition)
     """
     Takes a df of sediment frequencies in size bins (rows = samples, columns = size bins)
     and returns a df of principle components. If the number of PCs is not provided chosen,
@@ -22,12 +22,14 @@ def PCA(df, num=0.95):  # TODO: rephrase docstring as it is not specific to sedi
     
     pc_df = pd.DataFrame(data = principalComponents, index = df.index, columns = pc_names)
     
-    pc_loadings = pd.DataFrame(pca.components_.T, columns=pc_names, index=df.columns)  # this gives the eigenvalues which say how much each variable contributed to a PC. Add  "* np.sqrt(pca.explained_variance_)" to yield the correlations between each variable and PC instead. From: https://scentellegher.github.io/machine-learning/2020/01/27/pca-loadings-sklearn.html
+    pc_loadings = pd.DataFrame(pca.components_.T, columns=pc_names, index=df.columns)
+    
+    pc_explained = pd.Series(pca.explained_variance_ratio_, index=pc_names)  # this gives the eigenvalues which say how much each variable contributed to a PC. Add  "* np.sqrt(pca.explained_variance_)" to yield the correlations between each variable and PC instead. From: https://scentellegher.github.io/machine-learning/2020/01/27/pca-loadings-sklearn.html
 
     print('PCA explained variance:', pca.explained_variance_ratio_)
     print('PCA total explained', sum(pca.explained_variance_ratio_))
 
-    return pc_df, pc_loadings, pca.explained_variance_ratio_
+    return pc_df, pc_loadings, pc_explained
 
 
 def PCOA(df, num = 3):  # TODO: rephrase docstring as it is not specific to sediments (now also used for composition)

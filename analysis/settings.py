@@ -20,12 +20,12 @@ class Config:
     lower_density_limit: float = 900  # the smallest particle density in kg/m3 included in the analysis
     upper_density_limit: float = 2000  # the largest particle density in kg/m3 included in the analysis
 
-    allowed_zeros: float = 1  # the fraction of allowed zeros in a sediment size bin
+    # allowed_zeros: float = 1  # the fraction of allowed zeros in a sediment size bin  # TODO: not used anymore
 
     # kde_steps: int = 496  # number points on the size axis where the kde is defined (like number of bins in histogram)  # TODO: can this be deleted?
     optimise_bw: bool = False  # if True: compute an individual bandwidth for each sample before computing the KDE
-    bws_to_test: int = 100  # if optimise_bw = True: how many bandwidth values should be tried out?
-    fixed_bw: int = 50  # if optimise_bw = False: fixed bandwidth value to use for all kde's
+    bws_to_test: int = 20  # if optimise_bw = True: how many bandwidth values should be tried out?
+    fixed_bw: int = 75  # if optimise_bw = False: fixed bandwidth value to use for all kde's
     kernel: str = 'gaussian'  # type of kernel to be used
 
     bin_conc: bool = False  # True: calculate MP conc. (#/kg) for individual size bins; False: calculate percentages
@@ -46,7 +46,7 @@ class Config:
 # creates the x-axis data for the prob. dist. func.
 # Config.x_d: np.array = np.linspace(Config.lower_size_limit, Config.upper_size_limit, Config.kde_steps)  # TODO: can this be deleted?
 
-Config.bandwidths: np.array = 10 ** np.linspace(-1, 2,
+Config.bandwidths: np.array = 10 ** np.linspace(2, 3,
                                                 Config.bws_to_test)  # creates the range of bandwidths to be tested
 
 regio_sep = {

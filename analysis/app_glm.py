@@ -2,35 +2,47 @@ from itertools import groupby
 import numpy as np
 import pandas as pd
 from math import floor, ceil
+from sklearn import preprocessing
 import streamlit as st
 from statsmodels.graphics.gofplots import qqplot
 
 import prepare_data
 import glm
 import cv
-from components import PCOA
-from plots import scatter_chart, poly_comp_chart, histograms, station_map
+from components import pca, PCOA
+from plots import scatter_chart, poly_comp_chart, histograms, biplot, station_map
 from settings import Config, shortnames, regio_sep
 
 st.set_page_config(layout="wide")
 
-featurelist = ['Frequency', 'Concentration', 'MassConcentration', 'MP_D50',  # endogs
-               'ConcentrationA500', 'pred_Ord_Poly_ConcentrationA500', 'pred_TMP_ConcentrationA500','pred_Paint_ConcentrationA500', 'ConcentrationB500', 'ConcentrationA500_div_B500', # endogs derivatives
-               'Split', 'Mass', 'LON', 'LAT', 'Depth', 'Dist_Marina', 'Dist_WWTP', 'Dist_WWTP2', 'regio_sep',  # sampling related exogs
-               'PC1', 'PC2',   # sediment size PCOA outputs
-               # 'MoM_ari_MEAN', 'MoM_ari_SORTING', 'MoM_ari_SKEWNESS', 'MoM_ari_KURTOSIS',  # sediments (gradistat) exogs
-               # 'MoM_geo_MEAN', 'MoM_geo_SORTING', 'MoM_geo_SKEWNESS', 'MoM_geo_KURTOSIS',
-               # 'MoM_log_MEAN', 'MoM_log_SORTING', 'MoM_log_SKEWNESS', 'MoM_log_KURTOSIS',
-               # 'FW_geo_MEAN', 'FW_geo_SORTING', 'FW_geo_SKEWNESS', 'FW_geo_KURTOSIS',
-               # 'FW_log_MEAN', 'FW_log_SORTING', 'FW_log_SKEWNESS', 'FW_log_KURTOSIS',
-               # 'MODE 1 (µm)', 'MODE 2 (µm)', 'MODE 3 (µm)',
-               'D10 (µm)', 'D50 (µm)', 'D90 (µm)',
-               # '(D90 div D10) (µm)', '(D90 - D10) (µm)', '(D75 div D25) (µm)', '(D75 - D25) (µm)',
-               'perc GRAVEL', 'perc SAND', 'perc MUD', 'perc CLAY', 
-               # 'perc V COARSE SAND', 'perc COARSE SAND', 'perc MEDIUM SAND', 'perc FINE SAND', 'perc V FINE SAND',
-               # 'perc V COARSE SILT', 'perc COARSE SILT', 'perc MEDIUM SILT', 'perc FINE SILT', 'perc V FINE SILT',
-               'OM_D50', 'TOC', 'Hg', 'TIC'  # other exogs
-               ]
+featurelist = [
+
+    'Concentration', 'MassConcentration', 'MP_D50',  # endogs
+    'ConcentrationA500', 'ConcentrationB500', 'ConcentrationA500_div_B500', # endog derivatives
+    # 'pred_Ord_Poly_ConcentrationA500', 'pred_TMP_ConcentrationA500','pred_Paint_ConcentrationA500',  # more endog derivatives
+    # 'Concentration_paint', 'Concentration_PS_Beads', 'Concentration_ord_poly', 'Concentration_irregular',  # even more endog derivatives
+
+    'LON', 'LAT', 'X', 'Y', 'Depth', 'Dist_Land', 'Dist_Marina', 'Dist_WWTP', 'Dist_WWTP2', 'regio_sep',  # geo related exogs
+    
+    # 'Split', 'Mass', 'Frequency', 'FrequencyA500', 'FrequencyB500', 'MPmass',  # sampling related exogs
+    
+    'PC1', 'PC2',   # sediment size PCOA outputs
+    # 'SAMPLE TYPE ', 'TEXTURAL GROUP ', 'SEDIMENT NAME ',  # sediments (gradistat) exogs
+    # 'MoM_ari_MEAN', 'MoM_ari_SORTING', 'MoM_ari_SKEWNESS', 'MoM_ari_KURTOSIS',
+    # 'MoM_geo_MEAN', 'MoM_geo_SORTING', 'MoM_geo_SKEWNESS', 'MoM_geo_KURTOSIS',
+    # 'MoM_log_MEAN', 'MoM_log_SORTING', 'MoM_log_SKEWNESS', 'MoM_log_KURTOSIS',
+    # 'FW_geo_MEAN',  'FW_geo_SORTING',  'FW_geo_SKEWNESS',  'FW_geo_KURTOSIS',
+    # 'FW_log_MEAN',  'FW_log_SORTING',  'FW_log_SKEWNESS',  'FW_log_KURTOSIS',
+    'MODE 1 (µm)', #'MODE 2 (µm)', 'MODE 3 (µm)',
+    'D10 (µm)', 'D50 (µm)', 'D90 (µm)',
+    # '(D90 div D10) (µm)', '(D90 - D10) (µm)', '(D75 div D25) (µm)', '(D75 - D25) (µm)',
+    'perc GRAVEL', 'perc SAND', 'perc MUD', 'perc CLAY', 
+    # 'perc V COARSE SAND', 'perc COARSE SAND', 'perc MEDIUM SAND', 'perc FINE SAND', 'perc V FINE SAND',
+    # 'perc V COARSE SILT', 'perc COARSE SILT', 'perc MEDIUM SILT', 'perc FINE SILT', 'perc V FINE SILT',
+    
+    'OM_D50', 'TOC', 'Hg', 'TIC'  # other exogs
+
+    ]
 
 
 @st.cache()
@@ -38,11 +50,11 @@ def data_load_and_prep():
     mp_pdd = prepare_data.get_pdd()
 
     # Also import sediment data (sediment frequencies per size bin from master sizer export)
-    grainsize_iow = prepare_data.get_grainsizes()[0]  # get_grainsizes returns 3 objects: iow, cau and sed_lower_boundaries
+    grainsize_iow = prepare_data.get_grainsizes()[0]  # get_grainsizes returns 3 objects: iow, cau and centers of sediment size bins
 
-    scor, load, expl = PCOA(grainsize_iow, 2)
+    sed_scor, sed_load, sed_expl = PCOA(grainsize_iow, 2)
 
-    return mp_pdd, scor
+    return mp_pdd, sed_scor
 
 
 @st.cache()
@@ -70,21 +82,8 @@ def pdd2sdd(mp_pdd, regions):
     return sdd_iow
 
 
-def main():
-    mp_pdd, scor = data_load_and_prep()  # load data
+def filters(mp_pdd):
     
-    st.title('Microplastics and sediment analysis')
-    st.markdown('___', unsafe_allow_html=True)
-    
-    raw_data_checkbox = st.sidebar.checkbox('Show raw data')
-    if raw_data_checkbox:
-        with st.expander("Original particle domain data"):
-            st.write(mp_pdd)
-            st.write('Shape: ', mp_pdd.shape)
-            col1, col2 = st.columns([1,3])
-            col1.write(mp_pdd.dtypes)
-            col2.write(mp_pdd.describe())
-
     Config.size_dim = st.sidebar.radio('Select size dimension', ['size_geom_mean', 'Size_1_µm', 'Size_2_µm'])
     size_lims = floor(mp_pdd[Config.size_dim].min() / 10) * 10, ceil(mp_pdd[Config.size_dim].max() / 10) * 10
     Config.lower_size_limit = st.sidebar.number_input('Lower size limit',
@@ -125,87 +124,79 @@ def main():
 
     regionfilter = st.sidebar.multiselect('Select regions:', set(regio_sep.values()),
                                           default=set(regio_sep.values()))
+    return mp_pdd, regionfilter
 
+
+def df_expander(df, title):
+    with st.expander(title):
+        st.write(df)
+        st.write('Shape: ', df.shape)
+        col1, col2 = st.columns([1,3])
+        col1.write(df.dtypes)
+        col2.write(df.describe())
+
+
+def new_chap(title = None):
+    st.markdown('___', unsafe_allow_html=True)
+    st.text("")  # empty line to make some distance
+    if title:
+        st.subheader(title)
+
+
+def main():
+#%%
+    st.title('Microplastics and sediment analysis')
+    new_chap()
+    
+    mp_pdd, sed_scor = data_load_and_prep()  # load data
+
+    raw_data_checkbox = st.sidebar.checkbox('Show raw data')
+    if raw_data_checkbox:
+        df_expander(mp_pdd, "Original particle domain data")            
+
+    mp_pdd, regionfilter = filters(mp_pdd)  # provide side bar menus and filter data
     sdd_iow = pdd2sdd(mp_pdd, regionfilter)
-    df = sdd_iow.merge(scor, right_index=True, left_on='Sample', how='left')
+    df = sdd_iow.merge(sed_scor, right_index=True, left_on='Sample', how='left')
 
     if raw_data_checkbox:
-        with st.expander("Filtered particle domain data"):
-            st.write(mp_pdd)
-            st.write('Shape: ', mp_pdd.shape)
-            col1, col2 = st.columns([1,3])
-            col1.write(mp_pdd.dtypes)
-            col2.write(mp_pdd.describe())
+        df_expander(mp_pdd, "Filtered particle domain data")
+        df_expander(df, "Sample domain data")
 
-        with st.expander("Sample domain data"):
-            st.write(df)
-            st.write('Shape: ', df.shape)
-            col1, col2 = st.columns([1,3])
-            col1.write(df.dtypes)
-            col2.write(df.describe())
-
-    st.markdown('___', unsafe_allow_html=True)
-
+#%%
+    # new_cap('Map')
     # if st.checkbox('Plot map'):
     #     station_map(mp_pdd)  # plot map
     # st.markdown('___', unsafe_allow_html=True)
     # st.text("")  # empty line to make some distance
 
-    st.subheader('MP size histograms')
+#%%
+    new_chap('MP size histograms')
     if st.checkbox('Size histogram'):
         st.write(histograms(mp_pdd))
-    st.markdown('___', unsafe_allow_html=True)
-    st.text("")  # empty line to make some distance
 
-    st.subheader('Polymer composition')
+#%%
+    new_chap('Polymer composition')
     if st.checkbox('Polymer composition'):
         st.write(poly_comp_chart(mp_pdd, df))
     st.markdown('___', unsafe_allow_html=True)
     st.text("")  # empty line to make some distance
 
+#%%
+    new_chap('Feature analysis')  # TODO: we have 2 x PC1 / PC2 (from sediment PCOA and from here), this is confusing...
 
-    st.subheader('GLM')
-    if st.checkbox('Calculate GLM'):
-        col1, col2 = st.columns(2)
-        families = ['Gaussian', 'Poisson', 'Gamma', 'Tweedie', 'NegativeBinomial']
-        family = col1.radio('Select distribution family:', families, index=families.index('Poisson'))
-        # for neg.binom use CT-alpha-estimator from here: https://web.archive.org/web/20210303054417/https://dius.com.au/2017/08/03/using-statsmodels-glms-to-model-beverage-consumption/
-        Config.glm_family = family
+    feats = ['Depth', 'Dist_Land', 'Dist_WWTP', 'PC1', 'PC2', 'MODE 1 (µm)', 'D50 (µm)', 'perc MUD', 'TOC']
+    featfilter = st.multiselect('Select features:', featurelist, default=feats)
 
-        links = [None, 'identity', 'Power', 'inverse_power', 'sqrt', 'log']
-        link = col2.selectbox('Select link function (use None for default link of family):', links, index=0)
-        Config.glm_link = link
+    st.write(df.set_index('Sample')[featfilter].dropna())
 
-        Config.glm_formula = st.text_input('GLM formula:', 'Concentration ~ Dist_WWTP + Q("D50 (µm)") + PC2')
+    scor, load, expl = pca(df.set_index('Sample')[featfilter].dropna())
+    st.write(biplot(scor, load, expl, sdd_iow.dropna(axis=1).dropna(), 'PC1', 'PC2', sc='Concentration', lc=None, ntf=7, normalise=True))
 
-        # resp = st.sidebar.selectbox('Select Response', reponselist)
-        glm_res = glm.glm(df)
+    df2 = pd.concat([scor, df.set_index('Sample')[['Dist_WWTP', 'regio_sep', 'LON', 'LAT']]], axis=1)
+    st.write(scatter_chart(df2.reset_index(), 'Dist_WWTP', 'PC1', 'regio_sep', 'Sample', width=800, height=600)[0])
 
-        col1, col2, col3 = st.columns(3)
-        col1.write(glm_res.summary())
-
-        st.text("")  # empty line to make some distance
-
-        df['yhat'] = glm_res.mu
-        df['pearson_resid'] = glm_res.resid_pearson
-        col2.write(scatter_chart(df, 'yhat', Config.glm_formula.split(' ~')[0],
-                                 color='regio_sep', equal_axes=True,
-                                 title='GLM --- y vs. yhat'))
-        col3.write(scatter_chart(df, 'yhat', 'pearson_resid',
-                                 color='regio_sep', title='GLM --- Pearson residuals'))
-
-        resid = glm_res.resid_deviance.copy()
-        col3.pyplot(qqplot(resid, line='r'))
-
-        if st.checkbox('LOOCV'):
-            _, metrics = cv.loocv(df)
-            st.write(metrics)
-
-    st.text("")  # empty line to make some distance
-    st.markdown('___', unsafe_allow_html=True)
-    st.text("")  # empty line to make some distance
-    st.subheader('Single predictor correlation and colinearity check')
-
+#%%
+    new_chap('Single predictor correlation and colinearity check')
     col1, col2, col3 = st.columns(3)
     predx = col1.selectbox('x-Values:', featurelist, index=featurelist.index('perc MUD'))
     predy = col1.selectbox('y-Values:', featurelist, index=featurelist.index('Concentration'))
@@ -242,9 +233,47 @@ def main():
     # st.write(f'Pearson r: {r}, p: {p}')
     # from sklearn.metrics import r2_score
     # st.write(f'R2: {r2_score(df[predx], df[predy])}')
-    
-    st.markdown('___', unsafe_allow_html=True)
-    st.text("")  # empty line to make some distance
+
+#%%
+    new_chap('GLM')
+    if st.checkbox('Calculate GLM'):
+        col1, col2 = st.columns(2)
+        families = ['Gaussian', 'Poisson', 'Gamma', 'Tweedie', 'NegativeBinomial']
+        family = col1.radio('Select distribution family:', families, index=families.index('Poisson'))
+        # for neg.binom use CT-alpha-estimator from here: https://web.archive.org/web/20210303054417/https://dius.com.au/2017/08/03/using-statsmodels-glms-to-model-beverage-consumption/
+        Config.glm_family = family
+
+        links = [None, 'identity', 'Power', 'inverse_power', 'sqrt', 'log']
+        link = col2.selectbox('Select link function (use None for default link of family):', links, index=0)
+        Config.glm_link = link
+
+        Config.glm_formula = st.text_input('GLM formula:', 'Concentration ~ Dist_WWTP + Q("D50 (µm)") + PC2')
+
+        # resp = st.sidebar.selectbox('Select Response', reponselist)
+        glm_res = glm.glm(df)
+
+        col1, col2, col3 = st.columns(3)
+        col1.write(glm_res.summary())
+
+        st.text("")  # empty line to make some distance
+
+        df['yhat'] = glm_res.mu
+        df['pearson_resid'] = glm_res.resid_pearson
+        col2.write(scatter_chart(df, 'yhat', Config.glm_formula.split(' ~')[0],
+                                 color='regio_sep', equal_axes=True,
+                                 title='GLM --- y vs. yhat')[0])
+        col3.write(scatter_chart(df, 'yhat', 'pearson_resid',
+                                 color='regio_sep', title='GLM --- Pearson residuals')[0])
+
+        resid = glm_res.resid_deviance.copy()
+        col3.pyplot(qqplot(resid, line='r'))
+
+        if st.checkbox('LOOCV'):
+            _, metrics = cv.loocv(df)
+            st.write(metrics)
+
+#%%
+    new_chap()
 
 if __name__ == "__main__":
     main()

@@ -33,12 +33,15 @@ def calculate_kde(data, x_d, weights):
 
     # instantiate and fit the KDE model
     kde = KernelDensity(bandwidth=bw, kernel=Config.kernel)
-    kde.fit(data[:, None], sample_weight=weights)
+    kde.fit(data[:, None])#, sample_weight=weights)
+
+    params = kde.get_params(deep=True)
+
     # score_samples returns the log of the probability density
     logprob = kde.score_samples(x_d[:, None])
     kde_result = np.exp(logprob)
 
-    return kde_result, bw
+    return kde_result, params
 
 
 def per_sample_kde(pdd_MP, x_d, weight_col=None):
@@ -53,13 +56,15 @@ def per_sample_kde(pdd_MP, x_d, weight_col=None):
     for SampleName, SampleGroup in pdd_MP.groupby(['Sample']):
         if weight_col is not None:
             weights = SampleGroup[weight_col].values
+        else:
+            weights = None
 
         x = SampleGroup[Config.size_dim].values
-        kde_result, bw = calculate_kde(x, x_d, weights)
+        kde_result, params = calculate_kde(x, x_d, weights)
 
         kde_results.loc[SampleName] = kde_result
 
-        print(f'{SampleName}:    bandwidth is {round(bw, 2)}                  ', end='\r')
+        print(f'{SampleName}:    bandwidth is {round(params["bandwidth"], 2)}                  ')#, end='\r')  # use end='\r' to overwrite previous line
         # time.sleep(0.05)
 
     kde_results = kde_results.T.set_index('x_d').T  # workaround as pandas has no df.set_columns() function
@@ -68,7 +73,6 @@ def per_sample_kde(pdd_MP, x_d, weight_col=None):
 
     kde_results.index.name = 'Sample'
     return kde_results
-
 
 def probDens2conc(size_pdfs, sdd_MP):
     """

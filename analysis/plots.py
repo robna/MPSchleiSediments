@@ -363,6 +363,7 @@ def biplot(scor, load, expl, discr, x, y, sc, lc, ntf=5, normalise=False,
     -------
     altair figure, as html and inline
     """
+    load.rename_axis('features', inplace=True)
 
     dfl = load.head(ntf).append(load.head(ntf) - load.head(ntf)).reset_index()
     # dfl = (dfl / dfl.max(numeric_only=True).max(numeric_only=True))  # normalise values to range [-1,1]
@@ -370,29 +371,31 @@ def biplot(scor, load, expl, discr, x, y, sc, lc, ntf=5, normalise=False,
     dfl2 = load.head(ntf).reset_index()
     # dfl2 = (dfl2 / dfl2.max().max())
 
-    dfs = scor.reset_index().rename(columns={'index': 'Sample'}).merge(discr[['Sample', 'Dist_WWTP', 'regio_sep']])
+    dfs = scor.reset_index().rename(columns={'index': 'Sample'}).merge(discr[['Sample', 'Dist_WWTP', 'regio_sep', 'Concentration']])
     # dfs = (dfs / dfs.max(numeric_only=True).max(numeric_only=True))
 
     lines = alt.Chart(dfl).mark_line(opacity=0.3).encode(
         x=x,
         y=y,
-        color=alt.Color('polymer_type', legend=None)
+        detail='features'
+        # color=alt.Color('features', scale=alt.Scale(scheme='warmgreys'), legend=None)
     )
 
-    heads = alt.Chart(dfl2).mark_circle(size=50, opacity=0.5).encode(
+    heads = alt.Chart(dfl2).mark_circle(size=80, opacity=0.5).encode(
         x=x,
         y=y,
-        color=alt.Color('polymer_type', legend=None)
+        detail='features'
+        # color=alt.Color('features', scale=alt.Scale(scheme='warmgreys'), legend=None)
     )
 
     text = heads.mark_text(dx=-25, dy=19, fontSize=12).encode(
-        text='polymer_type'
+        text='features'
     )
 
-    scatter = alt.Chart(dfs).mark_point(strokeWidth=3).encode(
-        x=x,
-        y=y,
-        color=alt.Color('regio_sep', scale=alt.Scale(scheme='dark2')),
+    scatter = alt.Chart(dfs).mark_point(strokeWidth=5, size=50).encode(
+        x=alt.X(x, axis=alt.Axis(title=f'{x}  ({expl[x]:.1%})')),
+        y=alt.Y(y, axis=alt.Axis(title=f'{y}  ({expl[y]:.1%})')),
+        color=alt.Color(sc, scale=alt.Scale(scheme='turbo', type='log')),
         tooltip='Sample'
     )
 
@@ -403,7 +406,7 @@ def biplot(scor, load, expl, discr, x, y, sc, lc, ntf=5, normalise=False,
         width=figsize[0], height=figsize[1]
     )
 
-    figure.save('../plots/biplot.html')
+    # figure.save('../plots/biplot.html')
 
     return figure
 
