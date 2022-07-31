@@ -32,14 +32,17 @@ def pca(df, num=0.95):  # TODO: rephrase docstring as it is not specific to sedi
     return pc_df, pc_loadings, pc_explained
 
 
-def PCOA(df, num = 3):  # TODO: rephrase docstring as it is not specific to sediments (now also used for composition)
+def PCOA(df, num=None):  # TODO: rephrase docstring as it is not specific to sediments (now also used for composition)
     """
     | Takes a dataframe of sediment grain sizes (compositional data), with rows = samples, columns = size bins.
-    | num is the number of principal coordinates to return (default = 3).
+    | 
     | Calculates a Bray-Curtis dissimilarity matrix for the PCoA.
     | Calculates a Principal Coordinate Analysis and returns its scores.
     | Returns the requested number of PCos as a pandas df and prints the explained proportions.
     """
+
+    if num == None:
+        num = df.shape[1]
 
     df = df.div(df.sum(axis=1), axis=0)  # ensure closed compositional data
     data = df.values

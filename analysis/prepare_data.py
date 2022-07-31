@@ -146,9 +146,9 @@ def additional_sdd_merging(mp_sdd, how='left'):
     mp_sdd_amended['Dist_Land'] = geo.get_distance_to_shore(mp_sdd_amended['LON'], mp_sdd_amended['LAT'])
     
     # concatenate with Warnow data: only activate if you want to use Warnow data for comparison
-    warnow = pd.read_csv('../data/Warnow_sdd.csv', index_col=0)
-    warnow["ConcentrationA500"] = warnow["Concentration"]
-    mp_sdd_amended = pd.concat([mp_sdd_amended, warnow], sort=False)
+    # warnow = pd.read_csv('../data/Warnow_sdd.csv', index_col=0)
+    # warnow["ConcentrationA500"] = warnow["Concentration"]
+    # mp_sdd_amended = pd.concat([mp_sdd_amended, warnow], sort=False)
     
     # optionally: uncomment to export the final data
     # sdd_iow.to_csv('../csv/MP_Stats_SchleiSediments.csv')

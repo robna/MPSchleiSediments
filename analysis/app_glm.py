@@ -170,30 +170,46 @@ def main():
     # st.text("")  # empty line to make some distance
 
 #%%
-    new_chap('MP size histograms')
+    new_chap('MP properties')
     if st.checkbox('Size histogram'):
         st.write(histograms(mp_pdd))
 
-#%%
-    new_chap('Polymer composition')
     if st.checkbox('Polymer composition'):
         st.write(poly_comp_chart(mp_pdd, df))
-    st.markdown('___', unsafe_allow_html=True)
-    st.text("")  # empty line to make some distance
+
+        com = prepare_data.aggregate_SDD(
+                    mp_pdd.groupby(['Sample', 'polymer_type'])
+            ).merge(sdd_iow[['Sample', 'Dist_WWTP', 'regio_sep']], on='Sample'
+            ).pivot(index=['Sample'], columns=['polymer_type'], values=['Concentration']
+            ).droplevel(0,axis=1
+            ).fillna(0)
+        
+        st.write(biplot(
+            scor=PCOA(com)[0],
+            load=PCOA(com)[1],
+            expl=PCOA(com)[2],
+            discr=sdd_iow,
+            x='PC1',
+            y='PC2',
+            sc='regio_sep',
+            ntf=7,
+            normalise='standard'
+            ))
+
 
 #%%
     new_chap('Feature analysis')  # TODO: we have 2 x PC1 / PC2 (from sediment PCOA and from here), this is confusing...
+    if st.checkbox('Feature analysis'):
+        feats = ['Depth', 'Dist_Land', 'Dist_WWTP', 'PC1', 'PC2', 'MODE 1 (µm)', 'D50 (µm)', 'perc MUD', 'TOC']
+        featfilter = st.multiselect('Select features:', featurelist, default=feats)
 
-    feats = ['Depth', 'Dist_Land', 'Dist_WWTP', 'PC1', 'PC2', 'MODE 1 (µm)', 'D50 (µm)', 'perc MUD', 'TOC']
-    featfilter = st.multiselect('Select features:', featurelist, default=feats)
+        st.write(df.set_index('Sample')[featfilter].dropna())
 
-    st.write(df.set_index('Sample')[featfilter].dropna())
+        scor, load, expl = pca(df.set_index('Sample')[featfilter].dropna())
+        st.write(biplot(scor, load, expl, sdd_iow.dropna(axis=1).dropna(), 'PC1', 'PC2', sc='Concentration', ntf=7, normalise='standard'))
 
-    scor, load, expl = pca(df.set_index('Sample')[featfilter].dropna())
-    st.write(biplot(scor, load, expl, sdd_iow.dropna(axis=1).dropna(), 'PC1', 'PC2', sc='Concentration', lc=None, ntf=7, normalise=True))
-
-    df2 = pd.concat([scor, df.set_index('Sample')[['Dist_WWTP', 'regio_sep', 'LON', 'LAT']]], axis=1)
-    st.write(scatter_chart(df2.reset_index(), 'Dist_WWTP', 'PC1', 'regio_sep', 'Sample', width=800, height=600)[0])
+        df2 = pd.concat([scor, df.set_index('Sample')[['Dist_WWTP', 'regio_sep', 'LON', 'LAT']]], axis=1)
+        st.write(scatter_chart(df2.reset_index(), 'Dist_WWTP', 'PC1', 'regio_sep', 'Sample', width=800, height=600)[0])
 
 #%%
     new_chap('Single predictor correlation and colinearity check')
@@ -225,6 +241,9 @@ def main():
     )
 
     col1.write(scatters)
+    col3.markdown('___', unsafe_allow_html=True)
+    col3.text("")  # empty line to make some distance
+    col3.write('Regression parameters:')
     col3.write(reg_params)
 
     # TODO: temporary check for r-values (remove later)
@@ -259,9 +278,11 @@ def main():
 
         df['yhat'] = glm_res.mu
         df['pearson_resid'] = glm_res.resid_pearson
-        col2.write(scatter_chart(df, 'yhat', Config.glm_formula.split(' ~')[0],
-                                 color='regio_sep', equal_axes=True,
-                                 title='GLM --- y vs. yhat')[0])
+        col2.write(scatter_chart(df, Config.glm_formula.split(' ~')[0], 'yhat',
+                                 color='regio_sep',
+                                 identity=True, equal_axes=False,
+                                 width=400, height=300,
+                                 title='GLM --- yhat vs. y')[0])
         col3.write(scatter_chart(df, 'yhat', 'pearson_resid',
                                  color='regio_sep', title='GLM --- Pearson residuals')[0])
 

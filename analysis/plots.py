@@ -1,3 +1,4 @@
+from cv2 import norm
 import numpy as np
 import pandas as pd
 
@@ -17,6 +18,7 @@ import plotly.express as px
     
 import pydeck as pdk
 import streamlit as st
+from sklearn.metrics import r2_score
 # from streamlit_vega_lite import altair_component
 
 from settings import Config
@@ -224,7 +226,18 @@ def scatter_chart(
             y=alt.Y(x, scale=alt.Scale(domain=[minY, maxY]))
         )
 
-        chart = alt.layer(chart, identityLine)
+        identityR2 = r2_score(df[x], df[y])
+        
+        identityR2Text = alt.Chart(df).mark_text(  # TODO: could use empty dataset "{'values':[{}]}" instead of "df" to print text only once?
+            fontSize=12,
+            align="left", baseline="top"
+        ).encode(
+            x=alt.value(width / 1.8),  # pixels from left
+            y=alt.value(height / 100),  # pixels from top
+            text=alt.value(f'identity_R² = {identityR2:.2f}')
+        )
+        
+        chart = alt.layer(chart, identityLine, identityR2Text)
 
     if mix_lines:
         chart = alt.layer(chart, conserv_mixin_lines(df, x, y, color)).resolve_scale(
@@ -340,7 +353,7 @@ def histograms(df):
     return chart
 
 
-def biplot(scor, load, expl, discr, x, y, sc, lc, ntf=5, normalise=False,
+def biplot(scor, load, expl, discr, x, y, sc, ntf=5, normalise=None,
            figsize=(800, 600)):  # TODO: normalisation not yet implemented
     """
     Create the Biplot based on the PCoA or PCA scores and loadings.
@@ -354,9 +367,8 @@ def biplot(scor, load, expl, discr, x, y, sc, lc, ntf=5, normalise=False,
     x : component to plot on the x-axis
     y : component to plot on the y-axis
     sc : component to plot on the color scale for scores
-    lc : component to plot on the color scale for loadings
     ntf : number of top features to plot, default = 5
-    normalise : boolean, whether normalise scores and loadings to [-1,1], default = False
+    normalise : normalise scores and loadings: 'maxabs' = [-1,1], 'standard' = [mean=0, std=1], default: None
     figsize : (float, float), optional, default: 800, 600
 
     Returns
@@ -364,6 +376,14 @@ def biplot(scor, load, expl, discr, x, y, sc, lc, ntf=5, normalise=False,
     altair figure, as html and inline
     """
     load.rename_axis('features', inplace=True)
+
+    if normalise == 'maxabs': # MaxAbsScaler
+        load = load.apply(lambda x: x / np.max(np.abs(x)))
+        scor = scor.apply(lambda x: x / np.max(np.abs(x)))
+
+    elif normalise == 'standard': # StandardScaler
+        load = load.apply(lambda x: (x - x.mean()) / x.std())
+        scor = scor.apply(lambda x: (x - x.mean()) / x.std())
 
     dfl = load.head(ntf).append(load.head(ntf) - load.head(ntf)).reset_index()
     # dfl = (dfl / dfl.max(numeric_only=True).max(numeric_only=True))  # normalise values to range [-1,1]
@@ -399,7 +419,15 @@ def biplot(scor, load, expl, discr, x, y, sc, lc, ntf=5, normalise=False,
         tooltip='Sample'
     )
 
-    figure = alt.layer(lines, heads, text, scatter
+    info = alt.Chart(dfs).mark_text(  # TODO: could use empty dataset "{'values':[{}]}" instead of "dfs" to print text only once?
+        fontSize=12
+    ).encode(
+        text=alt.value([f'Explained: {expl.sum():.1%}', f'Values scaled: {normalise}']),
+        x=alt.value(figsize[0] / 5),  # pixels from left
+        y=alt.value(figsize[1] / 20),  # pixels from top
+    )
+
+    figure = alt.layer(lines, heads, text, scatter, info
                        ).resolve_scale(color='independent'
                                        ).interactive(
     ).properties(
