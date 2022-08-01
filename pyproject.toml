@@ -16,10 +16,11 @@ dependencies = [
     "rpy2",
     "plotly",
     "pydeck",
-    "scikit-bio",
+    "scikit-bio=0.5.6",
     "xgboost",
     "scipy>=1.8",
     "pysal>=2.6.0",
+    "ipykernel>=6.15.1",
 ]
 requires-python = ">=3.8,<3.10"
 license = {text = "GPL-3.0-or-later"}

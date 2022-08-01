@@ -13,12 +13,12 @@ vega-datasets = "*"
 streamlit-vega-lite = "*"
 rpy2 = "*"
 plotly = "*"
-scikit-bio = "*"
+scikit-bio = "==0.5.6"
 xgboost = "*"
 pysal = "*"
 hvplot = "*"
-pyqt5 = "*"
-scikit-image = "*"
+ipykernel = "*"
+mlxtend = "*"
 
 [dev-packages]
 
