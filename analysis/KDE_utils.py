@@ -33,7 +33,7 @@ def calculate_kde(data, x_d, weights):
 
     # instantiate and fit the KDE model
     kde = KernelDensity(bandwidth=bw, kernel=Config.kernel)
-    kde.fit(data[:, None])#, sample_weight=weights)
+    kde.fit(data[:, None], sample_weight=weights)
 
     params = kde.get_params(deep=True)
 
