@@ -74,6 +74,13 @@ def mass_conversion(df):
         df['Size_1_[µm]']
      )  # because of they way how Gepard detects MP we do not assume a fibre void fraction here
 
+    
+    
+#volume equivalent spherical diameter
+
+    
+    df['vESD'] = ((6 * df['particle_volume_[µm3]'])/np.pi)**(1/3)
+    
     df['particle_mass_[µg]'] = df['particle_volume_[µm3]'] * df['density'] * 1e-9
 
     # calculate volume and mass share of each particle grouped by Sample

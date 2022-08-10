@@ -44,7 +44,7 @@ def calculate_kde(data, x_d, weights):
     return kde_result, params
 
 
-def per_sample_kde(pdd_MP, x_d, weight_col=None):
+def per_sample_kde(pdd_MP, x_d, weight_col=None, size_dim=Config.size_dim):
     """
     Loop through the MP df (grouped by samples) and calculate one kde per sample.
     Returns a df with the x-values in the first column
@@ -59,7 +59,7 @@ def per_sample_kde(pdd_MP, x_d, weight_col=None):
         else:
             weights = None
 
-        x = SampleGroup[Config.size_dim].values
+        x = SampleGroup[size_dim].values
         kde_result, params = calculate_kde(x, x_d, weights)
 
         kde_results.loc[SampleName] = kde_result
