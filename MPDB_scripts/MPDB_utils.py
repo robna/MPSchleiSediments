@@ -14,7 +14,9 @@ def particle_amplification(MP):
     MP.Fraction_analysed.fillna(1, inplace=True)
 
     # Take 1 divided by Fraction_analysed (rounded to next integer) to get the factor each particle needs to be repeated
-    # by to extrapolate to whole sample. Then do the repetition using np. repeat and write it back into "MP"
+    # by to extrapolate to whole sample. Then do the repetition using np. repeat and write it back into "MP".
+    # Need to use "round" because we cannot create "3.5" particles out of one. This distorts the results slightly in
+    # cases were the fraction analysed is not a whole number fraction like 1/2 or 1/3.
     MP = MP.loc[np.repeat(MP.index.values, round(1 / MP.Fraction_analysed))]
 
     MP.IDParticles = MP.IDParticles.astype(str) + '_' + MP.groupby('IDParticles').cumcount().astype(str)

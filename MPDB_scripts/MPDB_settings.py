@@ -11,6 +11,7 @@ particleQuery: str = '''SELECT distinct
                     `s`.`Project` AS `Project`,
                     `p`.`Size_1_[µm]` AS `Size_1_[µm]`,
                     `p`.`Size_2_[µm]` AS `Size_2_[µm]`,
+                    `p`.`Size_3_[µm]` AS `Size_3_[µm]`,
                     `p`.`Shape` AS `Shape`,
                     `p`.`Colour` AS `Colour`,
                     `pt`.`polymer_type` AS `polymer_type`,
