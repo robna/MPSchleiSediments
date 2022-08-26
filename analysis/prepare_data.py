@@ -48,7 +48,7 @@ def mass_conversion(df):
         densities['generic'],
         inplace=True)  # assume a general average density where exact density is not available, ref: https://doi.org/10.1021/acs.est.0c02982
 
-    df.loc[df['Shape'] == 'irregular', 'Size_3_[µm]'] = (
+    df.loc[(df['Shape'] == 'irregular') & (df['Size_3_[µm]'] == np.nan), 'Size_3_[µm]'] = (
         0.312 *
         df['size_geom_mean'] +
         3.706
