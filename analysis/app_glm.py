@@ -142,6 +142,32 @@ def new_chap(title = None):
     if title:
         st.subheader(title)
 
+    
+def get_selections(optionlist, defaults):
+    """
+    Provide the necessary selection for scatter_chart from plots.py
+    :param optionlist: list of options to select from
+    :param defaults: tuple of column names: (x, y, color) used as their respective default selections
+    """
+    col1, col2, col3 = st.columns(3)
+    class sel_dict(object): pass  # create dummy class to get access to __dict__
+    sel = sel_dict()
+    sel.x = col1.selectbox('x-Values:', optionlist, index=optionlist.index(defaults[0]))
+    sel.y = col1.selectbox('y-Values:', optionlist, index=optionlist.index(defaults[1]))
+    sel.color = col1.selectbox('Color:', [None, *optionlist], index=optionlist.index(defaults[2])+1)
+    sel.xtransform = col2. checkbox('Log transform x-data')
+    sel.ytransform = col2. checkbox('Log transform y-data')
+    sel.reg = col2.radio('Regression type:', [None, 'linear', 'log', 'exp', 'pow'], index=0)
+    sel.reg_groups = col2.checkbox('Calculate separate regressions by color?')
+    sel.xscale = col3.radio('X-Axis type:', ['linear', 'log', 'sqrt'], index=0)
+    sel.yscale = col3.radio('Y-Axis type:', ['linear', 'log', 'sqrt'], index=0)
+    sel.equal_axes = col3.checkbox('Equal axes?')
+    sel.identity = col3.checkbox('Show identity line (dashed)?')
+    sel.mix_lines = col3.checkbox('Show conservative mixing lines?')
+    sel.labels = col3.selectbox('Labels:', [None, *optionlist], index=0)
+    cols = (col1, col2, col3)
+    return sel.__dict__, cols
+
 
 def main():
 #%%
@@ -160,7 +186,18 @@ def main():
 
     if raw_data_checkbox:
         df_expander(mp_pdd, "Filtered particle domain data")
+        with st.expander("Plot particle properties"):
+            particle_chart_selections, cols = get_selections(mp_pdd.columns.tolist(), ('size_geom_mean', 'Size_3_µm', 'Shape'))
+            particle_scatters, particle_reg_params = scatter_chart(
+            mp_pdd, **particle_chart_selections,
+            title='', width=800, height=600)
+            cols[0].write(particle_scatters)
+            cols[2].markdown('___', unsafe_allow_html=True)
+            cols[2].text("")  # empty line to make some distance
+            cols[2].write('Regression parameters:')
+            cols[2].write(particle_reg_params)
         df_expander(df, "Sample domain data")
+
 
 #%%
     # new_cap('Map')
@@ -213,38 +250,15 @@ def main():
 
 #%%
     new_chap('Single predictor correlation and colinearity check')
-    col1, col2, col3 = st.columns(3)
-    predx = col1.selectbox('x-Values:', featurelist, index=featurelist.index('perc MUD'))
-    predy = col1.selectbox('y-Values:', featurelist, index=featurelist.index('Concentration'))
-    color = col1.selectbox('Color:', [None, *featurelist], index=featurelist.index('regio_sep')+1)
-    xtrans = col2. checkbox('Log transform x-data')
-    ytrans = col2. checkbox('Log transform y-data')
-    reg = col2.radio('Regression type:', [None, 'linear', 'log', 'exp', 'pow'], index=0)
-    reg_groups = col2.checkbox('Calculate separate regressions by color?')
-    xscale = col3.radio('X-Axis type:', ['linear', 'log', 'sqrt'], index=0)
-    yscale = col3.radio('Y-Axis type:', ['linear', 'log', 'sqrt'], index=0)
-    equal_axes = col3.checkbox('Equal axes?')
-    identity = col3.checkbox('Show identity line (dashed)?')
-    mix_lines = col3.checkbox('Show conservative mixing lines?')
-    labels = col3.checkbox('Show data labels')
+    sample_chart_selections, cols = get_selections(featurelist, ('perc MUD', 'Concentration', 'regio_sep'))
 
-    scatters, reg_params = scatter_chart(
-        df, predx, predy, color,  # define data source, x, y, color
-        'Sample' if labels else None,  # define labels
-        reg, reg_groups,  # define regression type and whether to calculate separate regs by color
-        equal_axes = equal_axes,  # define whether to equalize axes
-        identity=identity,  # whether to show identity line
-        mix_lines=mix_lines,  # whether to show conservative mixing lines
-        xtransform=xtrans, ytransform=ytrans,  # transform x and y data
-        xscale=xscale, yscale=yscale,
-        title='', width=800, height=600
-    )
+    scatters, reg_params = scatter_chart(df, **sample_chart_selections, title='', width=800, height=600)
 
-    col1.write(scatters)
-    col3.markdown('___', unsafe_allow_html=True)
-    col3.text("")  # empty line to make some distance
-    col3.write('Regression parameters:')
-    col3.write(reg_params)
+    cols[0].write(scatters)
+    cols[2].markdown('___', unsafe_allow_html=True)
+    cols[2].text("")  # empty line to make some distance
+    cols[2].write('Regression parameters:')
+    cols[2].write(reg_params)
 
     # TODO: temporary check for r-values (remove later)
     # from scipy.stats import pearsonr

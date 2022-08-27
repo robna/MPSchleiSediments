@@ -12,8 +12,8 @@ def get_pdd():
     Reads the MP particle domain data (PDD) from the CSV file and does some preprocessing
     """
     
-    mp_pdd = pd.read_csv('../data/env_MP_clean_list_SchleiSediments.csv', index_col=0)
-    mp_pdd = mass_conversion(mp_pdd)  # calculate particle weights
+    mp_pdd = pd.read_csv('../data/mp_pdd.csv', index_col=0)
+    mp_pdd = height_vol_dens_mass(mp_pdd)  # calculate particle weights
     mp_pdd, gpn = outliers.low_freq_out(mp_pdd)  # remove low frequency outliers
     # mp_pdd = mp_pdd.loc[mp_pdd.Shape=='irregular']  # filter to only use fibres or irregulars
     mp_pdd['polymer_type'] = mp_pdd['polymer_type'].map(shortnames).fillna(mp_pdd['polymer_type'])  # use abbreviations for polymer names but retain original names for polymers not present in shortnames
@@ -40,49 +40,52 @@ def get_grainsizes():
     return grainsize_iow, grainsize_cau, boundaries
 
 
-def mass_conversion(df):
-    """Adds MP density, volume and mass to each particle"""
+def height_vol_dens_mass(df):
+    """Adds height, volume, density and mass to each MP particle"""
 
-    df['density'] = df['polymer_type'].map(densities)
-    df['density'].fillna(
-        densities['generic'],
-        inplace=True)  # assume a general average density where exact density is not available, ref: https://doi.org/10.1021/acs.est.0c02982
-
-    df.loc[(df['Shape'] == 'irregular') & (df['Size_3_[µm]'] == np.nan), 'Size_3_[µm]'] = (
+    # Adjust heights (a.k.a. Size_3): not all Gepard heights can be trusted, see inline comments below
+    # ------------------------------------------------------------------------------------------------
+    df['orig_gepard_height'] = df['Size_3_[µm]']  # save original height for later use
+    df.loc[(df['Shape'] == 'irregular') & (df['Size_3_[µm]'] == np.nan)  # where no Gepard height exists, use regressed height
+           |(df['Size_3_[µm]'] == 0)  # due to insufficient z-resolution, small particles tend to cluster at 0 and 20 µm height
+           |(df['Size_3_[µm]'] == 20)
+           ,'Size_3_[µm]'] = (  
         0.312 *
         df['size_geom_mean'] +
         3.706
       )  # calculates the 3rd dimension of non-fibres, according to Kristinas correlation between size_geom_mean and manually measured height (n=116, R²=0.49)
-    
-    df.loc[df['Shape'] == 'fibre', 'Size_3_[µm]'] = df['Size_2_[µm]'] # fibre height is just the same as fibre width
+    df.loc[(df['Shape'] == 'irregular') & (df['Size_3_[µm]'] > df['Size_1_[µm]']), 'Size_3_[µm]'] = df['Size_1_[µm]']  # when irreg higher than long, use Size_1 as height
+    df.loc[(df['Shape'] ==     'fibre') & (df['Size_3_[µm]'] > df['Size_2_[µm]']), 'Size_3_[µm]'] = df['Size_2_[µm]']  # when fibre higher than wide: use Size_2 as height
 
+    # Calculate volumes
+    # -----------------
     # Estimate volumes, ref: # from https://doi.org/10.1016/j.watres.2018.05.019  -> not used anymore, as Kristina showed it to be inaccurate
     # df['size_dimension_decrease_factor'] = df.loc[df.Shape == 'irregular', 'Size_2_[µm]'] / df.loc[df.Shape == 'irregular', 'Size_1_[µm]']  # calculates the factor, by which size dimishes from 1st to 2nd dimension
     # df.loc[df['Shape'] == 'irregular', 'particle_volume_[µm3]'] = 4/3 * np.pi * (df['Size_1_[µm]']/2) * (df['Size_2_[µm]']/2)**2 * df['size_dimension_decrease_factor']  # ellipsoid volume with 3rd dim = 2nd dim * (2nd dim / 1st dim)
-
     df.loc[df['Shape'] == 'irregular', 'particle_volume_[µm3]'] = (  # ellipsoid volume: 4/3 * π * (a/2) * (b/2) * (c/2)
         4 / 3 * np.pi *
         (df['Size_1_[µm]'] / 2) *
         (df['Size_2_[µm]'] / 2) *
         (df['Size_3_[µm]'] / 2)
      )
-    
     df.loc[df['Shape'] == 'fibre', 'particle_volume_[µm3]'] = (  # elliptical cylinder volume: π * (a/2) * (b/2) * (length)
         np.pi *
         (df['Size_2_[µm]'] / 2) *
         (df['Size_3_[µm]'] / 2) *
         df['Size_1_[µm]']
-     )  # because of they way how Gepard detects MP we do not assume a fibre void fraction here
+     )
+    df['vESD'] = ((6 * df['particle_volume_[µm3]'])/np.pi)**(1/3)  # volume equivalent spherical diameter
 
+    # Get densities
+    # -------------
+    df['density'] = df['polymer_type'].map(densities)
+    df['density'].fillna(
+        densities['generic'],
+        inplace=True)  # assume a general average density where exact density is not available, ref: https://doi.org/10.1021/acs.est.0c02982
     
-    
-#volume equivalent spherical diameter
-
-    
-    df['vESD'] = ((6 * df['particle_volume_[µm3]'])/np.pi)**(1/3)
-    
+    # Get masses
+    # ----------
     df['particle_mass_[µg]'] = df['particle_volume_[µm3]'] * df['density'] * 1e-9
-
     # calculate volume and mass share of each particle grouped by Sample
     for sample_name, Sample in df.groupby(['Sample'], sort=False):
         Sample['particle_volume_share'] = Sample['particle_volume_[µm3]'] / Sample['particle_volume_[µm3]'].sum()

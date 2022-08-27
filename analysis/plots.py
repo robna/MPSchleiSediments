@@ -191,7 +191,7 @@ def scatter_chart(
         RegLine = base.mark_line().transform_regression(
             x, y, method=reg, groupby=[color if reg_groups else 'common_group']
         ).encode(
-        color=alt.Color(color, legend=None)
+        color=alt.Color(color if reg_groups else 'common_group', legend=None)
         )
 
         RegParams = base.transform_regression(
@@ -201,7 +201,7 @@ def scatter_chart(
         RegEq = RegParams.mark_text(align='left', lineBreak='\n', fontSize = 18).encode(
             x=alt.value(width / 5),  # pixels from left
             y=alt.value(height / 20),  # pixels from top
-            color=alt.Color(color, legend=None),
+            color=alt.Color(color if reg_groups else 'common_group', legend=None),
             text='params:N'
         ).transform_calculate(
             params=reg_eq[reg]

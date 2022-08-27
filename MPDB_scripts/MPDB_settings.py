@@ -1,6 +1,7 @@
 MPDB_server: str = '192.124.245.26'
 
-particleQuery: str = '''SELECT distinct
+particleQuery: str = '''-- TODO: simplify column names, e.g. avoid non-ascii characters
+                SELECT distinct
                     `p`.`Sample` AS `Sample`,
                     `p`.`IDParticles` AS `IDParticles`,
                     `s`.`Site_name` AS `Site_name`,
@@ -20,7 +21,7 @@ particleQuery: str = '''SELECT distinct
                     `s`.`IDSample` AS `sample_ID`,
                     `s`.`Sampling_weight_[kg]` AS `Sampling_weight_[kg]`,
                     `s`.`Fraction_analysed` AS `Fraction_analysed`
-    FROM ((((`particles` `p`
+                FROM ((((`particles` `p`
                     JOIN `samples` `s` ON ((`p`.`Sample` = `s`.`Sample_name`)))
                     JOIN `particles2analysis` `pa` ON ((`p`.`IDParticles` = `pa`.`IDParticles`)))
                     JOIN `analysis` `a` ON ((`pa`.`IDAnalysis` = `a`.`IDAnalysis`)))
