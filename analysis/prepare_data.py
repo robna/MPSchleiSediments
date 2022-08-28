@@ -46,16 +46,14 @@ def height_vol_dens_mass(df):
     # Adjust heights (a.k.a. Size_3): not all Gepard heights can be trusted, see inline comments below
     # ------------------------------------------------------------------------------------------------
     df['orig_gepard_height'] = df['Size_3_[µm]']  # save original height for later use
-    df.loc[(df['Shape'] == 'irregular') & (df['Size_3_[µm]'] == np.nan)  # where no Gepard height exists, use regressed height
-           |(df['Size_3_[µm]'] == 0)  # due to insufficient z-resolution, small particles tend to cluster at 0 and 20 µm height
-           |(df['Size_3_[µm]'] == 20)
-           ,'Size_3_[µm]'] = (  
-        0.312 *
-        df['size_geom_mean'] +
-        3.706
-      )  # calculates the 3rd dimension of non-fibres, according to Kristinas correlation between size_geom_mean and manually measured height (n=116, R²=0.49)
+    df.loc[(df['Shape'] == 'irregular') & (df['Size_3_[µm]'].isna())  # where no Gepard height exists, use regressed height
+          |(df['Size_3_[µm]'] == 0)  # due to insufficient z-resolution, small particles tend to cluster at 0 µm height
+         #|(df['Size_3_[µm]'] == 20)
+           ,'Size_3_[µm]'] = (1.919764*np.log(df['Size_2_[µm]'])**0.660945)  # regression from particle with existinf Gepard height data
     df.loc[(df['Shape'] == 'irregular') & (df['Size_3_[µm]'] > df['Size_1_[µm]']), 'Size_3_[µm]'] = df['Size_1_[µm]']  # when irreg higher than long, use Size_1 as height
-    df.loc[(df['Shape'] ==     'fibre') & (df['Size_3_[µm]'] > df['Size_2_[µm]']), 'Size_3_[µm]'] = df['Size_2_[µm]']  # when fibre higher than wide: use Size_2 as height
+    df.loc[(df['Shape'] ==     'fibre') & (df['Size_3_[µm]'] > df['Size_2_[µm]'])
+          |(df['Shape'] ==     'fibre') & (df['Size_3_[µm]'].isna()), 'Size_3_[µm]'] = df['Size_2_[µm]']  # when fibre without height or higher than wide: use Size_2 as height
+    #df.loc[df['Shape'] ==     'fibre'] = df['Size_2_[µm]']  # alternative: use Size_2 as height for all fibres
 
     # Calculate volumes
     # -----------------
