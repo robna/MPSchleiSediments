@@ -17,9 +17,10 @@ def particle_amplification(MP):
     # by to extrapolate to whole sample. Then do the repetition using np. repeat and write it back into "MP".
     # Need to use "round" because we cannot create "3.5" particles out of one. This distorts the results slightly in
     # cases were the fraction analysed is not a whole number fraction like 1/2 or 1/3.
-    MP = MP.loc[np.repeat(MP.index.values, round(1 / MP.Fraction_analysed))]
-
-    MP.IDParticles = MP.IDParticles.astype(str) + '_' + MP.groupby('IDParticles').cumcount().astype(str)
+    repeater = round(1 / MP.Fraction_analysed)
+    repeater.loc[MP.Particle_name.str.contains('IOW') == True] = 1  # particles with 'IOW' in their name have been picked before splitting, thus should not be repeated
+    MP = MP.loc[np.repeat(MP.index.values, repeater)]  # repeat each particle according to the repeater value calculated above
+    MP.IDParticles = MP.IDParticles.astype(str) + '_' + MP.groupby('IDParticles').cumcount().astype(str)  # add a number to the ID to make it unique
     return MP
 
 

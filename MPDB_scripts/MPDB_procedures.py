@@ -39,7 +39,7 @@ def blank_procedure(samples_MP, IPF_blank_MP):
             # difference in size_geom_mean to that of the current blank particle is our candidate for elimination,
             # and we save its ID as 'eliminee'
 
-            IPF_elimination_list = IPF_elimination_list.append(pd.DataFrame({
+            IPF_elimination_list = pd.concat([IPF_elimination_list, pd.DataFrame({
                 # now we keep a record entry of all details of the particle that gets eliminated and append it to the
                 # prepared data frame
                 'ID_blank_particle': label,
@@ -48,7 +48,7 @@ def blank_procedure(samples_MP, IPF_blank_MP):
                 'polymer_type': current_blank_particle.polymer_type.iloc[0],
                 'Colour': current_blank_particle.Colour.iloc[0],
                 'Shape': current_blank_particle.Shape.iloc[0]
-            }, index=[0]), ignore_index=True)
+            }, index=[0])], ignore_index=True)
 
             samples_MP_copy.drop(eliminee, inplace=True)  # finally we drop the line of the eliminated particle from
             # our particles dataframe, so we can't match it to another blank particle in the next round
@@ -58,7 +58,7 @@ def blank_procedure(samples_MP, IPF_blank_MP):
         else:
 
             print('For blank particle #', label, ': ', 'Nothing to clean up.')
-    
+    print('Total number of particles eliminated due to IPF blank particle matches: ', len(IPF_elimination_list))
     return samples_MP_copy, IPF_elimination_list
 
 
@@ -85,7 +85,7 @@ def blind_procedure(env_MP, syn_blind):
                 eliminee = pd.to_numeric(current_blind_particle['size_diff']).idxmin()
                 sample_group.drop([eliminee], inplace=True)
 
-                IOW_elimination_list = IOW_elimination_list.append(pd.DataFrame({
+                IOW_elimination_list = pd.concat([IOW_elimination_list, pd.DataFrame({
                     'ID_blind_particle': label,
                     'Blind_sample': current_blind_particle.Sample_y.iloc[0],
                     'ID_sample_particle': eliminee,
@@ -93,13 +93,13 @@ def blind_procedure(env_MP, syn_blind):
                     'polymer_type': current_blind_particle.polymer_type.iloc[0],
                     'Colour': current_blind_particle.Colour.iloc[0],
                     'Shape': current_blind_particle.Shape.iloc[0]
-                }, index=[0]), ignore_index=True)
+                }, index=[0])], ignore_index=True)
 
                 env_MP_copy.drop(eliminee, inplace=True)
 
         print(len(IOW_elimination_list) - old_length, ' particles elimnated in:  ', sample_name)
         old_length = len(IOW_elimination_list)
-    print('Total number of particles eliminated due to blind particle matches: ', len(IOW_elimination_list))
+    print('Total number of particles eliminated due to IOW blind particle matches: ', len(IOW_elimination_list))
     
     return env_MP_copy, IOW_elimination_list
 
@@ -135,6 +135,6 @@ def make_syn_blind(IOW_blind_MP):
     syn_blind = IOW_blind_MP[0:0]
     for group_name, group_content in blind_PhTs:
         current_group = group_content.sort_values(by=['blind_size_geom_mean'], ascending=False)
-        syn_blind = syn_blind.append(current_group[0::blinds])  # Why is there no inplace option for pandas append?
+        syn_blind = pd.concat([syn_blind, current_group[0::blinds]])
     
     return syn_blind

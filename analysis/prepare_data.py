@@ -13,6 +13,7 @@ def get_pdd():
     """
     
     mp_pdd = pd.read_csv('../data/mp_pdd.csv', index_col=0)
+    mp_pdd.drop(columns=['Site_name', 'Compartment', 'Contributor', 'Project', 'Particle_name', 'lab_blank_ID', 'sample_ID'], inplace=True)  # columns not needed for analysis
     mp_pdd = height_vol_dens_mass(mp_pdd)  # calculate particle weights
     mp_pdd, gpn = outliers.low_freq_out(mp_pdd)  # remove low frequency outliers
     # mp_pdd = mp_pdd.loc[mp_pdd.Shape=='irregular']  # filter to only use fibres or irregulars
@@ -101,7 +102,7 @@ def aggregate_SDD(mp_pdd):
         mp_pdd = mp_pdd.groupby(['Sample'])
 
     mp_sdd = mp_pdd.agg(
-        Frequency=('Site_name', 'count'),
+        Frequency=('Sample', 'count'),
         FrequencyA500=('Size_1_µm', lambda x: (x >= 500).sum()),
         FrequencyB500=('Size_1_µm', lambda x: (x < 500).sum()),
         MPmass=('particle_mass_µg', 'sum'),
