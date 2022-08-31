@@ -18,7 +18,6 @@ xgboost = "*"
 pysal = "*"
 hvplot = "*"
 ipykernel = "*"
-mlxtend = "*"
 
 [dev-packages]
 
