@@ -1,11 +1,44 @@
 import numpy as np
 import pandas as pd
-import time
 from sklearn.neighbors import KernelDensity
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import LeaveOneOut
 from settings import Config
 import prepare_data
+import rpy2.robjects as ro
+import rpy2.robjects.packages as rpackages
+from rpy2.robjects.vectors import StrVector
+from rpy2.robjects.conversion import localconverter
+from rpy2.robjects import r, pandas2ri
+pandas2ri.activate()
+
+def r_setup(packnames):
+    # import R's "utils" package
+    utils = rpackages.importr('utils')
+    # select a mirror for R packages
+    utils.chooseCRANmirror(ind=1) # select the first mirror in the list
+    # Selectively install what needs to be install.
+    # We are fancy, just because we can.
+    names_to_install = [x for x in packnames if not rpackages.isinstalled(x)]
+    if len(names_to_install) > 0:
+        utils.install_packages(StrVector(names_to_install))
+
+
+def bound_kde(n, x, low, high, bw=Config.fixed_bw, method='adjustedKDE'):
+    r_setup(['scdensity'])
+    sckde = rpackages.importr('scdensity')
+    kde = sckde.scdensity(x, bw=bw,
+                          constraint=ro.StrVector(["boundedLeft", "boundedRight", "monotoneRightTail"]),
+                          opts=ro.ListVector({"lowerBound": low, "upperBound": high}),
+                          method=method)
+    # sample required amount of values from kde, adapted from https://alfurka.github.io/2020-12-16-sampling-with-density-function/
+    cdf = r.cumsum(kde.rx2('y')) / r.cumsum(kde.rx2('y'))[r.length(kde.rx2('y'))-1]
+    set_seed = r('set.seed')
+    sampled_values = []
+    for i in range(n):
+        set_seed(i)
+        sampled_values.append(kde.rx2('x')[r.findInterval(r.runif(1), cdf)+1-1][0])
+    return sampled_values, kde, cdf
 
 
 def optimise_bandwidth(data, weights):
