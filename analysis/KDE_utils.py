@@ -5,10 +5,8 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import LeaveOneOut
 from settings import Config
 import prepare_data
-import rpy2.robjects as ro
+import rpy2.robjects as ro  # Obs: rpy2 needs to be installed in v.3.5.1. most recent version (3.5.4) did only work in the jupyter notebooks, but not in streamlit!!
 import rpy2.robjects.packages as rpackages
-from rpy2.robjects.vectors import StrVector
-from rpy2.robjects.conversion import localconverter
 from rpy2.robjects import r, pandas2ri
 pandas2ri.activate()
 
@@ -25,7 +23,7 @@ def r_setup(packnames):
     # We are fancy, just because we can.
     names_to_install = [x for x in packnames if not rpackages.isinstalled(x)]
     if len(names_to_install) > 0:
-        utils.install_packages(StrVector(names_to_install))
+        utils.install_packages(ro.StrVector(names_to_install))
 
 
 def bound_kde(n, low, high, x=None, bw=Config.fixed_bw, method='adjustedKDE'):

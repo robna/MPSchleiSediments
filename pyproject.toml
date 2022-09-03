@@ -13,7 +13,7 @@ dependencies = [
     "statsmodels",
     "vega-datasets",
     "streamlit-vega-lite",
-    "rpy2",
+    "rpy2==3.5.1",
     "plotly",
     "pydeck",
     "scikit-bio>=0.5.7",

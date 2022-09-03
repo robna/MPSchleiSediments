@@ -1,9 +1,5 @@
-from itertools import groupby
-import numpy as np
 import pandas as pd
 from math import floor, ceil
-from sklearn import preprocessing
-import streamlit as st
 from statsmodels.graphics.gofplots import qqplot
 
 import prepare_data
@@ -13,6 +9,7 @@ from components import pca, PCOA
 from plots import scatter_chart, poly_comp_chart, histograms, biplot, station_map
 from settings import Config, shortnames, regio_sep
 
+import streamlit as st
 st.set_page_config(layout="wide")
 
 featurelist = [
@@ -84,7 +81,8 @@ def pdd2sdd(mp_pdd, regions):
 
 def filters(mp_pdd):
     
-    Config.size_dim = st.sidebar.radio('Select size dimension', ['size_geom_mean', 'Size_1_µm', 'Size_2_µm'])
+    Config.size_dim = st.sidebar.radio('Select size dimension', ['size_geom_mean', 'Size_1_µm', 'Size_2_µm', 'Size_3_µm',
+                                                                 'vESD', 'particle_volume_µm3', 'particle_mass_µg'])
     size_lims = floor(mp_pdd[Config.size_dim].min() / 10) * 10, ceil(mp_pdd[Config.size_dim].max() / 10) * 10
     Config.lower_size_limit = st.sidebar.number_input('Lower size limit',
                                                       value=size_lims[0],

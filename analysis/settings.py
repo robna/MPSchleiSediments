@@ -14,7 +14,7 @@ class Config:
     closing: int = 100 # make comp data closed to int value: 0 for no closure, 1 for fraction, 100 for percentages
     rebin_by_n: int = 5  # make sediment size bins coarser: sum up every n bins into one new
 
-    size_dim: str = 'size_geom_mean'  # size dimension to be used applying size limitation
+    size_dim: str = 'particle_volumen_µm3'  # which size dimension to use for the analysis
     lower_size_limit: float = 0  # the smallest particle size in µm included in the kde computation
     upper_size_limit: float = 5000  # the largest particle size in µm included in the kde computation
     lower_density_limit: float = 900  # the smallest particle density in kg/m3 included in the analysis
