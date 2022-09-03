@@ -28,6 +28,10 @@ class Config:
     fixed_bw: int = 75  # if optimise_bw = False: fixed bandwidth value to use for all kde's
     kernel: str = 'gaussian'  # type of kernel to be used
 
+    # shape-constrained KDE for particle heights
+    height_low: float = 0  # lowest height value which should be selected for height update from KDE
+    height_high: float = 30  # highest height value which should be selected for height update from KDE
+
     bin_conc: bool = False  # True: calculate MP conc. (#/kg) for individual size bins; False: calculate percentages
 
     MPlow: int = 50  # TODO: are these still needed?

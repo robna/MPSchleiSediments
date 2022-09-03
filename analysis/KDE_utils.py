@@ -13,6 +13,10 @@ from rpy2.robjects import r, pandas2ri
 pandas2ri.activate()
 
 def r_setup(packnames):
+    """
+    Function to install R packages. Taken from https://rpy2.github.io/doc/latest/html/introduction.html#installing-packages
+    :param packnames: list of R packages to install
+    """
     # import R's "utils" package
     utils = rpackages.importr('utils')
     # select a mirror for R packages
@@ -24,7 +28,22 @@ def r_setup(packnames):
         utils.install_packages(StrVector(names_to_install))
 
 
-def bound_kde(n, x, low, high, bw=Config.fixed_bw, method='adjustedKDE'):
+def bound_kde(n, low, high, x=None, bw=Config.fixed_bw, method='adjustedKDE'):
+    """
+    Calculates a shape restricted KDE in R.
+    :param n: number of values to sample from the calculated distribution
+    :param low: lower boundary of the shape restriction (i.e. force probability density of 0 below this value)
+    :param high: upper boundary of the shape restriction (i.e. force probability density of 0 above this value)  -- Obs: only works correctly for 'greedy' method
+    :param x: array / series of values to evaluate the probability density at
+    :param bw: bandwidth to use for the KDE
+    :param method: method to use for the shape restriction. Options are 'adjusted' (default), 'weighted' and 'greedy'
+    :return sampled_values: array of sampled values from the calculated distribution
+    :return kde: the R kde object
+    :return cdf: the corresponding cumulative distribution function
+    """
+    if x is None:
+        x_df = pd.read_csv('../data/ManualHeights_Schlei_S8_v2.csv')
+        x = x_df.loc[(x_df.manual_Size_3_um >= low) & (x_df.manual_Size_3_um <= high), 'manual_Size_3_um']
     r_setup(['scdensity'])
     sckde = rpackages.importr('scdensity')
     kde = sckde.scdensity(x, bw=bw,

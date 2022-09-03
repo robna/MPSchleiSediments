@@ -3,6 +3,7 @@ import pandas as pd
 import geopandas as gpd
 from skbio.stats.composition import closure
 from settings import densities, regio_sep, shortnames, Config
+from KDE_utils import bound_kde
 import outliers
 import geo
 
@@ -47,10 +48,31 @@ def height_vol_dens_mass(df):
     # Adjust heights (a.k.a. Size_3): not all Gepard heights can be trusted, see inline comments below
     # ------------------------------------------------------------------------------------------------
     df['orig_gepard_height'] = df['Size_3_[µm]']  # save original height for later use
-    df.loc[(df['Shape'] == 'irregular') & (df['Size_3_[µm]'].isna())  # where no Gepard height exists, use regressed height
-          |(df['Size_3_[µm]'] == 0)  # due to insufficient z-resolution, small particles tend to cluster at 0 µm height
+
+    # There should be no more particles without height. Hence, the operation below is commented out and only here for documentation.
+    #df.loc[(df['Shape'] == 'irregular') & (df['Size_3_[µm]'].isna())  # where no Gepard height exists, use regressed height
+         #|(df['Size_3_[µm]'] == 0)  # due to insufficient z-resolution, small particles tend to cluster at 0 µm height
          #|(df['Size_3_[µm]'] == 20)
-           ,'Size_3_[µm]'] = (1.919764*np.log(df['Size_2_[µm]'])**0.660945)  # regression from particle with existinf Gepard height data
+         #,'Size_3_[µm]'] = (1.919764*np.log(df['Size_2_[µm]'])**0.660945)  # regression from particle with existing Gepard height data
+    
+    # where particle Gepard height is low, get height from shape-constrained height distribution of manually measured particles
+    # this is to mitigate the effect of the low z-resolution of the Gepard, which produces wrong and clustered height data for small particles
+    hw = df.loc[(df['Shape'] == 'irregular') &  # generate weights for the scKDE-sampled height values
+                (df['Size_3_[µm]'] >= Config.height_low) &
+                (df['Size_3_[µm]'] <= Config.height_high)
+                , 'Size_3_[µm]'
+               ].apply(lambda x: 0.8 *  # weight for scKDE-sampled height values at the lower end of the height range, default 80%
+                    max(0,  # don't allow negative weights
+                        min(1,(  # don't allow weights > 1
+                            (Config.height_high - x) / (Config.height_high - Config.height_low)  # calculate the individual weights
+                              )
+                           )
+                       )
+                      )
+    sampled_values, kde, cdf = bound_kde(hw.shape[0], Config.height_low, Config.height_high, bw=3, method="weight")
+    # blend the scKDE-sampled height values with the Gepard height values applying a linear weight decrease with heights increasing within the [low, high] range
+    df.loc[hw.index, 'Size_3_[µm]'] = hw * sampled_values + (1 - hw) * df.loc[hw.index, 'Size_3_[µm]']
+
     df.loc[(df['Shape'] == 'irregular') & (df['Size_3_[µm]'] > df['Size_1_[µm]']), 'Size_3_[µm]'] = df['Size_1_[µm]']  # when irreg higher than long, use Size_1 as height
     df.loc[(df['Shape'] ==     'fibre') & (df['Size_3_[µm]'] > df['Size_2_[µm]'])
           |(df['Shape'] ==     'fibre') & (df['Size_3_[µm]'].isna()), 'Size_3_[µm]'] = df['Size_2_[µm]']  # when fibre without height or higher than wide: use Size_2 as height

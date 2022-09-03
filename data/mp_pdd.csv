@@ -3682,21 +3682,21 @@ IDParticles,Sample,Site_name,GPS_LON,GPS_LAT,Compartment,Contributor,Project,Par
 45055_1,Schlei_S13,Schlei,9.62153,54.5157,sediment,27,BONUS MICROPOLL,,91.0,87.0,66.0488,irregular,unspecific,5,Poly (methyl methacrylate),Poly(methyl methacrylate),1399.0,1203,0.071,0.25,88.97752525216691
 45055_2,Schlei_S13,Schlei,9.62153,54.5157,sediment,27,BONUS MICROPOLL,,91.0,87.0,66.0488,irregular,unspecific,5,Poly (methyl methacrylate),Poly(methyl methacrylate),1399.0,1203,0.071,0.25,88.97752525216691
 45055_3,Schlei_S13,Schlei,9.62153,54.5157,sediment,27,BONUS MICROPOLL,,91.0,87.0,66.0488,irregular,unspecific,5,Poly (methyl methacrylate),Poly(methyl methacrylate),1399.0,1203,0.071,0.25,88.97752525216691
-45056_0,Schlei_S13,Schlei,9.62153,54.5157,sediment,27,BONUS MICROPOLL,,276.0,63.0,,irregular,unspecific,5,Polypropylene,Polypropylene,1399.0,1203,0.071,0.25,131.86356585501545
-45056_1,Schlei_S13,Schlei,9.62153,54.5157,sediment,27,BONUS MICROPOLL,,276.0,63.0,,irregular,unspecific,5,Polypropylene,Polypropylene,1399.0,1203,0.071,0.25,131.86356585501545
-45056_2,Schlei_S13,Schlei,9.62153,54.5157,sediment,27,BONUS MICROPOLL,,276.0,63.0,,irregular,unspecific,5,Polypropylene,Polypropylene,1399.0,1203,0.071,0.25,131.86356585501545
-45056_3,Schlei_S13,Schlei,9.62153,54.5157,sediment,27,BONUS MICROPOLL,,276.0,63.0,,irregular,unspecific,5,Polypropylene,Polypropylene,1399.0,1203,0.071,0.25,131.86356585501545
-45058_0,Schlei_S13,Schlei,9.62153,54.5157,sediment,27,BONUS MICROPOLL,,420.0,69.0,,irregular,unspecific,5,Polypropylene,Polypropylene,1399.0,1203,0.071,0.25,170.23513150933329
-45058_1,Schlei_S13,Schlei,9.62153,54.5157,sediment,27,BONUS MICROPOLL,,420.0,69.0,,irregular,unspecific,5,Polypropylene,Polypropylene,1399.0,1203,0.071,0.25,170.23513150933329
-45058_2,Schlei_S13,Schlei,9.62153,54.5157,sediment,27,BONUS MICROPOLL,,420.0,69.0,,irregular,unspecific,5,Polypropylene,Polypropylene,1399.0,1203,0.071,0.25,170.23513150933329
-45058_3,Schlei_S13,Schlei,9.62153,54.5157,sediment,27,BONUS MICROPOLL,,420.0,69.0,,irregular,unspecific,5,Polypropylene,Polypropylene,1399.0,1203,0.071,0.25,170.23513150933329
-45060_0,Schlei_S13,Schlei,9.62153,54.5157,sediment,27,BONUS MICROPOLL,,1065.0,38.0,,fibre,unspecific,5,Poly (ethylene terephthalate),Poly(ethylene terephtalate),1399.0,1203,0.071,0.25,201.17156856772777
-45060_1,Schlei_S13,Schlei,9.62153,54.5157,sediment,27,BONUS MICROPOLL,,1065.0,38.0,,fibre,unspecific,5,Poly (ethylene terephthalate),Poly(ethylene terephtalate),1399.0,1203,0.071,0.25,201.17156856772777
-45060_2,Schlei_S13,Schlei,9.62153,54.5157,sediment,27,BONUS MICROPOLL,,1065.0,38.0,,fibre,unspecific,5,Poly (ethylene terephthalate),Poly(ethylene terephtalate),1399.0,1203,0.071,0.25,201.17156856772777
-45060_3,Schlei_S13,Schlei,9.62153,54.5157,sediment,27,BONUS MICROPOLL,,1065.0,38.0,,fibre,unspecific,5,Poly (ethylene terephthalate),Poly(ethylene terephtalate),1399.0,1203,0.071,0.25,201.17156856772777
-45062_1,Schlei_S13,Schlei,9.62153,54.5157,sediment,27,BONUS MICROPOLL,,153.0,88.0,,irregular,unspecific,5,Polyethylene,Polyethylene,1399.0,1203,0.071,0.25,116.0344776348823
-45062_2,Schlei_S13,Schlei,9.62153,54.5157,sediment,27,BONUS MICROPOLL,,153.0,88.0,,irregular,unspecific,5,Polyethylene,Polyethylene,1399.0,1203,0.071,0.25,116.0344776348823
-45062_3,Schlei_S13,Schlei,9.62153,54.5157,sediment,27,BONUS MICROPOLL,,153.0,88.0,,irregular,unspecific,5,Polyethylene,Polyethylene,1399.0,1203,0.071,0.25,116.0344776348823
+45056_0,Schlei_S13,Schlei,9.62153,54.5157,sediment,27,BONUS MICROPOLL,,276.0,63.0,34.0,irregular,unspecific,5,Polypropylene,Polypropylene,1399.0,1203,0.071,0.25,131.86356585501545
+45056_1,Schlei_S13,Schlei,9.62153,54.5157,sediment,27,BONUS MICROPOLL,,276.0,63.0,34.0,irregular,unspecific,5,Polypropylene,Polypropylene,1399.0,1203,0.071,0.25,131.86356585501545
+45056_2,Schlei_S13,Schlei,9.62153,54.5157,sediment,27,BONUS MICROPOLL,,276.0,63.0,34.0,irregular,unspecific,5,Polypropylene,Polypropylene,1399.0,1203,0.071,0.25,131.86356585501545
+45056_3,Schlei_S13,Schlei,9.62153,54.5157,sediment,27,BONUS MICROPOLL,,276.0,63.0,34.0,irregular,unspecific,5,Polypropylene,Polypropylene,1399.0,1203,0.071,0.25,131.86356585501545
+45058_0,Schlei_S13,Schlei,9.62153,54.5157,sediment,27,BONUS MICROPOLL,,420.0,69.0,250.0,irregular,unspecific,5,Polypropylene,Polypropylene,1399.0,1203,0.071,0.25,170.23513150933329
+45058_1,Schlei_S13,Schlei,9.62153,54.5157,sediment,27,BONUS MICROPOLL,,420.0,69.0,250.0,irregular,unspecific,5,Polypropylene,Polypropylene,1399.0,1203,0.071,0.25,170.23513150933329
+45058_2,Schlei_S13,Schlei,9.62153,54.5157,sediment,27,BONUS MICROPOLL,,420.0,69.0,250.0,irregular,unspecific,5,Polypropylene,Polypropylene,1399.0,1203,0.071,0.25,170.23513150933329
+45058_3,Schlei_S13,Schlei,9.62153,54.5157,sediment,27,BONUS MICROPOLL,,420.0,69.0,250.0,irregular,unspecific,5,Polypropylene,Polypropylene,1399.0,1203,0.071,0.25,170.23513150933329
+45060_0,Schlei_S13,Schlei,9.62153,54.5157,sediment,27,BONUS MICROPOLL,,1065.0,38.0,60.0,fibre,unspecific,5,Poly (ethylene terephthalate),Poly(ethylene terephtalate),1399.0,1203,0.071,0.25,201.17156856772777
+45060_1,Schlei_S13,Schlei,9.62153,54.5157,sediment,27,BONUS MICROPOLL,,1065.0,38.0,60.0,fibre,unspecific,5,Poly (ethylene terephthalate),Poly(ethylene terephtalate),1399.0,1203,0.071,0.25,201.17156856772777
+45060_2,Schlei_S13,Schlei,9.62153,54.5157,sediment,27,BONUS MICROPOLL,,1065.0,38.0,60.0,fibre,unspecific,5,Poly (ethylene terephthalate),Poly(ethylene terephtalate),1399.0,1203,0.071,0.25,201.17156856772777
+45060_3,Schlei_S13,Schlei,9.62153,54.5157,sediment,27,BONUS MICROPOLL,,1065.0,38.0,60.0,fibre,unspecific,5,Poly (ethylene terephthalate),Poly(ethylene terephtalate),1399.0,1203,0.071,0.25,201.17156856772777
+45062_1,Schlei_S13,Schlei,9.62153,54.5157,sediment,27,BONUS MICROPOLL,,153.0,88.0,32.0,irregular,unspecific,5,Polyethylene,Polyethylene,1399.0,1203,0.071,0.25,116.0344776348823
+45062_2,Schlei_S13,Schlei,9.62153,54.5157,sediment,27,BONUS MICROPOLL,,153.0,88.0,32.0,irregular,unspecific,5,Polyethylene,Polyethylene,1399.0,1203,0.071,0.25,116.0344776348823
+45062_3,Schlei_S13,Schlei,9.62153,54.5157,sediment,27,BONUS MICROPOLL,,153.0,88.0,32.0,irregular,unspecific,5,Polyethylene,Polyethylene,1399.0,1203,0.071,0.25,116.0344776348823
 45072_0,Schlei_S27,Schlei,9.9332,54.6359,sediment,27,BONUS MICROPOLL,,203.0,23.0,48.5336,fibre,unspecific,5,Poly (ethylene terephthalate),Poly(ethylene terephtalate),1403.0,1217,0.25,0.25,68.33008122342603
 45072_1,Schlei_S27,Schlei,9.9332,54.6359,sediment,27,BONUS MICROPOLL,,203.0,23.0,48.5336,fibre,unspecific,5,Poly (ethylene terephthalate),Poly(ethylene terephtalate),1403.0,1217,0.25,0.25,68.33008122342603
 45072_2,Schlei_S27,Schlei,9.9332,54.6359,sediment,27,BONUS MICROPOLL,,203.0,23.0,48.5336,fibre,unspecific,5,Poly (ethylene terephthalate),Poly(ethylene terephtalate),1403.0,1217,0.25,0.25,68.33008122342603
@@ -4984,10 +4984,10 @@ IDParticles,Sample,Site_name,GPS_LON,GPS_LAT,Compartment,Contributor,Project,Par
 46260_0,Schlei_S25,Schlei,9.88715,54.6143,sediment,27,BONUS MICROPOLL,,290.0,33.0,78.875,fibre,unspecific,5,Poly (ethylene terephthalate),Poly(ethylene terephtalate),1402.0,1215,0.13,1.0,97.82637681116479
 46264_0,Schlei_S25,Schlei,9.88715,54.6143,sediment,27,BONUS MICROPOLL,,179.0,63.0,0.0,irregular,unspecific,5,Polypropylene,PP+PY17+PB15,1402.0,1215,0.13,1.0,106.19322012256714
 46265_0,Schlei_S25,Schlei,9.88715,54.6143,sediment,27,BONUS MICROPOLL,,68.0,68.0,77.271,irregular,unspecific,5,Poly (methyl methacrylate),Poly(methyl methacrylate),1402.0,1215,0.13,1.0,68.0
-46287_0,Schlei_S23,Schlei,9.78108,54.5722,sediment,27,BONUS MICROPOLL,P13_IPF gepickt,850.0,200.0,,irregular,unspecific,18,Polypropylene,PP,1391.0,1213,0.093,1.0,412.31056256176606
-46288_0,Schlei_S23,Schlei,9.78108,54.5722,sediment,27,BONUS MICROPOLL,P16_IPF gepickt,340.0,205.0,,irregular,unspecific,11,Polycaprolacton,Polycaprolacton,1391.0,1213,0.093,1.0,264.0075756488817
-46291_0,Schlei_S23,Schlei,9.78108,54.5722,sediment,27,BONUS MICROPOLL,P21_IPF gepickt,560.0,180.0,,irregular,unspecific,11,Polypropylene,Polypropylene,1391.0,1213,0.093,1.0,317.49015732775086
-46305_0,Schlei_S25,Schlei,9.88715,54.6143,sediment,27,BONUS MICROPOLL,IPF-P1,4800.0,413.37,,irregular,unspecific,11,Ethylen-Vinylacetat-Copolymer,Ethylen-Vinylacetat-Copolymer,1402.0,1215,0.13,1.0,1408.6078233489973
+46287_0,Schlei_S23,Schlei,9.78108,54.5722,sediment,27,BONUS MICROPOLL,P13_IPF gepickt,850.0,200.0,14.6,irregular,unspecific,18,Polypropylene,PP,1391.0,1213,0.093,1.0,412.31056256176606
+46288_0,Schlei_S23,Schlei,9.78108,54.5722,sediment,27,BONUS MICROPOLL,P16_IPF gepickt,340.0,205.0,8.76,irregular,unspecific,11,Polycaprolacton,Polycaprolacton,1391.0,1213,0.093,1.0,264.0075756488817
+46291_0,Schlei_S23,Schlei,9.78108,54.5722,sediment,27,BONUS MICROPOLL,P21_IPF gepickt,560.0,180.0,17.52,irregular,unspecific,11,Polypropylene,Polypropylene,1391.0,1213,0.093,1.0,317.49015732775086
+46305_0,Schlei_S25,Schlei,9.88715,54.6143,sediment,27,BONUS MICROPOLL,IPF-P1,4800.0,413.37,93.52,irregular,unspecific,11,Ethylen-Vinylacetat-Copolymer,Ethylen-Vinylacetat-Copolymer,1402.0,1215,0.13,1.0,1408.6078233489973
 51790_0,Schlei_S16,Schlei,9.67003,54.514,sediment,27,BONUS MICROPOLL,,52.0,34.0,55.0821,irregular,unspecific,5,Polypropylene,Polypropylene,,1206,0.09,0.25,42.04759208325728
 51790_1,Schlei_S16,Schlei,9.67003,54.514,sediment,27,BONUS MICROPOLL,,52.0,34.0,55.0821,irregular,unspecific,5,Polypropylene,Polypropylene,,1206,0.09,0.25,42.04759208325728
 51790_2,Schlei_S16,Schlei,9.67003,54.514,sediment,27,BONUS MICROPOLL,,52.0,34.0,55.0821,irregular,unspecific,5,Polypropylene,Polypropylene,,1206,0.09,0.25,42.04759208325728
@@ -7585,21 +7585,14 @@ IDParticles,Sample,Site_name,GPS_LON,GPS_LAT,Compartment,Contributor,Project,Par
 52617_1,Schlei_S6,Schlei,9.61715,54.522,sediment,27,BONUS MICROPOLL,,130.0,25.0,12.8926,fibre,unspecific,5,Polypropylene,PP+PY17,1491.0,1195,0.04,0.25,57.0087712549569
 52617_2,Schlei_S6,Schlei,9.61715,54.522,sediment,27,BONUS MICROPOLL,,130.0,25.0,12.8926,fibre,unspecific,5,Polypropylene,PP+PY17,1491.0,1195,0.04,0.25,57.0087712549569
 52617_3,Schlei_S6,Schlei,9.61715,54.522,sediment,27,BONUS MICROPOLL,,130.0,25.0,12.8926,fibre,unspecific,5,Polypropylene,PP+PY17,1491.0,1195,0.04,0.25,57.0087712549569
-52620_1,Schlei_S7,Schlei,9.61202,54.5183,sediment,27,BONUS MICROPOLL,,53.0,46.0,,irregular,unspecific,5,Epoxy resin,Epoxy resin1,1487.0,1196,0.081,0.125,49.37610758251404
-52620_2,Schlei_S7,Schlei,9.61202,54.5183,sediment,27,BONUS MICROPOLL,,53.0,46.0,,irregular,unspecific,5,Epoxy resin,Epoxy resin1,1487.0,1196,0.081,0.125,49.37610758251404
-52620_3,Schlei_S7,Schlei,9.61202,54.5183,sediment,27,BONUS MICROPOLL,,53.0,46.0,,irregular,unspecific,5,Epoxy resin,Epoxy resin1,1487.0,1196,0.081,0.125,49.37610758251404
-52620_4,Schlei_S7,Schlei,9.61202,54.5183,sediment,27,BONUS MICROPOLL,,53.0,46.0,,irregular,unspecific,5,Epoxy resin,Epoxy resin1,1487.0,1196,0.081,0.125,49.37610758251404
-52620_5,Schlei_S7,Schlei,9.61202,54.5183,sediment,27,BONUS MICROPOLL,,53.0,46.0,,irregular,unspecific,5,Epoxy resin,Epoxy resin1,1487.0,1196,0.081,0.125,49.37610758251404
-52620_6,Schlei_S7,Schlei,9.61202,54.5183,sediment,27,BONUS MICROPOLL,,53.0,46.0,,irregular,unspecific,5,Epoxy resin,Epoxy resin1,1487.0,1196,0.081,0.125,49.37610758251404
-52620_7,Schlei_S7,Schlei,9.61202,54.5183,sediment,27,BONUS MICROPOLL,,53.0,46.0,,irregular,unspecific,5,Epoxy resin,Epoxy resin1,1487.0,1196,0.081,0.125,49.37610758251404
-52622_0,Schlei_S7,Schlei,9.61202,54.5183,sediment,27,BONUS MICROPOLL,,51.0,33.0,,irregular,unspecific,5,Polystyrene,Polystyrene,1487.0,1196,0.081,0.125,41.02438299353203
-52622_1,Schlei_S7,Schlei,9.61202,54.5183,sediment,27,BONUS MICROPOLL,,51.0,33.0,,irregular,unspecific,5,Polystyrene,Polystyrene,1487.0,1196,0.081,0.125,41.02438299353203
-52622_2,Schlei_S7,Schlei,9.61202,54.5183,sediment,27,BONUS MICROPOLL,,51.0,33.0,,irregular,unspecific,5,Polystyrene,Polystyrene,1487.0,1196,0.081,0.125,41.02438299353203
-52622_3,Schlei_S7,Schlei,9.61202,54.5183,sediment,27,BONUS MICROPOLL,,51.0,33.0,,irregular,unspecific,5,Polystyrene,Polystyrene,1487.0,1196,0.081,0.125,41.02438299353203
-52622_4,Schlei_S7,Schlei,9.61202,54.5183,sediment,27,BONUS MICROPOLL,,51.0,33.0,,irregular,unspecific,5,Polystyrene,Polystyrene,1487.0,1196,0.081,0.125,41.02438299353203
-52622_5,Schlei_S7,Schlei,9.61202,54.5183,sediment,27,BONUS MICROPOLL,,51.0,33.0,,irregular,unspecific,5,Polystyrene,Polystyrene,1487.0,1196,0.081,0.125,41.02438299353203
-52622_6,Schlei_S7,Schlei,9.61202,54.5183,sediment,27,BONUS MICROPOLL,,51.0,33.0,,irregular,unspecific,5,Polystyrene,Polystyrene,1487.0,1196,0.081,0.125,41.02438299353203
-52622_7,Schlei_S7,Schlei,9.61202,54.5183,sediment,27,BONUS MICROPOLL,,51.0,33.0,,irregular,unspecific,5,Polystyrene,Polystyrene,1487.0,1196,0.081,0.125,41.02438299353203
+52620_0,Schlei_S6,Schlei,9.61715,54.522,sediment,27,BONUS MICROPOLL,,53.0,46.0,25.7911,irregular,unspecific,5,Epoxy resin,Epoxy resin1,1491.0,1195,0.04,0.25,49.37610758251404
+52620_1,Schlei_S6,Schlei,9.61715,54.522,sediment,27,BONUS MICROPOLL,,53.0,46.0,25.7911,irregular,unspecific,5,Epoxy resin,Epoxy resin1,1491.0,1195,0.04,0.25,49.37610758251404
+52620_2,Schlei_S6,Schlei,9.61715,54.522,sediment,27,BONUS MICROPOLL,,53.0,46.0,25.7911,irregular,unspecific,5,Epoxy resin,Epoxy resin1,1491.0,1195,0.04,0.25,49.37610758251404
+52620_3,Schlei_S6,Schlei,9.61715,54.522,sediment,27,BONUS MICROPOLL,,53.0,46.0,25.7911,irregular,unspecific,5,Epoxy resin,Epoxy resin1,1491.0,1195,0.04,0.25,49.37610758251404
+52622_0,Schlei_S6,Schlei,9.61715,54.522,sediment,27,BONUS MICROPOLL,,51.0,33.0,28.636,irregular,unspecific,5,Polystyrene,Polystyrene,1491.0,1195,0.04,0.25,41.02438299353203
+52622_1,Schlei_S6,Schlei,9.61715,54.522,sediment,27,BONUS MICROPOLL,,51.0,33.0,28.636,irregular,unspecific,5,Polystyrene,Polystyrene,1491.0,1195,0.04,0.25,41.02438299353203
+52622_2,Schlei_S6,Schlei,9.61715,54.522,sediment,27,BONUS MICROPOLL,,51.0,33.0,28.636,irregular,unspecific,5,Polystyrene,Polystyrene,1491.0,1195,0.04,0.25,41.02438299353203
+52622_3,Schlei_S6,Schlei,9.61715,54.522,sediment,27,BONUS MICROPOLL,,51.0,33.0,28.636,irregular,unspecific,5,Polystyrene,Polystyrene,1491.0,1195,0.04,0.25,41.02438299353203
 52629_0,Schlei_S8,Schlei,9.60645,54.5253,sediment,27,BONUS MICROPOLL,,317.0,26.0,16.6756,fibre,unspecific,5,Poly (ethylene terephthalate),Poly(ethylene terephthalate),1398.0,1197,0.105,0.5,90.78546139112804
 52629_1,Schlei_S8,Schlei,9.60645,54.5253,sediment,27,BONUS MICROPOLL,,317.0,26.0,16.6756,fibre,unspecific,5,Poly (ethylene terephthalate),Poly(ethylene terephthalate),1398.0,1197,0.105,0.5,90.78546139112804
 52630_0,Schlei_S8,Schlei,9.60645,54.5253,sediment,27,BONUS MICROPOLL,,248.0,61.0,29.1443,irregular,unspecific,5,Poly (ethylene terephthalate),Poly(ethylene terephthalate),1398.0,1197,0.105,0.5,122.99593489217439
@@ -12225,3 +12218,19 @@ IDParticles,Sample,Site_name,GPS_LON,GPS_LAT,Compartment,Contributor,Project,Par
 54295_1,Schlei_S32,Schlei,9.98658,54.6874,sediment,27,BONUS MICROPOLL,,230.0,168.0,168.217,irregular,unspecific,5,Poly (vinyl chloride),Poly(vinyl chloride),1485.0,1222,0.179,0.25,196.57059800488983
 54295_2,Schlei_S32,Schlei,9.98658,54.6874,sediment,27,BONUS MICROPOLL,,230.0,168.0,168.217,irregular,unspecific,5,Poly (vinyl chloride),Poly(vinyl chloride),1485.0,1222,0.179,0.25,196.57059800488983
 54295_3,Schlei_S32,Schlei,9.98658,54.6874,sediment,27,BONUS MICROPOLL,,230.0,168.0,168.217,irregular,unspecific,5,Poly (vinyl chloride),Poly(vinyl chloride),1485.0,1222,0.179,0.25,196.57059800488983
+60589_0,Schlei_S7,Schlei,9.61202,54.5183,sediment,27,BONUS MICROPOLL,,123.0,16.0,16.5227,fibre,unspecific,5,Polypropylene,Polypropylene,1487.0,1196,0.081,0.125,44.36214602563767
+60589_1,Schlei_S7,Schlei,9.61202,54.5183,sediment,27,BONUS MICROPOLL,,123.0,16.0,16.5227,fibre,unspecific,5,Polypropylene,Polypropylene,1487.0,1196,0.081,0.125,44.36214602563767
+60589_2,Schlei_S7,Schlei,9.61202,54.5183,sediment,27,BONUS MICROPOLL,,123.0,16.0,16.5227,fibre,unspecific,5,Polypropylene,Polypropylene,1487.0,1196,0.081,0.125,44.36214602563767
+60589_3,Schlei_S7,Schlei,9.61202,54.5183,sediment,27,BONUS MICROPOLL,,123.0,16.0,16.5227,fibre,unspecific,5,Polypropylene,Polypropylene,1487.0,1196,0.081,0.125,44.36214602563767
+60589_4,Schlei_S7,Schlei,9.61202,54.5183,sediment,27,BONUS MICROPOLL,,123.0,16.0,16.5227,fibre,unspecific,5,Polypropylene,Polypropylene,1487.0,1196,0.081,0.125,44.36214602563767
+60589_5,Schlei_S7,Schlei,9.61202,54.5183,sediment,27,BONUS MICROPOLL,,123.0,16.0,16.5227,fibre,unspecific,5,Polypropylene,Polypropylene,1487.0,1196,0.081,0.125,44.36214602563767
+60589_6,Schlei_S7,Schlei,9.61202,54.5183,sediment,27,BONUS MICROPOLL,,123.0,16.0,16.5227,fibre,unspecific,5,Polypropylene,Polypropylene,1487.0,1196,0.081,0.125,44.36214602563767
+60589_7,Schlei_S7,Schlei,9.61202,54.5183,sediment,27,BONUS MICROPOLL,,123.0,16.0,16.5227,fibre,unspecific,5,Polypropylene,Polypropylene,1487.0,1196,0.081,0.125,44.36214602563767
+60590_0,Schlei_S7,Schlei,9.61202,54.5183,sediment,27,BONUS MICROPOLL,,243.0,194.0,55.0421,irregular,unspecific,5,Polystyrene,Polystyrene,1487.0,1196,0.081,0.125,217.12208547266673
+60590_1,Schlei_S7,Schlei,9.61202,54.5183,sediment,27,BONUS MICROPOLL,,243.0,194.0,55.0421,irregular,unspecific,5,Polystyrene,Polystyrene,1487.0,1196,0.081,0.125,217.12208547266673
+60590_2,Schlei_S7,Schlei,9.61202,54.5183,sediment,27,BONUS MICROPOLL,,243.0,194.0,55.0421,irregular,unspecific,5,Polystyrene,Polystyrene,1487.0,1196,0.081,0.125,217.12208547266673
+60590_3,Schlei_S7,Schlei,9.61202,54.5183,sediment,27,BONUS MICROPOLL,,243.0,194.0,55.0421,irregular,unspecific,5,Polystyrene,Polystyrene,1487.0,1196,0.081,0.125,217.12208547266673
+60590_4,Schlei_S7,Schlei,9.61202,54.5183,sediment,27,BONUS MICROPOLL,,243.0,194.0,55.0421,irregular,unspecific,5,Polystyrene,Polystyrene,1487.0,1196,0.081,0.125,217.12208547266673
+60590_5,Schlei_S7,Schlei,9.61202,54.5183,sediment,27,BONUS MICROPOLL,,243.0,194.0,55.0421,irregular,unspecific,5,Polystyrene,Polystyrene,1487.0,1196,0.081,0.125,217.12208547266673
+60590_6,Schlei_S7,Schlei,9.61202,54.5183,sediment,27,BONUS MICROPOLL,,243.0,194.0,55.0421,irregular,unspecific,5,Polystyrene,Polystyrene,1487.0,1196,0.081,0.125,217.12208547266673
+60590_7,Schlei_S7,Schlei,9.61202,54.5183,sediment,27,BONUS MICROPOLL,,243.0,194.0,55.0421,irregular,unspecific,5,Polystyrene,Polystyrene,1487.0,1196,0.081,0.125,217.12208547266673
