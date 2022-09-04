@@ -16,6 +16,7 @@ def get_pdd():
     mp_pdd = pd.read_csv('../data/mp_pdd.csv', index_col=0)
     mp_pdd.drop(columns=['Site_name', 'Compartment', 'Contributor', 'Project', 'Particle_name', 'lab_blank_ID', 'sample_ID'], inplace=True)  # columns not needed for analysis
     mp_pdd = height_vol_dens_mass(mp_pdd)  # calculate particle weights
+    mp_pdd = geom_mean_3d(mp_pdd)  # calculate the geometric mean from 3 size dimensions
     mp_pdd, gpn = outliers.low_freq_out(mp_pdd)  # remove low frequency outliers
     # mp_pdd = mp_pdd.loc[mp_pdd.Shape=='irregular']  # filter to only use fibres or irregulars
     mp_pdd['polymer_type'] = mp_pdd['polymer_type'].map(shortnames).fillna(mp_pdd['polymer_type'])  # use abbreviations for polymer names but retain original names for polymers not present in shortnames
@@ -115,6 +116,10 @@ def height_vol_dens_mass(df):
         Sample['particle_mass_share'] = Sample['particle_mass_[µg]'] / Sample['particle_mass_[µg]'].sum()
         df.loc[Sample.index, 'particle_mass_share'] = Sample['particle_mass_share']
 
+    return df
+
+def geom_mean_3d(df):
+    df['size_geom_mean_3d'] = (df['Size_1_[µm]'] * df['Size_2_[µm]'] * df['Size_3_[µm]']) ** (1/3)
     return df
 
 

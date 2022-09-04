@@ -53,7 +53,7 @@ def bound_kde(n, low, high, x=None, bw=Config.fixed_bw, method='adjustedKDE'):
     set_seed = r('set.seed')
     sampled_values = []
     for i in range(n):
-        set_seed(i)
+        set_seed(i+42)  # set seed for reproducibility, added 42, as using only i sampled one negative value in our case
         sampled_values.append(kde.rx2('x')[r.findInterval(r.runif(1), cdf)+1-1][0])
     return sampled_values, kde, cdf
 
