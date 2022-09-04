@@ -14,12 +14,13 @@ def particle_amplification(MP):
     MP.Fraction_analysed.fillna(1, inplace=True)
 
     # Take 1 divided by Fraction_analysed (rounded to next integer) to get the factor each particle needs to be repeated
-    # by to extrapolate to whole sample. Then do the repetition using np. repeat and write it back into "MP".
-    # Need to use "round" because we cannot create "3.5" particles out of one. This distorts the results slightly in
-    # cases were the fraction analysed is not a whole number fraction like 1/2 or 1/3.
-    repeater = round(1 / MP.Fraction_analysed)
+    # by to extrapolate to whole sample.
+    repeater = 1 / MP.Fraction_analysed
     repeater.loc[MP.Particle_name.str.contains('IOW') == True] = 1  # particles with 'IOW' in their name have been picked before splitting, thus should not be repeated
-    MP = MP.loc[np.repeat(MP.index.values, repeater)]  # repeat each particle according to the repeater value calculated above
+    repeater.loc[MP.Sample == "Schlei_S1_15cm"] = 100 / MP.loc[  # S1_15_cm had varying individual filter splits, so particles ned to get their repeater value from the Comment field in the analysis table
+        MP.Sample == 'Schlei_S1_15cm', 'Comment'
+        ].str.split('(').str[1].str.extract('(\d+)').astype(float)[0]
+    MP = MP.loc[np.repeat(MP.index.values, round(repeater))]  # Need to use "round" here because we cannot create "3.5" particles out of one. This distorts the results slightly in cases were the fraction analysed is not a whole number fraction like 1/2 or 1/3.
     MP.IDParticles = MP.IDParticles.astype(str) + '_' + MP.groupby('IDParticles').cumcount().astype(str)  # add a number to the ID to make it unique
     return MP
 

@@ -19,6 +19,7 @@ particleQuery: str = '''-- TODO: simplify column names, e.g. avoid non-ascii cha
                     `p`.`Preferred_method` AS `Preferred_method`,
                     `pt`.`polymer_type` AS `polymer_type`,
                     `a`.`Library_entry` AS `library_entry`,
+                    `a`.`Comment` AS `Comment`,
                     `s`.`Lab_blank` AS `lab_blank_ID`,
                     `s`.`IDSample` AS `sample_ID`,
                     `s`.`Sampling_weight_[kg]` AS `Sampling_weight_[kg]`,
