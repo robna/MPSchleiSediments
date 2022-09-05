@@ -157,28 +157,28 @@ shortnames = {
 
 densities = {  # Polymer densities in kg m⁻³
     'generic': 1141,  # assume a general average density where exact density is not available, ref: https://doi.org/10.1021/acs.est.0c02982
-    'Acrylic resin': None,
-    'Acrylnitril-Butadien-Styrol-Copolymer': 1040,
-    'Alkyd resin': None,
-    'Epoxy resin': None,
-    'Ethylen-Vinylacetat-Copolymer': 951,
-    'Nitrile rubber': None,
-    'Poly (ethylene terephthalate)': 1350,
-    'Poly (methyl methacrylate)': 1190,
-    'Poly (vinyl chloride)': 1400,
-    'Polyamide ': 1130,
-    'Polycaprolacton': 1145,
-    'Polycarbonate': 1200,
-    'Polyethylene': 940,
-    'Polyhydroxybutyrat': 1225,
-    'Polylactide': 1320,
-    'Polyoxymethylene': 1415,
-    'Polypropylene': 900,
-    'Polysiloxane': None,
-    'Polystyrene': 1043,
-    'Polyurethane ': 1190,
-    'Silicone-rubber': None,
-    'Styrene-butadiene-styrene block copolymer': None,
+    'Acrylic resin': 1600, #when dried resins are denser (averagely 1600 kg m⁻³ than original liquid polymer densities, see calculation in Enders et al. 2019
+    'Acrylnitril-Butadien-Styrol-Copolymer': 1060,  #Enders2019, Stuart2002
+    'Alkyd resin': 1600,
+    'Epoxy resin': 1600,
+    'Ethylen-Vinylacetat-Copolymer': 935,  #Enders2019, Stuart2002
+    'Nitrile rubber': 1000, #1250 # MatWeb
+    'Poly (ethylene terephthalate)': 1395,  #Enders2019, Stuart2002
+    'Poly (methyl methacrylate)': 1180,  #Enders2019, Stuart2002
+    'Poly (vinyl chloride)': 1395,  #Enders2019, Stuart2002
+    'Polyamide ': 1135,  #Enders2019, Stuart2002
+    'Polycaprolacton': 1150, # MatWeb #polymerdatabase ?
+    'Polycarbonate': 1210,  #Enders2019, Stuart2002
+    'Polyethylene': 940,  #Enders2019, Stuart2002
+    'Polyhydroxybutyrat': 1250, # MatWeb
+    'Polylactide': 1250, # MatWeb
+    'Polyoxymethylene': 1415, # MatWeb
+    'Polypropylene': 910, #Enders2019, Stuart2002 850 #MatWeb 910
+    'Polysiloxane': 1250, # MatWeb
+    'Polystyrene': 1050,  #Enders2019, Stuart2002
+    'Polyurethane ': 1600, #1230,  #Enders2019, Stuart2002 or resin?
+    'Silicone-rubber': 1200, # MatWeb
+    'Styrene-butadiene-styrene block copolymer': 940, # MatWeb
     'Unknown': None
 }
 
