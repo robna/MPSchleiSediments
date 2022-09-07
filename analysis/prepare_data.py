@@ -74,7 +74,7 @@ def height_vol_dens_mass(df):
     # blend the scKDE-sampled height values with the Gepard height values applying a linear weight decrease with heights increasing within the [low, high] range
     df.loc[hw.index, 'Size_3_[µm]'] = hw * sampled_values + (1 - hw) * df.loc[hw.index, 'Size_3_[µm]']
 
-    df.loc[(df['Shape'] == 'irregular') & (df['Size_3_[µm]'] > df['Size_2_[µm]']), 'Size_3_[µm]'] = df['Size_2_[µm]']  # when irreg higher than long, use Size_1 as height
+    df.loc[(df['Shape'] == 'irregular') & (df['Size_3_[µm]'] > df['Size_1_[µm]']), 'Size_3_[µm]'] = df['Size_2_[µm]']  # when irreg higher than long, use Size_1 as height
     df.loc[df['Shape'] ==     'fibre', 'Size_3_[µm]'] = df['Size_2_[µm]']  # Heights for fibres (alternative 1): use Size_2 as height for all fibres
     # df.loc[(df['Shape'] == 'fibre') & (  # Heights for fibres (alternative 2): when fibre without height OR higher than wide OR < 5: use Size_2 as height
     #         (df['Size_3_[µm]'] > df['Size_2_[µm]']) | (df['Size_3_[µm]'] < 5) | (df['Size_3_[µm]'].isna())
