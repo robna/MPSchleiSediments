@@ -37,7 +37,9 @@ featurelist = [
     # 'perc V COARSE SAND', 'perc COARSE SAND', 'perc MEDIUM SAND', 'perc FINE SAND', 'perc V FINE SAND',
     # 'perc V COARSE SILT', 'perc COARSE SILT', 'perc MEDIUM SILT', 'perc FINE SILT', 'perc V FINE SILT',
     
-    'OM_D50', 'TOC', 'Hg', 'TIC'  # other exogs
+    'OM_D50', 'TOC', 'Hg', 'TIC',  # other exogs
+
+    'Sample'  # sample name
 
     ]
 
@@ -60,6 +62,7 @@ def pdd2sdd(mp_pdd, regions):
     mp_sdd = prepare_data.aggregate_SDD(mp_pdd)
 
     sdd_iow = prepare_data.additional_sdd_merging(mp_sdd)
+    sdd_iow = sdd_iow.replace({'Sample': shortnames}).sort_values(by='Sample')
     sdd_iow = sdd_iow.loc[
         sdd_iow.regio_sep.isin(regions)]  # filter based on selected regions
 
