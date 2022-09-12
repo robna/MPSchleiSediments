@@ -58,42 +58,42 @@ def cummulated_buffer_residents(sdd, gdf=None, buffer_radius=222, col_name='WWTP
     # spatially join the sample domain data with the particle tracks, where the buffer zone of a sample contains a particle location at any time step
     dfsjoin = gpd.sjoin(sdd_gdf, gdf, how='left', predicate='contains')
     # group sdd by Sample and sum the number of particles that were encountered in the buffer zone
-    sdd[col_name] = dfsjoin.reset_index().groupby('index').index_right.count()
+    sdd[col_name] = dfsjoin.reset_index().groupby('index').time_step.mean()
     return sdd
 
-##TODO: the following two functions are not woring properly yet
-def build_paths(start, polygon, lines=None):
-    """
-    Generates a line between start and each polygon vertex if it does not intersect with the polygon.
-    :param start: start point
-    :param polygon: polygon action as a boundary
-    :return: list of lines between start and each polygon vertex
-    """
-    if lines is None:
-        lines = []
-    for vertex in polygon.exterior.coords:
-        line = LineString([start, vertex])
-        if not line.intersects(polygon):
-            lines.append(line)
-    return lines
+##TODO: the following two functions are not complete yet
+# def build_paths(start, polygon, lines=None):
+#     """
+#     Generates a line between start and each polygon vertex if it does not intersect with the polygon.
+#     :param start: start point
+#     :param polygon: polygon action as a boundary
+#     :return: list of lines between start and each polygon vertex
+#     """
+#     if lines is None:
+#         lines = []
+#     for vertex in polygon.exterior.coords:
+#         line = LineString([start, vertex])
+#         if not line.intersects(polygon):
+#             lines.append(line)
+#     return lines
 
 
-def dist_within(start, dest, polygon):
-    """
-    Calculates the distance between two points within a polygon using the Shapely library.
-    :param start: start point
-    :param dest: destination point
-    :param polygon: polygon action as a boundary
-    :return: distance between start and dest within polygon
-    """
-    # check if start and dest are within the polygon, and raise an error if not
-    if not polygon.contains(start) or not polygon.contains(dest):
-        raise ValueError('start and dest must be within the polygon')
-    # create a line between start and dest
-    line = LineString([start, dest])
-    # check if line lies completely within the polygon, and if so: return its length
-    if polygon.contains(line):
-        return line.length
-    # generate a line between start and each polygon vertex if it does not intersect with the polygon
-    lines = build_paths(start, dest, polygon)
-    # while lines have not reached dest, extend them to the next polygon vertex
+# def dist_within(start, dest, polygon):
+#     """
+#     Calculates the distance between two points within a polygon using the Shapely library.
+#     :param start: start point
+#     :param dest: destination point
+#     :param polygon: polygon action as a boundary
+#     :return: distance between start and dest within polygon
+#     """
+#     # check if start and dest are within the polygon, and raise an error if not
+#     if not polygon.contains(start) or not polygon.contains(dest):
+#         raise ValueError('start and dest must be within the polygon')
+#     # create a line between start and dest
+#     line = LineString([start, dest])
+#     # check if line lies completely within the polygon, and if so: return its length
+#     if polygon.contains(line):
+#         return line.length
+#     # generate a line between start and each polygon vertex if it does not intersect with the polygon
+#     lines = build_paths(start, dest, polygon)
+#     # while lines have not reached dest, extend them to the next polygon vertex
