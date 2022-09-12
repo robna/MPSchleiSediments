@@ -3,7 +3,7 @@ import pandas as pd
 import geopandas as gpd
 from skbio.stats.composition import closure
 from settings import densities, regio_sep, shortnames, Config
-from KDE_utils import bound_kde
+from KDE_utils import unbound_kde
 import outliers
 import geo
 
@@ -62,18 +62,23 @@ def height_vol_dens_mass(df):
                 (df['Size_3_[µm]'] >= Config.height_low) &
                 (df['Size_3_[µm]'] <= Config.height_high)
                 , 'Size_3_[µm]'
-               ].apply(lambda x: 0.8 *  # weight for scKDE-sampled height values at the lower end of the height range, default 80%
-                    max(0,  # don't allow negative weights
-                        min(1,(  # don't allow weights > 1
-                            (Config.height_high - x) / (Config.height_high - Config.height_low)  # calculate the individual weights
-                              )
-                           )
-                       )
-                      )
-    sampled_values, kde, cdf = bound_kde(hw.shape[0], Config.height_low, Config.height_high, bw=3, method="weight")
-    # blend the scKDE-sampled height values with the Gepard height values applying a linear weight decrease with heights increasing within the [low, high] range
-    df.loc[hw.index, 'Size_3_[µm]'] = hw * sampled_values + (1 - hw) * df.loc[hw.index, 'Size_3_[µm]']
+               ]#.apply(lambda x: 0.8 *  # weight for scKDE-sampled height values at the lower end of the height range, default 80%
+                    # max(0,  # don't allow negative weights
+                    #     min(1,(  # don't allow weights > 1
+                    #         (Config.height_high - x) / (Config.height_high - Config.height_low)  # calculate the individual weights
+                    #           )
+                    #        )
+                    #    )
+                    #   )
+    # sampled_values, kde, cdf = bound_kde(hw.shape[0], Config.height_low, Config.height_high, bw=3, method="weight")
+    # # blend the scKDE-sampled height values with the Gepard height values applying a linear weight decrease with heights increasing within the [low, high] range
+    # df.loc[hw.index, 'Size_3_[µm]'] = hw * sampled_values + (1 - hw) * df.loc[hw.index, 'Size_3_[µm]']
 
+    sampled_values, kde = unbound_kde(hw.shape[0], Config.height_low, Config.height_high)
+    hw.sort_values(inplace=True)
+    hw[:] = sampled_values
+    df.loc[hw.index, 'Size_3_µm'] = hw
+    
     df.loc[(df['Shape'] == 'irregular') & (df['Size_3_[µm]'] > df['Size_1_[µm]']), 'Size_3_[µm]'] = df['Size_2_[µm]']  # when irreg higher than long, use Size_1 as height
     df.loc[df['Shape'] ==     'fibre', 'Size_3_[µm]'] = df['Size_2_[µm]']  # Heights for fibres (alternative 1): use Size_2 as height for all fibres
     # df.loc[(df['Shape'] == 'fibre') & (  # Heights for fibres (alternative 2): when fibre without height OR higher than wide OR < 5: use Size_2 as height
