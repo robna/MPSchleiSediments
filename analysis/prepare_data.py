@@ -56,6 +56,12 @@ def height_vol_dens_mass(df):
          #|(df['Size_3_[µm]'] == 20)
          #,'Size_3_[µm]'] = (1.919764*np.log(df['Size_2_[µm]'])**0.660945)  # regression from particle with existing Gepard height data
     
+    df.loc[(df['Shape'] == 'irregular') & (df['Size_3_[µm]'] > df['Size_1_[µm]']), 'Size_3_[µm]'] = df['Size_2_[µm]']  # when irreg higher than long, use Size_1 as height
+    df.loc[df['Shape'] ==     'fibre', 'Size_3_[µm]'] = df['Size_2_[µm]']  # Heights for fibres (alternative 1): use Size_2 as height for all fibres
+    # df.loc[(df['Shape'] == 'fibre') & (  # Heights for fibres (alternative 2): when fibre without height OR higher than wide OR < 5: use Size_2 as height
+    #         (df['Size_3_[µm]'] > df['Size_2_[µm]']) | (df['Size_3_[µm]'] < 5) | (df['Size_3_[µm]'].isna())
+    #         ), 'Size_3_[µm]']= df['Size_2_[µm]']
+
     # where particle Gepard height is low, get height from shape-constrained height distribution of manually measured particles
     # this is to mitigate the effect of the low z-resolution of the Gepard, which produces wrong and clustered height data for small particles
     hw = df.loc[(df['Shape'] == 'irregular') &  # generate weights for the scKDE-sampled height values
@@ -75,15 +81,11 @@ def height_vol_dens_mass(df):
     # df.loc[hw.index, 'Size_3_[µm]'] = hw * sampled_values + (1 - hw) * df.loc[hw.index, 'Size_3_[µm]']
 
     sampled_values, kde = unbound_kde(hw.shape[0], Config.height_low, Config.height_high)
-    hw.sample(frac=1).sort_values(inplace=True)
+    hw = hw.sample(frac=1, random_state=21)
+    hw.sort_values(inplace=True)
     hw[:] = sampled_values
     df.loc[hw.index, 'Size_3_[µm]'] = hw
     
-    df.loc[(df['Shape'] == 'irregular') & (df['Size_3_[µm]'] > df['Size_1_[µm]']), 'Size_3_[µm]'] = df['Size_2_[µm]']  # when irreg higher than long, use Size_1 as height
-    df.loc[df['Shape'] ==     'fibre', 'Size_3_[µm]'] = df['Size_2_[µm]']  # Heights for fibres (alternative 1): use Size_2 as height for all fibres
-    # df.loc[(df['Shape'] == 'fibre') & (  # Heights for fibres (alternative 2): when fibre without height OR higher than wide OR < 5: use Size_2 as height
-    #         (df['Size_3_[µm]'] > df['Size_2_[µm]']) | (df['Size_3_[µm]'] < 5) | (df['Size_3_[µm]'].isna())
-    #         ), 'Size_3_[µm]']= df['Size_2_[µm]']
 
     # Calculate volumes
     # -----------------
