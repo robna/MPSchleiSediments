@@ -72,7 +72,7 @@ def per_sample_kde(pdd_MP, x_d, weight_col=None, size_dim=Config.size_dim):
 
     pdfs = pdfs.T.set_index('x_d').T  # workaround as pandas has no df.set_columns() function
     # pdfs.columns = pdfs.columns.astype(int)  # ...and turn column headers back to integers
-    pdfs = pdfs.loc[:, Config.lower_size_limit:Config.upper_size_limit]  # truncate to relevant range
+    # pdfs = pdfs.loc[:, Config.lower_size_limit:Config.upper_size_limit]  # may be activated truncate to relevant range, if the supplied x_d extends beyond the relevant range
 
     pdfs.index.name = 'Sample'
     return pdfs

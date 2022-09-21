@@ -188,6 +188,8 @@ def additional_sdd_merging(mp_sdd, how='left'):
 
     # calculate distance from shore
     mp_sdd_amended['Dist_Land'] = geo.get_distance_to_shore(mp_sdd_amended['LON'], mp_sdd_amended['LAT'])
+    # calculate WWTP_influence from BAW tracer model data
+    mp_sdd_amended = geo.cummulated_buffer_residents(mp_sdd_amended)
     
     # concatenate with Warnow data: only activate if you want to use Warnow data for comparison
     # warnow = pd.read_csv('../data/Warnow_sdd.csv', index_col=0)
@@ -307,14 +309,8 @@ def sediment_preps(sed_df):
              pd.to_numeric(sed_df.columns, errors='coerce') > 0]  # only keep columns that hold size bin data
     sed_df.columns = sed_df.columns.astype(float)
 
-    # TODO: check if this is necessary...
-    # sed_df = sed_df.loc[:, (sed_df.columns.astype('float') >= Config.lower_size_limit) &
-    #                     (sed_df.columns.astype('float') <= Config.upper_size_limit)]  # truncate to relevant size range
-
     if Config.rebinning:
         sed_df = rebin(sed_df)
-
-    # sed_lower_boundaries = sed_df.columns.values  # write the size bins lower boundaries in an array
 
     sed_df = complete_index_labels(sed_df)
 
@@ -324,11 +320,6 @@ def sediment_preps(sed_df):
 
     if Config.closing:
         sed_df[:] = closure(sed_df.to_numpy()) * Config.closing  # close compositional data
-
-    # TODO: check if this is still necessary...
-    # non_zero_counts = sed_df.fillna(1).astype(bool).sum(axis=0)  # count number of non-zero-values in each column
-    # sed_df = sed_df.loc[:, non_zero_counts[non_zero_counts >= int(
-    #     (1 - Config.allowed_zeros) * sed_df.shape[0])].index.values]  # drop columns with too many zeros
 
     return sed_df, {'lower': lowers, 'center': centers, 'upper': uppers}
 

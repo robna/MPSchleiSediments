@@ -8,48 +8,37 @@ predictors = ['Dist_WWTP', 'TOC', 'Q("D50 (µm)")"', 'PC1', 'PC2']  # columns to
 
 
 class Config:
+    # General data preparation settings
     min_part_count: float = 0  # how many MP particles are required to be considered as a valid sample 
-
     rebinning: bool = False  # whether or not to aggregate sizes to coarser bins
     closing: int = 100 # make comp data closed to int value: 0 for no closure, 1 for fraction, 100 for percentages
     rebin_by_n: int = 5  # make sediment size bins coarser: sum up every n bins into one new
 
+    # Settings for streamlit app filters (the actual values of these are controlled by the app filters)
     size_dim: str = 'vESD'  # which size dimension to use for the analysis
     lower_size_limit: float = 0  # the smallest particle size in µm included in the kde computation
     upper_size_limit: float = 5000  # the largest particle size in µm included in the kde computation
     lower_density_limit: float = 900  # the smallest particle density in kg/m3 included in the analysis
     upper_density_limit: float = 2000  # the largest particle density in kg/m3 included in the analysis
 
-    # allowed_zeros: float = 1  # the fraction of allowed zeros in a sediment size bin  # TODO: not used anymore
-
-    # kde_steps: int = 496  # number points on the size axis where the kde is defined (like number of bins in histogram)  # TODO: can this be deleted?
+    # KDE settings
     optimise_bw: bool = False  # if True: compute an individual bandwidth for each sample before computing the KDE
     bws_to_test: int = 200  # if optimise_bw = True: how many bandwidth values should be tried out?
     fixed_bw: int = 75  # if optimise_bw = False: fixed bandwidth value to use for all kde's
     kernel: str = 'gaussian'  # type of kernel to be used
+    bin_conc: bool = False  # True: calculate MP conc. (#/kg) for individual size bins; False: calculate percentages
 
-    # shape-constrained KDE for particle heights
+    # Settings for shape-constrained rpy2 KDE for particle heights
     height_low: float = 0  # lowest height value which should be selected for height update from KDE
     height_high: float = 20  # highest height value which should be selected for height update from KDE
     exceed_high_by: float = 50  # sampled heights from KDE may be up to this much bigger (in %) than height_high
 
-    bin_conc: bool = False  # True: calculate MP conc. (#/kg) for individual size bins; False: calculate percentages
-
-    MPlow: int = 50  # TODO: are these still needed?
-    MPup: int = 250
-    SEDlow: int = 50
-    SEDup: int = 250
-
-    ILR_transform: bool = True  # if True: use the ILR transform for sediment size data before dimensionality reduction
-
+    # Settings for the statsmodels GLM
     glm_family: str = 'Poisson'  # type of family to be used for the GLM
     glm_link: str = None  # Link function for GLM; use None for default link of chosen family
     glm_formula: str = f'{target} ~ {predictors[0]} + ' \
                        f'{predictors[1]}'
 
-
-# creates the x-axis data for the prob. dist. func.
-# Config.x_d: np.array = np.linspace(Config.lower_size_limit, Config.upper_size_limit, Config.kde_steps)  # TODO: can this be deleted?
 
 Config.bandwidths: np.array = 10 ** np.linspace(0, 3,
                                                 Config.bws_to_test)  # creates the range of bandwidths to be tested

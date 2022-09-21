@@ -58,7 +58,8 @@ def cummulated_buffer_residents(sdd, gdf=None, buffer_radius=222, col_name='WWTP
     # spatially join the sample domain data with the particle tracks, where the buffer zone of a sample contains a particle location at any time step
     dfsjoin = gpd.sjoin(sdd_gdf, gdf, how='left', predicate='contains')
     # group sdd by Sample and sum the number of particles that were encountered in the buffer zone
-    sdd[col_name] = dfsjoin.reset_index().groupby('index').time_step.mean()
+    sdd[col_name] = dfsjoin.reset_index().groupby('index').time_step.count()  # use .mean() instead of .count() for Kristinas approach
+    sdd.drop(columns=['geometry'], inplace=True)
     return sdd
 
 ##TODO: the following two functions are not complete yet
