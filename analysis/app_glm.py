@@ -144,28 +144,29 @@ def new_chap(title = None):
         st.subheader(title)
 
     
-def get_selections(optionlist, defaults):
+def get_selections(optionlist, defaults, key=0):
     """
     Provide the necessary selection for scatter_chart from plots.py
     :param optionlist: list of options to select from
     :param defaults: tuple of column names: (x, y, color) used as their respective default selections
+    :param key: a unique value for each call of this function to allow multiple instances of the selection widgets
     """
     col1, col2, col3 = st.columns(3)
     class sel_dict(object): pass  # create dummy class to get access to __dict__
     sel = sel_dict()
-    sel.x = col1.selectbox('x-Values:', optionlist, index=optionlist.index(defaults[0]))
-    sel.y = col1.selectbox('y-Values:', optionlist, index=optionlist.index(defaults[1]))
-    sel.color = col1.selectbox('Color:', [None, *optionlist], index=optionlist.index(defaults[2])+1)
-    sel.xtransform = col2. checkbox('Log transform x-data')
-    sel.ytransform = col2. checkbox('Log transform y-data')
-    sel.reg = col2.radio('Regression type:', [None, 'linear', 'log', 'exp', 'pow'], index=0)
-    sel.reg_groups = col2.checkbox('Calculate separate regressions by color?')
-    sel.xscale = col3.radio('X-Axis type:', ['linear', 'log', 'sqrt'], index=0)
-    sel.yscale = col3.radio('Y-Axis type:', ['linear', 'log', 'sqrt'], index=0)
-    sel.equal_axes = col3.checkbox('Equal axes?')
-    sel.identity = col3.checkbox('Show identity line (dashed)?')
-    sel.mix_lines = col3.checkbox('Show conservative mixing lines?')
-    sel.labels = col3.selectbox('Labels:', [None, *optionlist], index=0)
+    sel.y = col1.selectbox('y-Values:', optionlist, index=optionlist.index(defaults[1]), key='y'+str(key))
+    sel.x = col1.selectbox('x-Values:', optionlist, index=optionlist.index(defaults[0]), key='x'+str(key))
+    sel.color = col1.selectbox('Color:', [None, *optionlist], index=optionlist.index(defaults[2])+1, key='color'+str(key))
+    sel.xtransform = col2. checkbox('Log transform x-data', key='xtransform'+str(key))
+    sel.ytransform = col2. checkbox('Log transform y-data', key='ytransform'+str(key))
+    sel.reg = col2.radio('Regression type:', [None, 'linear', 'log', 'exp', 'pow'], index=0, key='reg'+str(key))
+    sel.reg_groups = col2.checkbox('Calculate separate regressions by color?', key='reg_groups'+str(key))
+    sel.xscale = col3.radio('X-Axis type:', ['linear', 'log', 'sqrt'], index=0, key='xscale'+str(key))
+    sel.yscale = col3.radio('Y-Axis type:', ['linear', 'log', 'sqrt'], index=0, key='yscale'+str(key))
+    sel.equal_axes = col3.checkbox('Equal axes?', key='equal_axes'+str(key))
+    sel.identity = col3.checkbox('Show identity line (dashed)?', key='identity'+str(key))
+    sel.mix_lines = col3.checkbox('Show conservative mixing lines?', key='mix_lines'+str(key))
+    sel.labels = col3.selectbox('Labels:', [None, *optionlist], index=0, key='labels'+str(key))
     cols = (col1, col2, col3)
     return sel.__dict__, cols
 
@@ -188,7 +189,7 @@ def main():
     if raw_data_checkbox:
         df_expander(mp_pdd, "Filtered particle domain data")
         with st.expander("Plot particle properties"):
-            particle_chart_selections, cols = get_selections(mp_pdd.columns.tolist(), ('size_geom_mean', 'Size_3_µm', 'Shape'))
+            particle_chart_selections, cols = get_selections(mp_pdd.columns.tolist(), ('size_geom_mean', 'Size_3_µm', 'Shape'), key='_raw')
             particle_scatters, particle_reg_params = scatter_chart(
             mp_pdd, **particle_chart_selections,
             title='', width=800, height=600)
@@ -251,7 +252,7 @@ def main():
 
 #%%
     new_chap('Single predictor correlation and colinearity check')
-    sample_chart_selections, cols = get_selections(featurelist, ('perc MUD', 'Concentration', 'regio_sep'))
+    sample_chart_selections, cols = get_selections(featurelist, ('perc MUD', 'Concentration', 'regio_sep'), key='_sdd')
 
     scatters, reg_params = scatter_chart(df, **sample_chart_selections, title='', width=800, height=600)
 
