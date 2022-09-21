@@ -1,3 +1,4 @@
+from analysis.settings import Config
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import LineString
@@ -42,7 +43,7 @@ def get_BAW_traces(epsg=25832):
     return gdf
 
 
-def cummulated_buffer_residents(sdd, gdf=None, buffer_radius=222, col_name='WWTP_influence'):
+def get_wwtp_influence(sdd, gdf=None, buffer_radius=Config.station_buffers, col_name='WWTP_influence'):
     """
     Calculates the sum of simulated particles that were encountered in a sample's buffer zone (irrespective of the time step).
     :param sdd: df with sample domain data
@@ -58,7 +59,8 @@ def cummulated_buffer_residents(sdd, gdf=None, buffer_radius=222, col_name='WWTP
     # spatially join the sample domain data with the particle tracks, where the buffer zone of a sample contains a particle location at any time step
     dfsjoin = gpd.sjoin(sdd_gdf, gdf, how='left', predicate='contains')
     # group sdd by Sample and sum the number of particles that were encountered in the buffer zone
-    sdd[col_name] = dfsjoin.reset_index().groupby('index').time_step.count()  # use .mean() instead of .count() for Kristinas approach
+    sdd[col_name+'_as_cumulated_residence'] = dfsjoin.reset_index().groupby('index').time_step.count()  # Robins approach
+    sdd[col_name+'_as_mean_time_travelled'] = dfsjoin.reset_index().groupby(['index', 'simPartID']).nth(0).groupby('index').time_step.mean()  # Kristinas approach
     sdd.drop(columns=['geometry'], inplace=True)
     return sdd
 

@@ -13,6 +13,7 @@ class Config:
     rebinning: bool = False  # whether or not to aggregate sizes to coarser bins
     closing: int = 100 # make comp data closed to int value: 0 for no closure, 1 for fraction, 100 for percentages
     rebin_by_n: int = 5  # make sediment size bins coarser: sum up every n bins into one new
+    station_buffers: int = 222  # buffer radius in meters around each sample station , in which tracer ocurrences from the BAW simulation are counted
 
     # Settings for streamlit app filters (the actual values of these are controlled by the app filters)
     size_dim: str = 'vESD'  # which size dimension to use for the analysis
