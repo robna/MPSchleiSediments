@@ -19,7 +19,8 @@ featurelist = [
     # 'pred_Ord_Poly_ConcentrationA500', 'pred_TMP_ConcentrationA500','pred_Paint_ConcentrationA500',  # more endog derivatives
     # 'Concentration_paint', 'Concentration_PS_Beads', 'Concentration_ord_poly', 'Concentration_irregular',  # even more endog derivatives
 
-    'LON', 'LAT', 'X', 'Y', 'Depth', 'Dist_Land', 'Dist_Marina', 'WWTP_influence', 'Dist_WWTP', 'Dist_WWTP2', 'regio_sep',  # geo related exogs
+    'LON', 'LAT', 'X', 'Y', 'Depth', 'Dist_Land', 'Dist_Marina', 'Dist_WWTP', 'Dist_WWTP2', 'regio_sep',  # geo related exogs
+    'WWTP_influence_as_tracer_mean_dist', 'WWTP_influence_as_cumulated_residence', 'WWTP_influence_as_mean_time_travelled',
     
     # 'Split', 'Mass', 'Frequency', 'FrequencyA500', 'FrequencyB500', 'MPmass',  # sampling related exogs
     
