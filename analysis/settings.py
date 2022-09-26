@@ -19,6 +19,7 @@ class Config:
     dem_resolution: float = 5  # resolution of the digital elevation model in meters
     sed_contact_dist: float = 0.1  # distance in meters to the sediment contact, below which a tracer is considered to have sedimented
     sed_contact_dur: int = 2  # number of timesteps a tracer has to be closer to the sediment than sed_contact_dist to be considered as sedimented
+    truncate_on_nth_sedimentation: int = 1  # set to 0 for no truncation, otherwise any positive integer will truncate at the respective sedimentation event: e.g. set to 1 to only include traces before first sediment contact
 
     # Settings for streamlit app filters (the actual values of these are controlled by the app filters)
     size_dim: str = 'vESD'  # which size dimension to use for the analysis

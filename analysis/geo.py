@@ -52,12 +52,12 @@ def get_wwtp_influence(sdd, gdf=None, buffer_radius=Config.station_buffers, col_
     :return: sdd df with added columns for WWTP inluence
     """
     sdd = sdd.copy()
-    if gdf is None:
-        gdf = get_BAW_traces()
-        gdf = tracer_sedimentation_points(gdf)
+    if gdf is None:  # if gdf is provided use as is, other load and prepare
+        gdf = get_BAW_traces()  # load from .dat file
+        gdf = tracer_sedimentation_points(gdf)  # determine tracer particle sedimentation events
     # turn sdd into a GeoDataFrame with conversion from Lat/Lon to to epsg of gdf
     sdd_gdf = gpd.GeoDataFrame(sdd, geometry=gpd.points_from_xy(sdd.LON, sdd.LAT), crs=4326).to_crs(gdf.crs)
-    sdd[col_name+'_as_tracer_mean_dist'] = sdd_gdf.geometry.apply(lambda x: gdf.loc[gdf.contact_count <= 1].distance(x).mean())  # mean distance of all particles at all time steps to each sample station
+    sdd[col_name+'_as_tracer_mean_dist'] = sdd_gdf.geometry.apply(lambda x: gdf.distance(x).mean())  # mean distance of all particles at all time steps to each sample station
     # create a buffer around each sample station
     sdd_gdf['geometry'] = sdd_gdf.buffer(buffer_radius)
     # spatially join the sample domain data with the particle tracks, where the buffer zone of a sample contains a particle location at any time step
@@ -175,11 +175,16 @@ def tracer_sedimentation_points(gdf, dem=None, dist=Config.sed_contact_dist, dur
     gdf = gdf.join(contact_dur, on=['contact_id'])  # join the series of the duration of each contact to the gdf
     
     for group_name, group in gdf.groupby('simPartID'):  # per tracer particle, loop through the rows of the gdf and count how many times up to each row a particle has been is valid contact to sediment
+        completed_row_contact_dur = np.nan
         counter = 0
         for row_index, row in group.iterrows():
-            if ~np.isnan(row.contact_dur) and np.isnan(completed_row_contact_dur):
+            if ~np.isnan(row.contact_dur) and np.isnan(completed_row_contact_dur):  # for row where contact_dur is not nan but completed_row_contact_dur was nan (i.e. at every time step where a new sedimentation starts), increase counter
                 counter += 1
             gdf.loc[row_index, 'contact_count'] = counter
-            completed_row_contact_dur = row.contact_dur
+            completed_row_contact_dur = row.contact_dur  # save what was in this rows contact_dur for comparison in next iteration
     gdf.drop(columns=['contact_id', 'contact_dur'], inplace=True)  # drop the intermediate columns
+
+    if Config.truncate_on_nth_sedimentation > 0:
+        gdf = gdf.loc[gdf.contact_count < Config.truncate_on_nth_sedimentation]
+    
     return gdf
