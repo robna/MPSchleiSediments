@@ -15,6 +15,7 @@ class Config:
     rebin_by_n: int = 5  # make sediment size bins coarser: sum up every n bins into one new
     
     # Geospacial settings
+    max_depth_allowed: float = 10  # for BAW tracer particles depth values larger than this, will be replaced by an interpolation from their neighbours
     station_buffers: int = 222  # buffer radius in meters around each sample station , in which tracer ocurrences from the BAW simulation are counted
     dem_resolution: float = 5  # resolution of the digital elevation model in meters
     sed_contact_dist: float = 0.1  # distance in meters to the sediment contact, below which a tracer is considered to have sedimented

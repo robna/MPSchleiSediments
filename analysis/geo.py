@@ -32,14 +32,29 @@ def get_distance_to_shore(LON, LAT, polygon=None, epsg=32632):
     return d
 
 
-def get_BAW_traces(epsg=25832):
-    df = pd.read_fwf('../data/insel_Bahnen.dat', names=['simPartID', 'X', 'Y', 'tracer_depth'])
-    df.loc[df.simPartID == 'Part', 'simPartID'] = df.loc[df.simPartID == 'Part', 'X']
-    df.simPartID.fillna(method='ffill', inplace=True)
+def get_BAW_traces(file, epsg=25832):
+    # first, find the line number of the first occurence of the string 'EGRUPPE' in the file (lines from there on will not be read)
+    with open(file, 'r') as f:
+        for i, line in enumerate(f):
+            if 'EGRUPPE' in line:
+                break
+    num_lines = sum(1 for _ in open(file))  # count number of lines in file
+    footer_length = num_lines - i  # number of lines in the footer
+    
+    # read and wrangle file into pandas df
+    df = pd.read_fwf(file, names=['X', 'Y', 'tracer_depth', 'simPartID'], skipfooter=footer_length)
+    df.reset_index(drop=True, inplace=True)
     df.dropna(inplace=True)
+    
     # add a new column to df called 'time_step' which starts from one for each simPartID and increases by one for each row
     df['time_step'] = df.groupby('simPartID').cumcount() + 1
+    
+    # correct unrealistic tracer depths
+    # df.loc[(df.tracer_depth > Config.max_depth_allowed) |
+    #        (df.tracer_depth < 0 ), 'tracer_depth'] = np.nan
+    # df.tracer_depth.interpolate(method='linear', inplace=True)
 
+    # create a GeoDataFrame from df
     gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.X, df.Y), crs=f"EPSG:{epsg}").drop(columns=['X', 'Y'])
     return gdf
 
