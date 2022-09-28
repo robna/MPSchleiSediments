@@ -52,12 +52,12 @@ def load_single_BAW_run(file, epsg=Config.baw_epsg):
     # read and wrangle file into pandas df
     if isinstance(file, str):
         file = Path(file)
-    df = pd.read_fwf(file, names=['X', 'Y', 'tracer_depth', 'simPartID'])
+    df = pd.read_fwf(file, names=['X', 'Y', 'tracer_depth', 'simPartID'], widths=[15,15,15,6])
     df['season'] = file.name.split('_')[0]
     df['tracer_ESD'] = file.name.split('_')[1].strip('.dat')
-    df = df.iloc[:df.index.get_loc('EGRU').argmax()]  # find the first row which has "EGRUPPE" in its index and drop it and all rows below
-    df.reset_index(drop=True, inplace=True)
+    df = df.iloc[:(df.X=='EGRUPPE').argmax()]  # find the first row which has "EGRUPPE" in its index and drop it and all rows below
     df.dropna(inplace=True)
+    df.reset_index(drop=True, inplace=True)
     
     # add a new column to df called 'time_step' which starts from one for each simPartID and increases by one for each row
     df['time_step'] = df.groupby('simPartID').cumcount() + 1

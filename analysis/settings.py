@@ -16,12 +16,12 @@ class Config:
     
     # Geospacial settings
     baw_epsg: int = 25832  # epsg code of the baw data
-    restrict_tracers_to_depth: float = 10  # for BAW tracer particles depth values larger than this, will be replaced by an interpolation from their neighbours, set to 0 for no depth correction
+    restrict_tracers_to_depth: float = 20  # for BAW tracer particles depth values larger than this, will be replaced by an interpolation from their neighbours, set to 0 for no depth correction
     station_buffers: int = 222  # buffer radius in meters around each sample station , in which tracer ocurrences from the BAW simulation are counted
     dem_resolution: float = 5  # resolution of the digital elevation model in meters
     sed_contact_dist: float = 0.01  # distance in meters to the sediment contact, below which a tracer is considered to have sedimented
     sed_contact_dur: int = 3  # number of timesteps a tracer has to be closer to the sediment than sed_contact_dist to be considered as sedimented
-    truncate_on_nth_sedimentation: int = 1  # set to 0 for no truncation, otherwise any positive integer will truncate at the respective sedimentation event: e.g. set to 1 to only include traces before first sediment contact
+    truncate_on_nth_sedimentation: int = 2  # set to 0 for no truncation, otherwise any positive integer will truncate at the respective sedimentation event: e.g. set to 1 to only include traces before first sediment contact
 
     # Settings for streamlit app filters (the actual values of these are controlled by the app filters)
     size_dim: str = 'vESD'  # which size dimension to use for the analysis
