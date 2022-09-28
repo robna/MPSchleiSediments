@@ -189,7 +189,7 @@ def additional_sdd_merging(mp_sdd, how='left'):
     # calculate distance from shore
     mp_sdd_amended['Dist_Land'] = geo.get_distance_to_shore(mp_sdd_amended['LON'], mp_sdd_amended['LAT'])
     # calculate WWTP_influence from BAW tracer model data
-    mp_sdd_amended = geo.get_wwtp_influence(mp_sdd_amended)
+    mp_sdd_amended = geo.get_wwtp_influence(mp_sdd_amended, tracks_file='../data/BAW_tracer_simulations.zip')
     
     # concatenate with Warnow data: only activate if you want to use Warnow data for comparison
     # warnow = pd.read_csv('../data/Warnow_sdd.csv', index_col=0)

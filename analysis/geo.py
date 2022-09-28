@@ -1,5 +1,6 @@
 from settings import Config
 from pathlib import Path
+from zipfile import ZipFile
 import geopandas as gpd
 import pandas as pd
 import numpy as np
@@ -7,7 +8,7 @@ import rasterio
 from shapely.geometry import LineString
 
 
-def get_distance_to_shore(LON, LAT, polygon=None, epsg=32632):
+def get_distance_to_shore(LON, LAT, polygon=None, epsg=Config.baw_epsg):
     """
     Calculates the distance to the shore for each sample station.
     :param LON: longitude
@@ -19,30 +20,42 @@ def get_distance_to_shore(LON, LAT, polygon=None, epsg=32632):
     if polygon is None:
         # read ../data/SchleiCoastline_from_OSM.geojson into a GeoDataFrame
         polygon = gpd.read_file('../data/SchleiCoastline_from_OSM.geojson').to_crs(f"EPSG:{epsg}")
-    
     gdf = gpd.GeoDataFrame(geometry=gpd.points_from_xy(LON, LAT))
     gdf.crs = 4326
     gdf.to_crs(f"EPSG:{epsg}", inplace=True)
-
-    # gdf.apply(lambda x: x.geometry.distance(schlei_coast.boundary), axis=1)
-    # schlei_coast.boundary.distance(gdf)
-
-    d = gdf.geometry.apply(lambda x: polygon.boundary.distance(x))
-
-    return d
+    return gdf.geometry.apply(lambda x: polygon.boundary.distance(x))
 
 
-def get_BAW_traces(file, epsg=25832):
-    # first, find the line number of the first occurence of the string 'EGRUPPE' in the file (lines from there on will not be read)
-    with open(file, 'r') as f:
-        for i, line in enumerate(f):
-            if 'EGRUPPE' in line:
-                break
-    num_lines = sum(1 for _ in open(file))  # count number of lines in file
-    footer_length = num_lines - i  # number of lines in the footer
-    
+def get_BAW_traces(file):
+    """
+    Utility function to load either a single .dat file
+    or a .zip file containing multiple .dat files
+    """
+
+    file = Path(file)
+    if file.suffix == '.zip':
+        return extract_zipped_traces(file)
+    elif file.suffix == '.dat':
+        return load_single_BAW_run(file)
+    else:
+        raise ValueError(f"File {file} has an unsupported file extension.")
+
+
+def load_single_BAW_run(file, epsg=Config.baw_epsg):
+    """
+    Loads a single BAW tracer particle simulation run from a .dat file
+    :param file: path to .dat file
+    :param epsg: epsg code of the projection
+    :return: GeoDataFrame with the tracer particle simulation run
+    """
+
     # read and wrangle file into pandas df
-    df = pd.read_fwf(file, names=['X', 'Y', 'tracer_depth', 'simPartID'], skipfooter=footer_length)
+    if isinstance(file, str):
+        file = Path(file)
+    df = pd.read_fwf(file, names=['X', 'Y', 'tracer_depth', 'simPartID'])
+    df['season'] = file.name.split('_')[0]
+    df['tracer_ESD'] = file.name.split('_')[1].strip('.dat')
+    df = df.iloc[:df.index.get_loc('EGRU').argmax()]  # find the first row which has "EGRUPPE" in its index and drop it and all rows below
     df.reset_index(drop=True, inplace=True)
     df.dropna(inplace=True)
     
@@ -50,38 +63,63 @@ def get_BAW_traces(file, epsg=25832):
     df['time_step'] = df.groupby('simPartID').cumcount() + 1
     
     # correct unrealistic tracer depths
-    # df.loc[(df.tracer_depth > Config.max_depth_allowed) |
-    #        (df.tracer_depth < 0 ), 'tracer_depth'] = np.nan
-    # df.tracer_depth.interpolate(method='linear', inplace=True)
+    if Config.restrict_tracers_to_depth:
+        df.loc[(df.tracer_depth > Config.restrict_tracers_to_depth) |  # find all rows where tracer_depth is larger than Config.restrict_tracers_to_depth
+            (df.tracer_depth < 0 ), 'tracer_depth'] = np.nan  # find all rows where tracer_depth is smaller than zero ...and set them to NaN
+        df.tracer_depth.interpolate(method='linear', inplace=True)  # interpolate the NaN values from their neighbours
 
     # create a GeoDataFrame from df
-    gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.X, df.Y), crs=f"EPSG:{epsg}").drop(columns=['X', 'Y'])
-    return gdf
+    return gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.X, df.Y), crs=f"EPSG:{epsg}").drop(columns=['X', 'Y'])
 
 
-def get_wwtp_influence(sdd, gdf=None, buffer_radius=Config.station_buffers, col_name='WWTP_influence'):
+def extract_zipped_traces(path2zip):
+    with ZipFile(path2zip) as zipObj:
+        # get a list of all .dat files in the zip
+        datfiles = [f for f in zipObj.namelist() if f.endswith('.dat')]
+        # read the .dat files using geo.get_BAW_traces and concatenate them into one dataframe
+        gdfs = [load_single_BAW_run(zipObj.open(f)) for f in datfiles]
+        return gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=True), crs=gdfs[0].crs)
+
+
+def get_wwtp_influence(sdd, tracks=None, tracks_file=None, buffer_radius=Config.station_buffers, col_prefix='WWTP_influence'):
     """
     Calculates different versions of an influence factor of the WWTP based on simulated tracers.
     :param sdd: df with sample domain data
-    :param gdf: GeoDataFrame containing the particle tracks as points geometries per time step
+    :param tracks: GeoDataFrame containing the particle tracks as points geometries per time step
+    :param tracks_file: path to a .dat file (or zip of .dats) containing the particle tracks
+    :param buffer_radius: radius of the buffer around the WWTP
+    :param col_prefix: column name prefix for the different versions of the influence factor
     :return: sdd df with added columns for WWTP inluence
     """
-    sdd = sdd.copy()
-    if gdf is None:  # if gdf is provided use as is, other load and prepare
-        gdf = get_BAW_traces()  # load from .dat file
-        gdf = tracer_sedimentation_points(gdf)  # determine tracer particle sedimentation events
-    # turn sdd into a GeoDataFrame with conversion from Lat/Lon to to epsg of gdf
-    sdd_gdf = gpd.GeoDataFrame(sdd, geometry=gpd.points_from_xy(sdd.LON, sdd.LAT), crs=4326).to_crs(gdf.crs)
-    sdd[col_name+'_as_tracer_mean_dist'] = sdd_gdf.geometry.apply(lambda x: gdf.distance(x).mean())  # mean distance of all particles at all time steps to each sample station
-    # create a buffer around each sample station
-    sdd_gdf['geometry'] = sdd_gdf.buffer(buffer_radius)
-    # spatially join the sample domain data with the particle tracks, where the buffer zone of a sample contains a particle location at any time step
-    dfsjoin = gpd.sjoin(sdd_gdf, gdf, how='left', predicate='contains')
-    # group sdd by Sample and sum the number of particles that were encountered in the buffer zone
-    sdd[col_name+'_as_cumulated_residence'] = dfsjoin.reset_index().groupby('index').time_step.count()  # Robins approach
-    sdd[col_name+'_as_mean_time_travelled'] = dfsjoin.reset_index().groupby(['index', 'simPartID']).nth(0).groupby('index').time_step.mean()  # Kristinas approach
-    sdd.drop(columns=['geometry'], inplace=True)
-    return sdd
+
+    try:  # because this calculation takes a while, we want to be able to save the tracks to a file and load them later
+        return pd.concat([sdd, pd.read_csv('../data/WWTP_influence.csv', index_col=0)], axis=1)
+    except:
+        print('Need to calculate WWTP influence based on simulated particle tracks. This may take a while...')
+        sdd = sdd.copy()
+        if tracks is None:  # if gdf is provided use as is, other load and prepare
+            if tracks_file is None:
+                raise ValueError('Either tracks or tracks_file must be provided.')
+            else:
+                tracks = get_BAW_traces(tracks_file)  # load from .dat file
+                #TODO: add possibility to repeat tracks of particles of individual ESDs according to their relative abundance in pdd (estimated from a KDE)
+                tracks = tracer_sedimentation_points(tracks)  # determine tracer particle sedimentation events
+        # turn sdd into a GeoDataFrame with conversion from Lat/Lon to to epsg of gdf
+        sdd_gdf = gpd.GeoDataFrame(sdd, geometry=gpd.points_from_xy(sdd.LON, sdd.LAT), crs=4326).to_crs(tracks.crs)
+        # approach 1: mean distance based influence factor
+        sdd[col_prefix+'_as_tracer_mean_dist'] = sdd_gdf.geometry.apply(lambda x: tracks.distance(x).mean())  # mean distance of all particles at all time steps to each sample station
+        # approach 2 and 3: buffer based influence factor
+        sdd_gdf['geometry'] = sdd_gdf.buffer(buffer_radius)
+        # spatially join the sample domain data with the particle tracks, where the buffer zone of a sample contains a particle location at any time step
+        dfsjoin = gpd.sjoin(sdd_gdf, tracks, how='left', predicate='contains')
+        # group sdd by Sample and sum the number of particles that were encountered in the buffer zone
+        sdd[col_prefix+'_as_cumulated_residence'] = dfsjoin.reset_index().groupby('index').time_step.count()  # Robins approach
+        sdd[col_prefix+'_as_mean_time_travelled'] = dfsjoin.reset_index().groupby(['index', 'simPartID']).nth(0).groupby('index').time_step.mean()  # Kristinas approach
+        sdd.drop(columns=['geometry'], inplace=True)
+        # save calculated WWTP influence factors (the last 3 columns of sdd) to a csv file
+        sdd.iloc[:, -3:].to_csv('../data/WWTP_influence.csv')
+        return sdd
+
 
 ##TODO: the following two functions are not complete yet
 # def build_paths(start, polygon, lines=None):
@@ -150,7 +188,7 @@ def sparse_xyz_to_grid(xyz, sep=' ', resolution=Config.dem_resolution, nodata=-9
     return df.to_numpy()
 
 
-def load_zipped_grid(path2zip, path2grid=None, epsg=25832):
+def load_zipped_grid(path2zip, path2grid=None, epsg=Config.baw_epsg):
     """
     Loads a grid from a .grd file inside a .zip file
     :param path2zip: path to .zip file
@@ -165,10 +203,10 @@ def load_zipped_grid(path2zip, path2grid=None, epsg=25832):
     return rasta
 
 
-def tracer_sedimentation_points(gdf, dem=None, dist=Config.sed_contact_dist, dur=Config.sed_contact_dur):
+def tracer_sedimentation_points(tracks, dem=None, dist=Config.sed_contact_dist, dur=Config.sed_contact_dur):
     """
     Calculates the sedimentation points of the tracer particles.
-    :param gdf: GeoDataFrame containing the particle tracks as points geometries per time step
+    :param tracks: GeoDataFrame containing the particle tracks as points geometries per time step
     :param dem: Digital Elevation Model
     :param dist: distance a tracer particle needs to get under to make a valid sediment contact
     :param dur: duration in time steps a tracer particle needs to be within 'dist' from sediment to make a valid sediment contact
@@ -178,28 +216,27 @@ def tracer_sedimentation_points(gdf, dem=None, dist=Config.sed_contact_dist, dur
     """
     if dem is None:
         dem = load_zipped_grid('../data/DGM_Schlei_1982_bis_2002_UTM32.zip')  # load grid from zip file
-    coord_list = [(x,y) for x,y in zip(gdf['geometry'].x , gdf['geometry'].y)]  # create list of coordinate tuples, because rasterio.sample can't handle geopandas geometries
-    gdf['water_depth'] = [x[0] for x in dem.sample(coord_list)]  # sample the grid at the locations of the tracer particles
-    gdf['sediment_contact'] = False  # intitialize sediment_contact column: False = no contact
-    gdf.loc[gdf['tracer_depth'].abs() > gdf['water_depth'].abs()-dist, 'sediment_contact'] = True  # set sediment_contact to True where the particle comes closer than 'dist' to 'water_depth'
+    coord_list = [(x,y) for x,y in zip(tracks['geometry'].x , tracks['geometry'].y)]  # create list of coordinate tuples, because rasterio.sample can't handle geopandas geometries
+    tracks['water_depth'] = [x[0] for x in dem.sample(coord_list)]  # sample the grid at the locations of the tracer particles
+    tracks['sediment_contact'] = False  # intitialize sediment_contact column: False = no contact
+    tracks.loc[tracks['tracer_depth'].abs() > tracks['water_depth'].abs()-dist, 'sediment_contact'] = True  # set sediment_contact to True where the particle comes closer than 'dist' to 'water_depth'
 
-    gdf['contact_id'] = (gdf.sediment_contact != gdf.sediment_contact.shift(1)).cumsum()  # create an intermediate column with a new unique id for each time the state of sediment_contact changes from False to True or vice versa
+    tracks['contact_id'] = (tracks.sediment_contact != tracks.sediment_contact.shift(1)).cumsum()  # create an intermediate column with a new unique id for each time the state of sediment_contact changes from False to True or vice versa
     
-    contact_dur = gdf.loc[gdf.sediment_contact].groupby(['contact_id']).sediment_contact.count().rename('contact_dur')  # create a series with the duration of each contact
+    contact_dur = tracks.loc[tracks.sediment_contact].groupby(['contact_id']).sediment_contact.count().rename('contact_dur')  # create a series with the duration of each contact
     contact_dur[contact_dur < dur] = np.nan  # exclude all contacts which are shorter than 'dur'
-    gdf = gdf.join(contact_dur, on=['contact_id'])  # join the series of the duration of each contact to the gdf
+    tracks = tracks.join(contact_dur, on=['contact_id'])  # join the series of the duration of each contact to the gdf
     
-    for group_name, group in gdf.groupby('simPartID'):  # per tracer particle, loop through the rows of the gdf and count how many times up to each row a particle has been is valid contact to sediment
+    for group_name, group in tracks.groupby('simPartID'):  # per tracer particle, loop through the rows of the gdf and count how many times up to each row a particle has been is valid contact to sediment
         completed_row_contact_dur = np.nan
         counter = 0
         for row_index, row in group.iterrows():
             if ~np.isnan(row.contact_dur) and np.isnan(completed_row_contact_dur):  # for row where contact_dur is not nan but completed_row_contact_dur was nan (i.e. at every time step where a new sedimentation starts), increase counter
                 counter += 1
-            gdf.loc[row_index, 'contact_count'] = counter
+            tracks.loc[row_index, 'contact_count'] = counter
             completed_row_contact_dur = row.contact_dur  # save what was in this rows contact_dur for comparison in next iteration
-    gdf.drop(columns=['contact_id', 'contact_dur'], inplace=True)  # drop the intermediate columns
+    tracks.drop(columns=['contact_id', 'contact_dur'], inplace=True)  # drop the intermediate columns
 
     if Config.truncate_on_nth_sedimentation > 0:
-        gdf = gdf.loc[gdf.contact_count < Config.truncate_on_nth_sedimentation]
-    
-    return gdf
+        tracks = tracks.loc[tracks.contact_count < Config.truncate_on_nth_sedimentation]
+    return tracks
