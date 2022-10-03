@@ -86,3 +86,4 @@ class Config:  # TODO: NEEDS CHECKING: how does this work together with the othe
     size_filter_dimension: str = 'Size_1_[µm]'  # Sets the dimension on which to apply the > x µm filter.
     # Can be either 'Size_1_[µm]', 'Size_2_[µm]', or 'size_geom_mean'.
     size_filter_highpass: int = 50  # Value in µm applied to size_filter_dimension to only keep particle >= in size.
+    size_filter_lowpass: int = 5000  # Value in µm applied to size_filter_dimension to only keep particle < in size.

@@ -32,6 +32,7 @@ def geom_mean(MP):
 
 def size_filter(MP):
     MP = MP[MP[Config.size_filter_dimension] >= Config.size_filter_highpass]
+    MP = MP[MP[Config.size_filter_dimension] < Config.size_filter_lowpass]
     return MP
 
 
