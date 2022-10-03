@@ -265,8 +265,8 @@ def equalise_mp_and_sed(mp, sed):
     # i.e. turn from concentrations to percentage abundances.
     # Can be omitted by making bin_conc = True in settings Config.
     # In this case values will continue to represent concentrations.
-    if not Config.bin_conc:
-        mp = mp.apply(lambda x: x / x.sum() * 100, axis=1)
+    # if not Config.bin_conc:
+    #     mp = mp.apply(lambda x: x / x.sum() * 100, axis=1)  # deactiviated as Config.bin_conc is now handled in KDE_utils.probDens2conc. If no problems occur, this whole part can be removed.
 
     mp_sed_melt = merge_size_ranges(mp, 'MP', sed, 'SED')
 
@@ -319,9 +319,18 @@ def sediment_preps(sed_df):
     centers = (lowers + uppers) / 2  # calculate size bin centers from lower and upper boundaries
 
     if Config.closing:
-        sed_df[:] = closure(sed_df.to_numpy()) * Config.closing  # close compositional data
+        sed_df = close_compositional_data(sed_df)  # close compositional data
 
     return sed_df, {'lower': lowers, 'center': centers, 'upper': uppers}
+
+
+def close_compositional_data(df, full=Config.closing):
+    """
+    Closes compositional data according to `full` value. In the closed df the sum of all rows will equal to `full`.
+    """
+
+    df[:] = closure(df.to_numpy()) * full
+    return df
 
 
 def combination_sums(df):  # TODO: convert to samples-in-rows-format
