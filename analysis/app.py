@@ -3,10 +3,11 @@ from math import floor, ceil
 from statsmodels.graphics.gofplots import qqplot
 
 import prepare_data
+import KDE_utils
 import glm
 import cv
 from components import pca, PCOA
-from plots import scatter_chart, poly_comp_chart, histograms, biplot, station_map
+from plots import scatter_chart, poly_comp_chart, histograms, biplot, station_map, size_kde_combined_samples_dist_plot
 from settings import Config, shortnames, regio_sep
 
 import streamlit as st
@@ -14,7 +15,7 @@ st.set_page_config(layout="wide")
 
 featurelist = [
 
-    'Concentration', 'MassConcentration', 'MP_D50',  # endogs
+    'Concentration', 'MassConcentration', 'MP_D50', 'MP_size_median_from_KDE',  # endogs
     'ConcentrationA500', 'ConcentrationB500', 'ConcentrationA500_div_B500', # endog derivatives
     # 'pred_Ord_Poly_ConcentrationA500', 'pred_TMP_ConcentrationA500','pred_Paint_ConcentrationA500',  # more endog derivatives
     # 'Concentration_paint', 'Concentration_PS_Beads', 'Concentration_ord_poly', 'Concentration_irregular',  # even more endog derivatives
@@ -44,17 +45,22 @@ featurelist = [
 
     ]
 
+def use_shortnames(df):
+    return df.replace({'Sample': shortnames}).sort_values(by='Sample')
+
 
 @st.cache()
 def data_load_and_prep():
     mp_pdd = prepare_data.get_pdd()
+    #mp_pdd = use_shortnames(mp_pdd)
 
     # Also import sediment data (sediment frequencies per size bin from master sizer export)
-    grainsize_iow = prepare_data.get_grainsizes()[0]  # get_grainsizes returns 3 objects: iow, cau and centers of sediment size bins
+    grainsize_iow, grainsize_cau, boundaries_dict = prepare_data.get_grainsizes()
+    #grainsize_iow = use_shortnames(grainsize_iow.reset_index().rename(columns={'index': 'Sample'})).set_index('Sample')
 
     sed_scor, sed_load, sed_expl = PCOA(grainsize_iow, 2)
 
-    return mp_pdd, sed_scor
+    return mp_pdd, sed_scor, grainsize_iow, boundaries_dict
 
 
 @st.cache()
@@ -63,7 +69,7 @@ def pdd2sdd(mp_pdd, regions):
     mp_sdd = prepare_data.aggregate_SDD(mp_pdd)
 
     sdd_iow = prepare_data.additional_sdd_merging(mp_sdd)
-    sdd_iow = sdd_iow.replace({'Sample': shortnames}).sort_values(by='Sample')
+    #sdd_iow = use_shortnames(sdd_iow)
     sdd_iow = sdd_iow.loc[
         sdd_iow.regio_sep.isin(regions)]  # filter based on selected regions
 
@@ -81,6 +87,22 @@ def pdd2sdd(mp_pdd, regions):
 #         -0.4207 + 0.0826 * sdd_iow['perc MUD'] + 0.056 * 8.33 * sdd_iow['TIC'] - 0.0002 * sdd_iow['Dist_WWTP'])  
 #         #2.4491 + 0.0379 * sdd_iow['perc MUD'])
     return sdd_iow
+
+
+#@st.cache()
+def get_size_kde(mp_pdd, boundaries_dict, grainsize_iow):
+    boundaries = boundaries_dict['center']
+    mp_size_pdfs = KDE_utils.per_sample_kde(mp_pdd, boundaries, size_dim = Config.size_dim, weight_col=Config.kde_weights)  # calculate mp size probability density functions
+    mp_size_pmf = KDE_utils.probDens2prob(mp_size_pdfs)  # calculate mp size probability mass functions, i.e. probability of finding a MP particle in a specific size bin
+    mp_size_pmf.columns = grainsize_iow.columns[:-1]  # when using "centers" of size bin boundaries for KDE, we need to adjust the column names to match with the sediment df again!
+    mp_size_pmf, grainsize_iow_truncated, mp_sed_melt = prepare_data.equalise_mp_and_sed(mp_size_pmf, grainsize_iow)
+    mp_size_cpmf = mp_size_pmf.cumsum(axis=1) # cumulative sum of the probability mass functions
+    size_bin_number_containing_median = (mp_size_cpmf.T.reset_index(drop=True).T - 0.5).abs().idxmin(axis=1)  # Find the size bins which enclose the 50% of the probability mass. OBS: if choosing a different colsing value than 1, the subtractionnn of 0.5 needs to be adjusted!!
+    KDE_medians = pd.DataFrame(boundaries_dict).center[size_bin_number_containing_median]
+    KDE_medians.name = 'MP_size_median_from_KDE'
+    KDE_medians.index = size_bin_number_containing_median.index
+    KDE_size_plot = size_kde_combined_samples_dist_plot(mp_sed_melt)
+    return KDE_medians, KDE_size_plot
 
 
 def filters(mp_pdd):
@@ -111,6 +133,7 @@ def filters(mp_pdd):
                                                          max_value=density_lims[1],
                                                          step=100)
 
+    Config.kde_weights = st.sidebar.radio('Select basis for size distributions (selecting "None" means, distributions are particle count-based)', [None, 'particle_volume_share', 'particle_mass_share'])
     samplefilter = st.sidebar.multiselect('Select samples:', mp_pdd.Sample.unique(), default=mp_pdd.Sample.unique())
     shapefilter = st.sidebar.multiselect('Select shapes:', ['irregular', 'fibre'], default=['irregular', 'fibre'])
     polymerfilter = st.sidebar.multiselect('Select polymers:', mp_pdd.polymer_type.unique(),
@@ -177,7 +200,7 @@ def main():
     st.title('Microplastics and sediment analysis')
     new_chap()
     
-    mp_pdd, sed_scor = data_load_and_prep()  # load data
+    mp_pdd, sed_scor, grainsize_iow, boundaries_dict = data_load_and_prep()  # load data
 
     raw_data_checkbox = st.sidebar.checkbox('Show raw data')
     if raw_data_checkbox:
@@ -185,7 +208,8 @@ def main():
 
     mp_pdd, regionfilter = filters(mp_pdd)  # provide side bar menus and filter data
     sdd_iow = pdd2sdd(mp_pdd, regionfilter)
-    df = sdd_iow.merge(sed_scor, right_index=True, left_on='Sample', how='left')
+    KDE_medians, KDE_size_plot = get_size_kde(mp_pdd, boundaries_dict, grainsize_iow)
+    df = sdd_iow.merge(sed_scor, right_index=True, left_on='Sample', how='left').join(KDE_medians, on='Sample')
 
     if raw_data_checkbox:
         df_expander(mp_pdd, "Filtered particle domain data")
@@ -200,8 +224,7 @@ def main():
             cols[2].write('Regression parameters:')
             cols[2].write(particle_reg_params)
         df_expander(df, "Sample domain data")
-
-
+        
 #%%
     # new_cap('Map')
     # if st.checkbox('Plot map'):
@@ -211,8 +234,9 @@ def main():
 
 #%%
     new_chap('MP properties')
-    if st.checkbox('Size histogram'):
+    if st.checkbox('Particle sizes'):
         st.write(histograms(mp_pdd))
+        st.write(KDE_size_plot)
 
     if st.checkbox('Polymer composition'):
         st.write(poly_comp_chart(mp_pdd, df))

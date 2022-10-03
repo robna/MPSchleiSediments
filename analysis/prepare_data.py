@@ -254,6 +254,9 @@ def equalise_mp_and_sed(mp, sed):
     Various data harmonisation steps on DFs containing per size bin data of MP concentrations (mp)
     and sediment frequencies (sed). See inline comments for separate steps.
     """
+    
+    mp = mp.copy()
+    sed= sed.copy()
 
     # make mp and sed contain only columns (size ranges) and rows (samples), which they have in common
     mp.drop([col for col in mp.columns if col not in sed.columns], axis=1, inplace=True)

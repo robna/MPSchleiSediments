@@ -575,3 +575,41 @@ def plotly_contour_plot(df, x, y, color, nbins=100, ncontours=10, figsize=(800, 
     #fig.update_yaxes(type="log", range=[0,4])  # log range: 10^0=1, 10^5=100000
 
     return fig
+
+
+def size_kde_combined_samples_dist_plot(mp_sed_melt):
+    """
+    KDE plots of MP and Sediment for all stations combined
+    (i.e. KDE calculated on separate samples,
+    then averageing probabilities for particle occurrenc
+    in the size bins for all samples)
+    """
+    
+    mp_sed_size_dist_AllSamplesAveraged = mp_sed_melt.melt(
+        id_vars=['Sample','lower','upper'],
+        var_name='particle_type'
+    ).groupby(
+        ['particle_type', 'lower', 'upper']
+    ).value.mean().reset_index()
+
+    dists = alt.Chart(mp_sed_size_dist_AllSamplesAveraged).mark_area(
+        #point=True,
+        opacity=0.3
+    ).encode(
+        x=alt.X('lower', scale=alt.Scale(domain=[0.1, 1500], clamp=True, type='linear')),
+        y='value',
+        color=alt.Color('particle_type'),
+        tooltip=['lower', 'upper', 'value', 'particle_type']
+    )
+
+    cumsum = dists.mark_line(strokeWidth=5, opacity=1).transform_window(
+        frame=[None, 0],
+        cumsum='sum(value)',
+        groupby=['particle_type']
+    ).encode(
+        y='cumsum:Q',
+        color=alt.Color('particle_type')
+    )
+
+    return alt.layer(dists, cumsum).resolve_scale(y='independent').properties(width=800, height=400)
+    

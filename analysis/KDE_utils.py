@@ -78,21 +78,27 @@ def per_sample_kde(pdd_MP, x_d, weight_col=None, size_dim=Config.size_dim):
     return pdfs
     
 
-def probDens2conc(size_pdfs, sdd_MP):
+def probDens2prob(size_pdfs, sdd_MP=None):
     """
     Converts df of probability densities into df of concentrations per size bins.
     Size bins are represented by their lower boundary as the df's index (inclusive)
     and reach up to the next index (exclusive). Both boundaries are named in the final index labels.
     """
 
-    steps = size_pdfs.T.reset_index().x_d.shift(-1) - size_pdfs.T.reset_index().x_d
+    #steps = size_pdfs.T.reset_index().x_d.shift(-1) - size_pdfs.T.reset_index().x_d
+    lower_bounds = size_pdfs.columns.to_numpy()
+    bin_widths = lower_bounds[1:] - lower_bounds[:-1]
+    bin_widths = np.append(bin_widths, np.nan)
+    
+    size_prob = size_pdfs.mul(bin_widths, axis=1)
+    
+    # TODO: if it is needed to get conc. per size bin instead of probs, these 2 lines should be moved somewhere later in the pipline. Here they are of no good use and cause problems with the subsequent calculation of the distributions medians.
+    # if Config.bin_conc:
+    #    size_prob = size_prob.mul(sdd_MP.set_index('Sample').Concentration, axis=0)
 
-    size_prob = size_pdfs.mul(list(steps), axis=1)
-    size_conc = size_prob.mul(sdd_MP.set_index('Sample').Concentration, axis=0)
+    size_prob = prepare_data.complete_index_labels(size_prob)
 
-    size_conc = prepare_data.complete_index_labels(size_conc)
-
-    return size_conc
+    return size_prob
 
 
 def load_manual_height_measurments(low, high):
