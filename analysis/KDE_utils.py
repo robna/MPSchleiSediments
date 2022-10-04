@@ -97,6 +97,7 @@ def probDens2prob(size_pdfs, sdd_MP=None):
     #    size_prob = size_prob.mul(sdd_MP.set_index('Sample').Concentration, axis=0)
 
     size_prob = prepare_data.complete_index_labels(size_prob)
+    size_prob = prepare_data.close_compositional_data(size_prob)
 
     return size_prob
 
