@@ -31,7 +31,7 @@ def loocv(df):
     mae = mean_absolute_error(target, pred.pred)
     rmse = np.sqrt(mean_squared_error(target, pred.pred))
     r2 = r2_score(target, pred.pred)
-    adj_r2 = 1 - (1 - r2) * (n - 1) / (n - p - 1)
+    adj_r2 = 1 - (1 - r2) * (n - 1) / (n - p)
 
     metrics = pd.DataFrame(columns=['Metric', 'Value'])
     metrics.loc[0] = ['Max Error', maxe]
