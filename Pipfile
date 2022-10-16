@@ -17,6 +17,8 @@ scikit-bio = "==0.5.6"
 xgboost = "*"
 pysal = "*"
 hvplot = "*"
+folium = "*"
+mapclassify = "*"
 ipykernel = "*"
 
 [dev-packages]

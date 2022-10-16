@@ -7,6 +7,9 @@ from sklearn.utils.metaestimators import available_if
 
 from statsmodels.formula.api import glm as glm_sm
 
+from joblib import Parallel, delayed, cpu_count
+from itertools import chain
+
 
 class PipelineHelper(BaseEstimator, TransformerMixin, ClassifierMixin):
     """
@@ -237,3 +240,31 @@ class SMWrapper(BaseEstimator, RegressorMixin):
 
     def summary(self):
         print(self.results_.summary())
+
+
+def parallel(func=None, args=(), merge_func=lambda x:x, parallelism = cpu_count()):
+    """
+    TODO: this is not tested!!
+    Decorator to parallelize a function.
+    Source: https://bytepawn.com/python-decorators-for-data-scientists.html
+    
+        Example of use:
+    
+            @parallel
+            def my_function(x):
+                return x**2
+    
+            my_function([1,2,3,4,5,6,7,8,9,10])
+    """
+
+    def decorator(func: lambda li: sorted(chain(*li))):
+        def inner(*args, **kwargs):
+            results = Parallel(n_jobs=parallelism)(delayed(func)(*args, **kwargs) for i in range(parallelism))
+            return merge_func(results)
+        return inner
+    if func is None:
+        # decorator was used like @parallel(...)
+        return decorator
+    else:
+        # decorator was used like @parallel, without parens
+        return decorator(func)
