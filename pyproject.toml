@@ -22,6 +22,9 @@ dependencies = [
     "pysal>=2.6.0",
     "ipykernel>=6.15.1",
     "hvplot>=0.8.1",
+    "scikit-learn>=1.1.2",
+    "folium>=0.13.0",
+    "mapclassify>=2.4.3",
 ]
 requires-python = ">=3.8,<3.10"
 license = {text = "GPL-3.0-or-later"}

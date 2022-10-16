@@ -1,4 +1,4 @@
-from settings import Config
+from settings import Config, baw_tracer_reduction_factors
 from pathlib import Path
 from zipfile import ZipFile
 import geopandas as gpd
@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 import rasterio
 from shapely.geometry import Point, LineString
-
+from joblib import Parallel, delayed, cpu_count
 
 def get_schlei(epsg=Config.baw_epsg):
     """
@@ -54,26 +54,33 @@ def get_BAW_traces(file, polygon=None, save_tracks=True):
     Utility function to load either a single .dat file
     or a .zip file containing multiple .dat files
     :param file: path to .dat or .zip file
+    :param cached: path to cached .geojson file, to long run loading from .dat or .zip files again
     :param polygon: polygon to be used crop points outside the relevant area
+    :param save_tracks: whether to save the tracks as a .geojson file
     :return: GeoDataFrame with the tracer particle simulation run(s) as points per time step
     """
 
     file = Path(file)
-    if file.suffix == '.zip':
+    if file.suffix == '.geojson':
+        return gpd.read_file(file)
+    elif file.suffix == '.zip':
         tracks = extract_zipped_traces(file)
     elif file.suffix == '.dat':
         tracks = load_single_BAW_run(file)
     else:
         raise ValueError(f"File {file} has an unsupported file extension.")
-    # tracks.sort_index(inplace=True)
-    # tracks = tracer_sedimentation_points(tracks)  # determine tracer particle sedimentation events
 
     if polygon is None:
         polygon = get_schlei()
     tracks = gpd.clip(tracks, polygon.buffer(10))  # keep only points in 'tracks' that are within the polygon (incl. a 10 m buffer to allow for minor deviations of the coastline between the polygon used here and the bouandaries of the tracer model)
     
+    tracks.sort_index(inplace=True)
+    tracks = tracer_sedimentation_points(tracks)  # determine tracer particle sedimentation events
+    
     if save_tracks:
-        tracks.to_file('../data/BAW_traces.geojson', driver='GeoJSON')
+        tracks.to_file('../data/BAW_tracer_points.geojson', driver='GeoJSON')
+        tracklines = tracer_points_to_lines(tracks)
+        tracklines.to_file('../data/BAW_tracer_lines.geojson', driver='GeoJSON')
     return tracks
 
 
@@ -114,7 +121,8 @@ def extract_zipped_traces(path2zip):
         # get a list of all .dat files in the zip
         datfiles = [f for f in zipObj.namelist() if f.endswith('.dat')]
         # read the .dat files using geo.get_BAW_traces and concatenate them into one dataframe
-        gdfs = [load_single_BAW_run(zipObj.open(f)) for f in datfiles]
+        gdfs = [load_single_BAW_run(zipObj.open(f)) for f in datfiles]  # normal way, using one cpu core
+        # gdfs = Parallel(n_jobs=cpu_count(), verbose=2, backend='multiprocessing')(delayed(load_single_BAW_run)(zipObj.open(f)) for f in datfiles)  # attempt to parallelize, but returns error: cannot pickle '_io.BufferedReader' object
         return gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=True), crs=gdfs[0].crs)
 
 
@@ -139,8 +147,6 @@ def get_wwtp_influence(sdd, tracks=None, tracks_file=None, buffer_radius=Config.
                 raise ValueError('Either tracks or tracks_file must be provided.')
             else:
                 tracks = get_BAW_traces(tracks_file)  # load from .dat file
-                #TODO: add possibility to repeat tracks of particles of individual ESDs according to their relative abundance in pdd (estimated from a KDE)
-                
         # turn sdd into a GeoDataFrame with conversion from Lat/Lon to to epsg of gdf
         sdd_gdf = gpd.GeoDataFrame(sdd, geometry=gpd.points_from_xy(sdd.LON, sdd.LAT), crs=4326).to_crs(tracks.crs)
         # approach 1: mean distance based influence factor
@@ -181,27 +187,34 @@ def tracer_sedimentation_points(tracks, dem=None, dist=Config.sed_contact_dist, 
     contact_dur = tracks.loc[tracks.sediment_contact].groupby(['contact_id']).sediment_contact.count().rename('contact_dur')  # create a series with the duration of each contact
     contact_dur[contact_dur < dur] = np.nan  # exclude all contacts which are shorter than 'dur'
     tracks = tracks.join(contact_dur, on=['contact_id'])  # join the series of the duration of each contact to the gdf
-    
-    for group_name, group in tracks.groupby(['simPartID', 'season', 'tracer_ESD']):  # per tracer particle, loop through the rows of the gdf and count how many times up to each row a particle has been in valid contact to sediment
+    tracks = pd.concat(Parallel(n_jobs=cpu_count())(delayed(arrest_tracks)(group, group_name) for group_name, group in tracks.groupby(['simPartID', 'season', 'tracer_ESD'])))
+    tracks.sort_index(inplace=True)
+    # tracks.drop(columns=['contact_id', 'contact_dur'], inplace=True)  # drop the intermediate columns    
+    return tracks
+
+
+def arrest_tracks(group, group_name):
+    """
+    Per tracer particle, loop through the rows of the gdf and count
+    how many times up to each row a particle has been in valid contact to sediment.
+    After a valid sedimentation set coordinates of all following time steps of
+    that particle to what they were at the time of sedimentation.
+    """
+    simPartID, tracer_ESD = group_name[0], group_name[2]
+    reducer = round(1 / baw_tracer_reduction_factors[tracer_ESD])
+    if (simPartID + reducer - 1) % reducer == 0:
         completed_row_contact_dur = np.nan
         counter = 0
         for row_index, row in group.iterrows():
             if ~np.isnan(row.contact_dur) and np.isnan(completed_row_contact_dur):  # for row where contact_dur is not nan but completed_row_contact_dur was nan (i.e. at every time step where a new sedimentation starts), increase counter
                 counter += 1
-            tracks.loc[row_index, 'contact_count'] = counter
             completed_row_contact_dur = row.contact_dur  # save what was in this rows contact_dur for comparison in next iteration
-    # tracks.drop(columns=['contact_id', 'contact_dur'], inplace=True)  # drop the intermediate columns
-
-    # if Config.arrest_on_nth_sedimentation > 0:
-    #     #tracks = tracks.loc[tracks.contact_count < Config.truncate_on_nth_sedimentation]  # truncate the gdf to only include tracks up to nth sedimentation
-    #     # when nth sedimentation is reached, set all following x and y coordinates to the same value as the last valid coordinate
-    #     for group_name, group in tracks.groupby(['simPartID', 'tracer_ESD']):  # 
-    #         #group.loc[tracks.contact_count >= Config.arrest_on_nth_sedimentation, 'geometry'] = group.loc[tracks.contact_count == Config.arrest_on_nth_sedimentation-1, 'geometry'].iloc[-1]
-    #         last_valid_x = group.loc[tracks.contact_count == Config.arrest_on_nth_sedimentation-1, 'geometry'].iloc[-1].x
-    #         last_valid_y = group.loc[tracks.contact_count == Config.arrest_on_nth_sedimentation-1, 'geometry'].iloc[-1].y
-    #         group.loc[tracks.contact_count >= Config.arrest_on_nth_sedimentation, 'geometry'] = Point(last_valid_x, last_valid_y)
-    #         tracks.loc[group.index] = group
-    return tracks
+            group.loc[row_index, 'contact_count'] = counter
+        if group.contact_count.max() >= Config.arrest_on_nth_sedimentation > 0:
+            last_valid_coords = group.loc[group.contact_count == Config.arrest_on_nth_sedimentation, 'geometry'].values[0]
+            last_valid_x, last_valid_y = last_valid_coords.x, last_valid_coords.y
+            group.loc[group.contact_count >= Config.arrest_on_nth_sedimentation, 'geometry'] = Point(last_valid_x, last_valid_y)
+        return group
 
 
 def sparse_xyz_to_grid(xyz, sep=' ', resolution=Config.dem_resolution, nodata=-9999):  # FIXME: not working yet, gives: TypeError: 'set' type is unordered, in line df_missing = ...
@@ -231,6 +244,13 @@ def sparse_xyz_to_grid(xyz, sep=' ', resolution=Config.dem_resolution, nodata=-9
     assert len(df) == len(x_vals) * len(y_vals)
 
     return df.to_numpy()
+
+
+def tracer_points_to_lines(tracks):
+    """
+    Convert the points of the tracer particles to lines
+    """
+    return tracks.groupby(['season', 'tracer_ESD', 'simPartID'])['geometry'].apply(lambda x: LineString(x.unique().tolist()*2 if len(x.unique().tolist())==1 else x.unique().tolist()))
 
 
 ##TODO: the following two functions are not complete yet
