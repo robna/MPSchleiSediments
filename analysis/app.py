@@ -1,6 +1,7 @@
 import pandas as pd
 from math import floor, ceil
 from statsmodels.graphics.gofplots import qqplot
+from sklearn.metrics import r2_score
 
 import prepare_data
 import KDE_utils
@@ -152,9 +153,9 @@ def filters(mp_pdd):
     return mp_pdd, regionfilter
 
 
-def df_expander(df, title):
+def df_expander(df, title, height=300):
     with st.expander(title):
-        st.write(df)
+        st.dataframe(df, height=height)
         st.write('Shape: ', df.shape)
         col1, col2 = st.columns([1,3])
         col1.write(df.dtypes)
@@ -223,7 +224,7 @@ def main():
             cols[2].text("")  # empty line to make some distance
             cols[2].write('Regression parameters:')
             cols[2].write(particle_reg_params)
-        df_expander(df, "Sample domain data")
+        df_expander(df, "Sample domain data", height=1000)
         
 #%%
     # new_cap('Map')
@@ -299,15 +300,16 @@ def main():
     if st.checkbox('Calculate GLM'):
         col1, col2 = st.columns(2)
         families = ['Gaussian', 'Poisson', 'Gamma', 'Tweedie', 'NegativeBinomial']
-        family = col1.radio('Select distribution family:', families, index=families.index('Poisson'))
+        family = col1.radio('Select distribution family:', families, index=families.index('Gaussian'))
         # for neg.binom use CT-alpha-estimator from here: https://web.archive.org/web/20210303054417/https://dius.com.au/2017/08/03/using-statsmodels-glms-to-model-beverage-consumption/
         Config.glm_family = family
 
         links = [None, 'identity', 'Power', 'inverse_power', 'sqrt', 'log']
-        link = col2.selectbox('Select link function (use None for default link of family):', links, index=0)
+        link = col2.selectbox('Select link function (use None for default link of family):', links, index=3)
         Config.glm_link = link
 
-        Config.glm_formula = st.text_input('GLM formula:', 'Concentration ~ Dist_WWTP + Q("D50 (µm)") + PC2')
+        Config.glm_formula = st.text_input('GLM formula:', 'Concentration ~ Dist_WWTP + PC1')
+        target_name = Config.glm_formula.split('~')[0].strip()
 
         # resp = st.sidebar.selectbox('Select Response', reponselist)
         glm_res = glm.glm(df)
@@ -319,7 +321,7 @@ def main():
 
         df['yhat'] = glm_res.mu
         df['pearson_resid'] = glm_res.resid_pearson
-        col2.write(scatter_chart(df, Config.glm_formula.split(' ~')[0], 'yhat',
+        col2.write(scatter_chart(df, target_name, 'yhat',
                                  color='regio_sep',
                                  identity=True, equal_axes=False,
                                  width=400, height=300,
@@ -331,8 +333,21 @@ def main():
         col3.pyplot(qqplot(resid, line='r'))
 
         if st.checkbox('LOOCV'):
-            _, metrics = cv.loocv(df)
+            loocv_predictions, metrics = cv.loocv(df)
             st.write(metrics)
+            with st.expander("LOOCV predictions"):
+                col1, col2 = st.columns((1, 2), gap='large')
+                col1.dataframe(loocv_predictions, height=1000)
+                loglog = col2.checkbox('LogLog?')
+                col2.write(scatter_chart(loocv_predictions, target_name, 'pred',
+                                 labels='Sample',
+                                 identity=True,
+                                 equal_axes=True if not loglog else False,
+                                 xscale='log' if loglog else 'linear', yscale='log' if loglog else 'linear',
+                                #  xtransform=True, ytransform=True,
+                                 width=800, height=800,
+                                 title='LOOCV --- yhat vs. y')[0]
+                )
 
 #%%
     new_chap()

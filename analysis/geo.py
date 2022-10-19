@@ -138,7 +138,7 @@ def get_wwtp_influence(sdd, tracks=None, tracks_file=None, buffer_radius=Config.
     """
 
     try:  # because this calculation takes a while, we want to be able to save the tracks to a file and load them later
-        return pd.concat([sdd, pd.read_csv('../data/WWTP_influence.csv', index_col=0)], axis=1)
+        return pd.merge(sdd, pd.read_csv('../data/WWTP_influence.csv', index_col=0), how='left', left_on='Sample', right_index=True)
     except:
         print('Need to calculate WWTP influence based on simulated particle tracks. This may take a while...')
         sdd = sdd.copy()
@@ -158,9 +158,10 @@ def get_wwtp_influence(sdd, tracks=None, tracks_file=None, buffer_radius=Config.
         # group sdd by Sample and sum the number of particles that were encountered in the buffer zone
         sdd[col_prefix+'_as_cumulated_residence'] = dfsjoin.reset_index().groupby('index').time_step.count()  # Robins approach
         sdd[col_prefix+'_as_mean_time_travelled'] = dfsjoin.reset_index().groupby(['index', 'simPartID']).nth(0).groupby('index').time_step.mean()  # Kristinas approach
+        sdd[col_prefix+'_as_mean_time_travelled'].fillna(Config.tracer_mean_time_fillna, inplace=True)
         sdd.drop(columns=['geometry'], inplace=True)
         # save calculated WWTP influence factors (the last 3 columns of sdd) to a csv file
-        sdd.iloc[:, -3:].to_csv('../data/WWTP_influence.csv')
+        sdd.set_index('Sample').iloc[:, -3:].to_csv('../data/WWTP_influence.csv', index_label='Sample')
         return sdd
 
 

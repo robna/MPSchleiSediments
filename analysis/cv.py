@@ -16,7 +16,7 @@ def loocv(df):
     """
     pred = pd.DataFrame(columns=['Sample', 'pred'])  # create empty dataframe for predictions
     n = df.shape[0]  # number of samples
-    p = Config.glm_formula.count('+') + 1  # number of predictors
+    p = Config.glm_formula.count('+') + Config.glm_formula.count('*') + 1  # number of predictors
     for train_index, test_index in LeaveOneOut(df.shape[0]):
         train = df.loc[train_index, :]
         test = df.loc[test_index, :]
@@ -25,7 +25,8 @@ def loocv(df):
         pred = pd.concat([pred, predi])
 
     target = df.loc[:, Config.glm_formula.split(' ~')[0]]  # isolate target variable (observed values)
-    pred.loc[:, Config.glm_formula.split(' ~')[0]] = target
+    target_name = Config.glm_formula.split(' ~')[0]
+    pred.loc[:, target_name] = target
 
     maxe = max_error(target, pred.pred)
     mae = mean_absolute_error(target, pred.pred)
@@ -33,11 +34,11 @@ def loocv(df):
     r2 = r2_score(target, pred.pred)
     adj_r2 = 1 - (1 - r2) * (n - 1) / (n - p)
 
-    metrics = pd.DataFrame(columns=['Metric', 'Value'])
-    metrics.loc[0] = ['Max Error', maxe]
-    metrics.loc[1] = ['MAE', mae]
-    metrics.loc[2] = ['RMSE', rmse]
-    metrics.loc[3] = ['R2', r2]
-    metrics.loc[4] = ['Adj. R2', adj_r2]
+    metrics = pd.DataFrame(columns=['Metric', 'Value', ''])
+    metrics.loc[0] = ['Max Error', maxe, pred.loc[np.abs(target - pred.pred ).idxmax(), 'Sample']]
+    metrics.loc[1] = ['Mean Absolute Error', mae, '']
+    metrics.loc[2] = ['Root Mean Square Error', rmse, '']
+    metrics.loc[3] = ['R²', r2, '']
+    metrics.loc[4] = ['Adjusted R²', adj_r2, '']
 
     return pred, metrics
