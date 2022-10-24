@@ -154,7 +154,7 @@ def get_wwtp_influence(sdd, trackpoints=None, tracks_file=None, buffer_radius=Co
         # approach 1: mean distance based influence factor
         sdd[col_prefix+'_as_tracer_mean_dist'] = sdd_gdf.geometry.apply(lambda x: trackpoints.distance(x).mean())  # mean distance of all particles at all time steps to each sample station
         # approach 2: mean distance based influence factor, but only distances to each tracer end point
-        sdd[col_prefix+'_as_endpoints_mean_dist'] = sdd_gdf.geometry.apply(lambda x: tracklines.apply(lambda y: y.coords[-1]).distance(x).mean())
+        sdd[col_prefix+'_as_endpoints_mean_dist'] = sdd_gdf.geometry.apply(lambda x: tracklines.apply(lambda y: Point(y.coords[-1])).distance(x).mean())
         # approach 3 and 4: buffer based influence factor
         sdd_gdf['geometry'] = sdd_gdf.buffer(buffer_radius)
         # spatially join the sample domain data with the particle tracks, where the buffer zone of a sample contains a particle location at any time step
@@ -165,7 +165,7 @@ def get_wwtp_influence(sdd, trackpoints=None, tracks_file=None, buffer_radius=Co
         sdd[col_prefix+'_as_mean_time_travelled'].fillna(Config.tracer_mean_time_fillna, inplace=True)
         sdd.drop(columns=['geometry'], inplace=True)
         # save calculated WWTP influence factors (the last 3 columns of sdd) to a csv file
-        sdd.set_index('Sample').iloc[:, -3:].to_csv('../data/WWTP_influence.csv', index_label='Sample')
+        sdd.set_index('Sample').iloc[:, -4:].to_csv('../data/WWTP_influence.csv', index_label='Sample')
         return sdd
 
 
