@@ -77,11 +77,11 @@ def get_BAW_traces(file, polygon=None, save_tracks=True):
     tracks.sort_index(inplace=True)
     tracks = tracer_sedimentation_points(tracks)  # determine tracer particle sedimentation events
     
+    tracklines = tracer_points_to_lines(tracks)
     if save_tracks:
         tracks.to_file('../data/BAW_tracer_points.geojson', driver='GeoJSON')
-        tracklines = tracer_points_to_lines(tracks)
         tracklines.to_file('../data/BAW_tracer_lines.geojson', driver='GeoJSON')
-    return tracks
+    return tracks, tracklines
 
 
 def load_single_BAW_run(file, epsg=Config.baw_epsg):
@@ -120,13 +120,15 @@ def extract_zipped_traces(path2zip):
     with ZipFile(path2zip) as zipObj:
         # get a list of all .dat files in the zip
         datfiles = [f for f in zipObj.namelist() if f.endswith('.dat')]
+        # only keep .dat files in the list which are from seasons named in Config.use_seasons
+        datfiles = [f for f in datfiles if f.split('_')[0] in Config.use_seasons]
         # read the .dat files using geo.get_BAW_traces and concatenate them into one dataframe
         gdfs = [load_single_BAW_run(zipObj.open(f)) for f in datfiles]  # normal way, using one cpu core
         # gdfs = Parallel(n_jobs=cpu_count(), verbose=2, backend='multiprocessing')(delayed(load_single_BAW_run)(zipObj.open(f)) for f in datfiles)  # attempt to parallelize, but returns error: cannot pickle '_io.BufferedReader' object
         return gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=True), crs=gdfs[0].crs)
 
 
-def get_wwtp_influence(sdd, tracks=None, tracks_file=None, buffer_radius=Config.station_buffers, col_prefix='WWTP_influence'):
+def get_wwtp_influence(sdd, trackpoints=None, tracks_file=None, buffer_radius=Config.station_buffers, col_prefix='WWTP_influence'):
     """
     Calculates different versions of an influence factor of the WWTP based on simulated tracers.
     :param sdd: df with sample domain data
@@ -142,19 +144,21 @@ def get_wwtp_influence(sdd, tracks=None, tracks_file=None, buffer_radius=Config.
     except:
         print('Need to calculate WWTP influence based on simulated particle tracks. This may take a while...')
         sdd = sdd.copy()
-        if tracks is None:  # if gdf is provided use as is, other load and prepare
+        if trackpoints is None:  # if gdf is provided use as is, other load and prepare
             if tracks_file is None:
                 raise ValueError('Either tracks or tracks_file must be provided.')
             else:
-                tracks = get_BAW_traces(tracks_file)  # load from .dat file
+                trackpoints, tracklines = get_BAW_traces(tracks_file)  # load from .dat file
         # turn sdd into a GeoDataFrame with conversion from Lat/Lon to to epsg of gdf
-        sdd_gdf = gpd.GeoDataFrame(sdd, geometry=gpd.points_from_xy(sdd.LON, sdd.LAT), crs=4326).to_crs(tracks.crs)
+        sdd_gdf = gpd.GeoDataFrame(sdd, geometry=gpd.points_from_xy(sdd.LON, sdd.LAT), crs=4326).to_crs(trackpoints.crs)
         # approach 1: mean distance based influence factor
-        sdd[col_prefix+'_as_tracer_mean_dist'] = sdd_gdf.geometry.apply(lambda x: tracks.distance(x).mean())  # mean distance of all particles at all time steps to each sample station
-        # approach 2 and 3: buffer based influence factor
+        sdd[col_prefix+'_as_tracer_mean_dist'] = sdd_gdf.geometry.apply(lambda x: trackpoints.distance(x).mean())  # mean distance of all particles at all time steps to each sample station
+        # approach 2: mean distance based influence factor, but only distances to each tracer end point
+        sdd[col_prefix+'_as_endpoints_mean_dist'] = sdd_gdf.geometry.apply(lambda x: tracklines.apply(lambda y: y.coords[-1]).distance(x).mean())
+        # approach 3 and 4: buffer based influence factor
         sdd_gdf['geometry'] = sdd_gdf.buffer(buffer_radius)
         # spatially join the sample domain data with the particle tracks, where the buffer zone of a sample contains a particle location at any time step
-        dfsjoin = gpd.sjoin(sdd_gdf, tracks, how='left', predicate='contains')
+        dfsjoin = gpd.sjoin(sdd_gdf, trackpoints, how='left', predicate='contains')
         # group sdd by Sample and sum the number of particles that were encountered in the buffer zone
         sdd[col_prefix+'_as_cumulated_residence'] = dfsjoin.reset_index().groupby('index').time_step.count()  # Robins approach
         sdd[col_prefix+'_as_mean_time_travelled'] = dfsjoin.reset_index().groupby(['index', 'simPartID']).nth(0).groupby('index').time_step.mean()  # Kristinas approach
@@ -202,6 +206,8 @@ def arrest_tracks(group, group_name):
     that particle to what they were at the time of sedimentation.
     """
     simPartID, tracer_ESD = group_name[0], group_name[2]
+    if baw_tracer_reduction_factors[tracer_ESD] == 0:  # if baw_tracer_reduction_factor is 0, return nothing, i.e. no particles of this type will be included
+        return
     reducer = round(1 / baw_tracer_reduction_factors[tracer_ESD])
     if (simPartID + reducer - 1) % reducer == 0:
         completed_row_contact_dur = np.nan

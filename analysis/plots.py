@@ -1,4 +1,3 @@
-from cv2 import norm
 import numpy as np
 import pandas as pd
 
@@ -10,7 +9,6 @@ import altair_transform
 import seaborn as sns
 sns.set_style('whitegrid')
 
-from matplotlib.colors import LogNorm
 from matplotlib import pyplot as plt
 
 import plotly.graph_objects as go
@@ -19,7 +17,6 @@ import plotly.express as px
 import pydeck as pdk
 import streamlit as st
 from sklearn.metrics import r2_score
-# from streamlit_vega_lite import altair_component
 
 from settings import Config
 import prepare_data
