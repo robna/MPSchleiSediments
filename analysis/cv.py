@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+from itertools import combinations
+from joblib import Parallel, delayed, cpu_count
 
 from statsmodels.sandbox.tools.cross_val import LeaveOneOut
 from sklearn.metrics import max_error, mean_squared_error, mean_absolute_error, r2_score
@@ -42,3 +44,44 @@ def loocv(df):
     metrics.loc[4] = ['Adjusted R²', adj_r2, '']
 
     return pred, metrics
+
+
+def generate_feature_sets(featurelist, mutual_exclusive, exclusive_keywords, num_feat='all', n_jobs=1):
+    """
+    Generate all possible feature combinations of a given size.
+    :param featurelist: list of all available features
+    :param mutual_exclusive: list of lists of features that are mutually exclusive
+    :param exclusive_keywords: list of keywords, for each of which maximum one feature containing it may be present in any given combination
+    :param num_feat: number of features in each set, can be an integer, or a tuple (min, max) or 'all' (default)
+    :return: list of feature sets as pandas index objects
+    """
+
+    if isinstance(featurelist, pd.DataFrame):
+        featurelist = featurelist.columns
+
+    if num_feat == 'all':
+        min_num , max_num = (1, len(featurelist))
+    elif isinstance(num_feat, int):
+        min_num = max_num = num_feat
+    elif isinstance(num_feat, (list, tuple)):
+        min_num, max_num = num_feat
+    else:
+        raise ValueError('num_feat must be an integer, a tuple or "all".')
+    
+    if n_jobs == 1:
+        fl = [list(combinations(featurelist, l)) for l in range(min_num, max_num+1)]
+    else:
+        fl = Parallel(n_jobs=n_jobs, verbose=1)(delayed(lambda x: list(combinations(featurelist, x)))(x) for x in range(min_num, max_num+1))
+
+    # flatten the list of lists and remove combinations containing mutual exclusive features
+    return [
+        item
+            for sublist in fl
+            for item in sublist
+        if not any(all(pd.Series(ex_feats).isin(item))
+            for ex_feats in mutual_exclusive)
+        and sum(keyword in feat 
+            for keyword in exclusive_keywords
+            for feat in item)
+        <= len(exclusive_keywords)
+        ]
