@@ -46,7 +46,7 @@ def loocv(df):
     return pred, metrics
 
 
-def generate_feature_sets(featurelist, mutual_exclusive, exclusive_keywords, num_feat='all', n_jobs=1):
+def generate_feature_sets(featurelist, mutual_exclusive, exclusive_keywords, num_feat='all', n_jobs=1, save=False):
     """
     Generate all possible feature combinations of a given size.
     :param featurelist: list of all available features
@@ -64,24 +64,70 @@ def generate_feature_sets(featurelist, mutual_exclusive, exclusive_keywords, num
     elif isinstance(num_feat, int):
         min_num = max_num = num_feat
     elif isinstance(num_feat, (list, tuple)):
-        min_num, max_num = num_feat
+        if len(num_feat) == 2:
+            min_num, max_num = num_feat
+        elif len(num_feat) == 1:
+            min_num = num_feat[0]
+            max_num = len(featurelist)
+        else:
+            raise ValueError(f'num_feat as list or tuple may only have two elements (min_num, max_num) OR one element (min_num,) where max_num = len(featurelist). You supplied {type(num_feat)} of length {len(num_feat)}.')
     else:
         raise ValueError('num_feat must be an integer, a tuple or "all".')
     
     if n_jobs == 1:
-        fl = [list(combinations(featurelist, l)) for l in range(min_num, max_num+1)]
-    else:
-        fl = Parallel(n_jobs=n_jobs, verbose=1)(delayed(lambda x: list(combinations(featurelist, x)))(x) for x in range(min_num, max_num+1))
+        nfl = [list(combinations(featurelist, l)) for l in range(min_num, max_num+1)]
+        # flatten the list of lists and remove combinations containing mutual exclusive features
+        fl = [
+            item
+                for sublist in nfl
+                for item in sublist
+            if not any(all(pd.Series(ex_feats).isin(item))
+                for ex_feats in mutual_exclusive)
+            and sum(keyword in feat 
+                for keyword in exclusive_keywords
+                for feat in item)
+            <= len(exclusive_keywords)
+            ]
 
-    # flatten the list of lists and remove combinations containing mutual exclusive features
-    return [
-        item
-            for sublist in fl
-            for item in sublist
-        if not any(all(pd.Series(ex_feats).isin(item))
-            for ex_feats in mutual_exclusive)
-        and sum(keyword in feat 
-            for keyword in exclusive_keywords
-            for feat in item)
-        <= len(exclusive_keywords)
-        ]
+    else:
+        def func(x):
+            return x
+        
+        nfl = Parallel(n_jobs=n_jobs, verbose=1)(delayed(lambda x: list(combinations(featurelist, x)))(x) for x in range(min_num, max_num+1))
+        # flatten and return, using joblib Parallel:
+        fl = Parallel(n_jobs=n_jobs, verbose=1)(delayed(func)(item)
+                for sublist in nfl
+                for item in sublist
+            if not any(all(pd.Series(ex_feats).isin(item))
+                for ex_feats in mutual_exclusive)
+            and sum(keyword in feat
+                for keyword in exclusive_keywords
+                for feat in item)
+            <= len(exclusive_keywords))
+    
+    print(f'Combination generation finished: {len(fl)} combinations generated.')
+    
+    if save:
+        with open(f'../data/feature_candidates_list_min{min_num}_max{max_num}.txt', 'w') as f:
+            for line in fl:
+                f.write(f"{line}\n")
+    return fl
+
+
+def best_median_score(cv_results):
+    """
+    Find the best median score from a cross-validation result dictionary.
+    :param cv_results: dictionary of cross-validation results
+    :return: index of best median score
+    """
+
+    inner_test_scores = np.array([
+                                    scores for key, scores
+                                    in cv_results.items()
+                                    if key.startswith('split')
+                                    and f'test_{Config.refit_scorer}'
+                                    in key
+                                ])
+    median_inner_test_scores = np.median(inner_test_scores, axis=0)
+    return median_inner_test_scores.argmax()
+    

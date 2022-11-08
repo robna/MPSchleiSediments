@@ -51,6 +51,14 @@ class Config:
     glm_formula: str = f'{target} ~ {predictors[0]} + ' \
                        f'{predictors[1]}'
 
+    # Settings for the CV notebook
+    scoring: dict = {  # dictionary of scores to be used by gridsearch
+                        'R2': 'r2',
+                        'MAPE': 'neg_mean_absolute_percentage_error',
+                        'MedAE': 'neg_median_absolute_error',
+                        # 'MSLE': 'neg_mean_squared_log_error',
+                    }
+    refit_scorer: str = 'R2'  # one of the keys in scoring dict above: will be used to refit at set best estimator of the gridsearch object
 
 Config.bandwidths: np.array = 10 ** np.linspace(0, 3,
                                                 Config.bws_to_test)  # creates the range of bandwidths to be tested
