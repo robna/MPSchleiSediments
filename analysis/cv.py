@@ -139,3 +139,21 @@ def best_median_score(cv_results):
     median_inner_test_scores = np.median(inner_test_scores, axis=0)
     return median_inner_test_scores.argmax()
     
+
+    def get_median_cv_scores(outerCV):
+        """
+        Add median cross-validation scores to nested CV results.
+        :param outerCV: result object of nested cross-validation
+        """
+
+        for outer_fold in range(len(outerCV['estimator'])):
+            res = outerCV['estimator'][outer_fold].cv_results_
+            res_df = pd.DataFrame(res)
+            for k, v in Config.scoring.items():
+                res[f'rank_by_mean_test_{k}'] = res.pop(f'rank_test_{k}')
+                res_df[f'median_test_{k}'] = res_df.filter(regex=f'^split._test_{k}').median(axis=1)
+                res_df[f'rank_by_median_test_{k}'] = res_df[f'median_test_{k}'].rank(ascending=False).astype(int)
+
+                res[f'median_test_{k}'] = res_df[f'median_test_{k}'].to_numpy()
+                res[f'rank_by_median_test_{k}'] = res_df[f'rank_by_median_test_{k}'].to_numpy()
+                
