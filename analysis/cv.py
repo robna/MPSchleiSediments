@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+import pickle
+from pathlib import Path
 from itertools import combinations
 from joblib import Parallel, delayed, cpu_count
 
@@ -53,7 +55,7 @@ def generate_feature_sets(featurelist, mutual_exclusive, exclusive_keywords, num
     :param mutual_exclusive: list of lists of features that are mutually exclusive
     :param exclusive_keywords: list of keywords, for each of which maximum one feature containing it may be present in any given combination
     :param num_feat: number of features in each set, can be an integer, or a tuple (min, max) or 'all' (default)
-    :return: list of feature sets as pandas index objects
+    :return: list of feature sets
     """
 
     if isinstance(featurelist, pd.DataFrame):
@@ -74,11 +76,18 @@ def generate_feature_sets(featurelist, mutual_exclusive, exclusive_keywords, num
     else:
         raise ValueError('num_feat must be an integer, a tuple or "all".')
     
+    if Path(f'../data/feature_candidates_list_min{min_num}_max{max_num}.pkl').exists():
+        with open(f'../data/feature_candidates_list_min{min_num}_max{max_num}.pkl', 'rb') as f:
+            fl =  pickle.load(f)
+            print(f'Loaded feature candidates list from file: {f.name}')
+            print(f'Number of feature sets: {len(fl)}')
+            return fl
+
     if n_jobs == 1:
         nfl = [list(combinations(featurelist, l)) for l in range(min_num, max_num+1)]
         # flatten the list of lists and remove combinations containing mutual exclusive features
         fl = [
-            item
+            list(item)
                 for sublist in nfl
                 for item in sublist
             if not any(all(pd.Series(ex_feats).isin(item))
@@ -89,13 +98,10 @@ def generate_feature_sets(featurelist, mutual_exclusive, exclusive_keywords, num
             <= len(exclusive_keywords)
             ]
 
-    else:
-        def func(x):
-            return x
-        
+    else:      
         nfl = Parallel(n_jobs=n_jobs, verbose=1)(delayed(lambda x: list(combinations(featurelist, x)))(x) for x in range(min_num, max_num+1))
         # flatten and return, using joblib Parallel:
-        fl = Parallel(n_jobs=n_jobs, verbose=1)(delayed(func)(item)
+        fl = Parallel(n_jobs=n_jobs, verbose=1)(delayed(list)(item)
                 for sublist in nfl
                 for item in sublist
             if not any(all(pd.Series(ex_feats).isin(item))
@@ -108,9 +114,11 @@ def generate_feature_sets(featurelist, mutual_exclusive, exclusive_keywords, num
     print(f'Combination generation finished: {len(fl)} combinations generated.')
     
     if save:
-        with open(f'../data/feature_candidates_list_min{min_num}_max{max_num}.txt', 'w') as f:
-            for line in fl:
-                f.write(f"{line}\n")
+        # with open(f'../data/feature_candidates_list_min{min_num}_max{max_num}.txt', 'w') as f:
+        #     for line in fl:
+        #         f.write(f"{line}\n")
+        with open(f'../data/feature_candidates_list_min{min_num}_max{max_num}.pkl', 'wb') as f:
+            pickle.dump(fl, f)
     return fl
 
 

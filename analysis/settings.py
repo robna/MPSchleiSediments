@@ -52,6 +52,19 @@ class Config:
                        f'{predictors[1]}'
 
     # Settings for the CV notebook
+    mutual_exclusive: list = [  # Mutual exclusive list (list of lists detailing predictors that are not allowed together in one model candidate)
+        ['MODE 1 (µm)', 'D50 (µm)'],
+        ['MODE 1 (µm)', 'PC1'],
+        ['MODE 1 (µm)', 'perc MUD'],
+        ['MODE 1 (µm)', 'TOC'],
+        ['D50 (µm)', 'PC1'],
+        ['D50 (µm)', 'perc MUD'],
+        ['D50 (µm)', 'TOC'],
+        ['perc MUD', 'PC1'],
+        ['perc MUD', 'TOC'],
+        ['PC1', 'TOC'],
+        ]
+    exclusive_keywords: list = ['WWTP']  # only feature_candidates sets with max 1 feature containing each keyword will be considered
     scoring: dict = {  # dictionary of scores to be used by gridsearch
                         'R2': 'r2',
                         'MAPE': 'neg_mean_absolute_percentage_error',
