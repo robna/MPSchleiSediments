@@ -1,6 +1,7 @@
 from settings import Config
 import statsmodels.formula.api as smf
 import statsmodels.api as sm
+import numpy as np
 
 def glm(data):
     """

@@ -51,6 +51,27 @@ class Config:
     glm_formula: str = f'{target} ~ {predictors[0]} + ' \
                        f'{predictors[1]}'
 
+    # Settings for the CV notebook
+    mutual_exclusive: list = [  # Mutual exclusive list (list of lists detailing predictors that are not allowed together in one model candidate)
+        ['MODE 1 (µm)', 'D50 (µm)'],
+        ['MODE 1 (µm)', 'PC1'],
+        ['MODE 1 (µm)', 'perc MUD'],
+        ['MODE 1 (µm)', 'TOC'],
+        ['D50 (µm)', 'PC1'],
+        ['D50 (µm)', 'perc MUD'],
+        ['D50 (µm)', 'TOC'],
+        ['perc MUD', 'PC1'],
+        ['perc MUD', 'TOC'],
+        ['PC1', 'TOC'],
+        ]
+    exclusive_keywords: list = ['WWTP']  # only feature_candidates sets with max 1 feature containing each keyword will be considered
+    scoring: dict = {  # dictionary of scores to be used by gridsearch
+                        'R2': 'r2',
+                        'MAPE': 'neg_mean_absolute_percentage_error',
+                        'MedAE': 'neg_median_absolute_error',
+                        # 'MSLE': 'neg_mean_squared_log_error',
+                    }
+    refit_scorer: str = 'R2'  # one of the keys in scoring dict above: will be used to refit at set best estimator of the gridsearch object
 
 Config.bandwidths: np.array = 10 ** np.linspace(0, 3,
                                                 Config.bws_to_test)  # creates the range of bandwidths to be tested

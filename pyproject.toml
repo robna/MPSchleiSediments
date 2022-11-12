@@ -22,7 +22,8 @@ dependencies = [
     "pysal>=2.6.0",
     "ipykernel>=6.15.1",
     "hvplot>=0.8.1",
-    "scikit-learn>=1.1.2",
+    #"scikit-learn>=1.1.2",
+    "scikit-learn @ https://pypi.anaconda.org/scipy-wheels-nightly/simple/scikit-learn/1.2.dev0/scikit_learn-1.2.dev0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
     "folium>=0.13.0",
     "mapclassify>=2.4.3",
 ]
