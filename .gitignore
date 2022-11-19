@@ -1,3 +1,6 @@
+# exported intermediate data
+/data/exports/
+
 # Ignore hidden files
 .*
 
