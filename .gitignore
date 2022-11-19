@@ -1,3 +1,6 @@
+# Ignore hidden files
+.*
+
 # PDM
 .pdm.toml
 __pypackages__/

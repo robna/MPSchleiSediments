@@ -76,7 +76,7 @@ def generate_feature_sets(featurelist, mutual_exclusive, exclusive_keywords, num
     else:
         raise ValueError('num_feat must be an integer, a tuple or "all".')
     
-    if Path(f'../data/feature_candidates_list_min{min_num}_max{max_num}.pkl').exists():
+    if Path(f'../data/.feature_candidates_list_min{min_num}_max{max_num}.pkl').exists():
         with open(f'../data/feature_candidates_list_min{min_num}_max{max_num}.pkl', 'rb') as f:
             fl =  pickle.load(f)
             print(f'Loaded feature candidates list from file: {f.name}')
@@ -117,7 +117,7 @@ def generate_feature_sets(featurelist, mutual_exclusive, exclusive_keywords, num
         # with open(f'../data/feature_candidates_list_min{min_num}_max{max_num}.txt', 'w') as f:
         #     for line in fl:
         #         f.write(f"{line}\n")
-        with open(f'../data/feature_candidates_list_min{min_num}_max{max_num}.pkl', 'wb') as f:
+        with open(f'../data/.feature_candidates_list_min{min_num}_max{max_num}.pkl', 'wb') as f:
             pickle.dump(fl, f)
     return fl
 

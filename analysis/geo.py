@@ -181,7 +181,7 @@ def tracer_sedimentation_points(tracks, dem=None, dist=Config.sed_contact_dist, 
              and another column called 'contact_count'starting at 0 for each particle and increasing by 1 for each contact to sediment which is at least 'dur' timesteps long
     """
     if dem is None:
-        dem = load_zipped_grid('../data/DGM_Schlei_1982_bis_2002_UTM32.zip')  # load grid from zip file
+        dem = load_zipped_grid('../data/.DGM_Schlei_1982_bis_2002_UTM32.zip')  # load grid from zip file
     coord_list = [(x,y) for x,y in zip(tracks['geometry'].x , tracks['geometry'].y)]  # create list of coordinate tuples, because rasterio.sample can't handle geopandas geometries
     tracks['water_depth'] = [-1 * x[0] for x in dem.sample(coord_list)]  # sample the grid at the locations of the tracer particles (multiply by -1 because the grid uses negative depth values)  
     tracks['sediment_contact'] = False  # intitialize sediment_contact column: False = no contact
