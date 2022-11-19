@@ -26,79 +26,79 @@ featurelist = [
     'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_444',
     'WWTP_influence_as_endpoints_mean_dist__sed_18µm_allseasons_444',
     'WWTP_influence_as_cumulated_residence__sed_18µm_allseasons_444',
-    'WWTP_influence_as_mean_time_travelled__sed_18µm_allseasons_444',
+    'WWTP_influence_as_mean_time_travelled__sed_18µm_allseasons_444',#0.64,0.77
     'WWTP_influence_as_tracer_mean_dist__nosed_18µm_spring_444',
     'WWTP_influence_as_endpoints_mean_dist__nosed_18µm_spring_444',
-    'WWTP_influence_as_cumulated_residence__nosed_18µm_spring_444',
-    'WWTP_influence_as_mean_time_travelled__nosed_18µm_spring_444',
+    'WWTP_influence_as_cumulated_residence__nosed_18µm_spring_444',#0.31...
+    'WWTP_influence_as_mean_time_travelled__nosed_18µm_spring_444',#0.84 #0.88 gausian###############################
     'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_spring_444',
     'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_spring_444',
     'WWTP_influence_as_cumulated_residence__nosed_allsizes_spring_444',
-    'WWTP_influence_as_mean_time_travelled__nosed_allsizes_spring_444',
+    'WWTP_influence_as_mean_time_travelled__nosed_allsizes_spring_444',#0.6
     'WWTP_influence_as_tracer_mean_dist__sed_18µm_autumn_222',
     'WWTP_influence_as_endpoints_mean_dist__sed_18µm_autumn_222',
     'WWTP_influence_as_cumulated_residence__sed_18µm_autumn_222',
-    'WWTP_influence_as_mean_time_travelled__sed_18µm_autumn_222',
+    'WWTP_influence_as_mean_time_travelled__sed_18µm_autumn_222',#0.73
     'WWTP_influence_as_tracer_mean_dist__sed_18µm_autumn_444',
     'WWTP_influence_as_endpoints_mean_dist__sed_18µm_autumn_444',
     'WWTP_influence_as_cumulated_residence__sed_18µm_autumn_444',
-    'WWTP_influence_as_mean_time_travelled__sed_18µm_autumn_444',
+    'WWTP_influence_as_mean_time_travelled__sed_18µm_autumn_444',#0.7
     'WWTP_influence_as_tracer_mean_dist__nosed_18µm_autumn_222',
     'WWTP_influence_as_endpoints_mean_dist__nosed_18µm_autumn_222',
     'WWTP_influence_as_cumulated_residence__nosed_18µm_autumn_222',
-    'WWTP_influence_as_mean_time_travelled__nosed_18µm_autumn_222',
+    'WWTP_influence_as_mean_time_travelled__nosed_18µm_autumn_222',#0.76 0.84.......................................
     'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_autumn_222',
     'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222',
     'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_222',
-    'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_222',
-    'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_allseasons_444',
+    'WWWTP_influence_as_mean_time_travelled__sed_allsizes_allseasons_222',#0.49
+    'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_allseasons_444', #0.47 0.75
     'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_allseasons_444',
     'WWTP_influence_as_cumulated_residence__nosed_allsizes_allseasons_444',
-    'WWTP_influence_as_mean_time_travelled__nosed_allsizes_allseasons_444',
+    'WWTP_influence_as_mean_time_travelled__nosed_allsizes_allseasons_444',#0.78
     'WWTP_influence_as_tracer_mean_dist__sed_allsizes_allseasons_444',
     'WWTP_influence_as_endpoints_mean_dist__sed_allsizes_allseasons_444',
     'WWTP_influence_as_cumulated_residence__sed_allsizes_allseasons_444',
-    'WWTP_influence_as_mean_time_travelled__sed_allsizes_allseasons_444',
+    'WWTP_influence_as_mean_time_travelled__sed_allsizes_allseasons_444',#0.7
     'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_222',
     'WWTP_influence_as_endpoints_mean_dist__sed_18µm_allseasons_222',
     'WWTP_influence_as_cumulated_residence__sed_18µm_allseasons_222',
-    'WWTP_influence_as_mean_time_travelled__sed_18µm_allseasons_222',
-    'WWTP_influence_as_tracer_mean_dist__nosed_18µm_allseasons_222',
+    'WWTP_influence_as_mean_time_travelled__sed_18µm_allseasons_222',#0.73###############################
+    'WWTP_influence_as_tracer_mean_dist__nosed_18µm_allseasons_222',#0.41 0,46
     'WWTP_influence_as_endpoints_mean_dist__nosed_18µm_allseasons_222',
     'WWTP_influence_as_cumulated_residence__nosed_18µm_allseasons_222',
-    'WWTP_influence_as_mean_time_travelled__nosed_18µm_allseasons_222',
+    'WWTP_influence_as_mean_time_travelled__nosed_18µm_allseasons_222',#0.86#0.86 gaussian log immer besser.....................................
     'WWTP_influence_as_tracer_mean_dist__nosed_18µm_spring_222',
     'WWTP_influence_as_endpoints_mean_dist__nosed_18µm_spring_222',
     'WWTP_influence_as_cumulated_residence__nosed_18µm_spring_222',
-    'WWTP_influence_as_mean_time_travelled__nosed_18µm_spring_222',
+    'WWTP_influence_as_mean_time_travelled__nosed_18µm_spring_222',#0.81#0.86
     'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_allseasons_222',
     'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_allseasons_222',
     'WWTP_influence_as_cumulated_residence__nosed_allsizes_allseasons_222',
-    'WWTP_influence_as_mean_time_travelled__nosed_allsizes_allseasons_222',
-    'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_autumn_444',
+    'WWTP_influence_as_mean_time_travelled__nosed_allsizes_allseasons_222',#0.68 #0.79
+    'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_autumn_444',#0.47,0.73
     'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_444',
-    'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_444',
-    'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_444',
+    'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_444',#0.78,0.79
+    'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_444',#0.84#0.87
     'WWTP_influence_as_tracer_mean_dist__sed_18µm_spring_444',
     'WWTP_influence_as_endpoints_mean_dist__sed_18µm_spring_444',
     'WWTP_influence_as_cumulated_residence__sed_18µm_spring_444',
-    'WWTP_influence_as_mean_time_travelled__sed_18µm_spring_444',
+    'WWTP_influence_as_mean_time_travelled__sed_18µm_spring_444',#0.52,0.83
     'WWTP_influence_as_tracer_mean_dist__nosed_18µm_autumn_444',
     'WWTP_influence_as_endpoints_mean_dist__nosed_18µm_autumn_444',
     'WWTP_influence_as_cumulated_residence__nosed_18µm_autumn_444',
-    'WWTP_influence_as_mean_time_travelled__nosed_18µm_autumn_444',
-    'WWTP_influence_as_tracer_mean_dist__sed_18µm_spring_222',
+    'WWTP_influence_as_mean_time_travelled__nosed_18µm_autumn_444',#0.74 #0.79####################################...............
+    'WWTP_influence_as_tracer_mean_dist__sed_18µm_spring_222',#0.41 0,46
     'WWTP_influence_as_endpoints_mean_dist__sed_18µm_spring_222',
     'WWTP_influence_as_cumulated_residence__sed_18µm_spring_222',
-    'WWTP_influence_as_mean_time_travelled__sed_18µm_spring_222',
+    'WWTP_influence_as_mean_time_travelled__sed_18µm_spring_222', #0.59, 0.84
     'WWTP_influence_as_tracer_mean_dist__sed_allsizes_allseasons_222',
     'WWTP_influence_as_endpoints_mean_dist__sed_allsizes_allseasons_222',
-    'WWTP_influence_as_cumulated_residence__sed_allsizes_allseasons_222',
-    'WWTP_influence_as_mean_time_travelled__sed_allsizes_allseasons_222',
-    'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_spring_222',
-    'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_spring_222',
-    'WWTP_influence_as_cumulated_residence__nosed_allsizes_spring_222',
-    'WWTP_influence_as_mean_time_travelled__nosed_allsizes_spring_222',
+    'WWTP_influence_as_cumulated_residence__sed_allsizes_allseasons_222',#0.75,0.76
+    'WWTP_influence_as_mean_time_travelled__sed_allsizes_allseasons_222',#0.49, 0.73
+    'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_spring_222',#0.47,0.76
+    'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_spring_222',#0.47,0.76
+    'WWTP_influence_as_cumulated_residence__nosed_allsizes_spring_222',#0.75,0.76
+    'WWTP_influence_as_mean_time_travelled__nosed_allsizes_spring_222',#0.51 0.74
     
     # 'Split', 'Mass', 'Frequency', 'FrequencyA500', 'FrequencyB500', 'MPmass',  # sampling related exogs
     
@@ -287,6 +287,8 @@ def main():
     sdd_iow = pdd2sdd(mp_pdd, regionfilter)
     KDE_medians, KDE_size_plot = get_size_kde(mp_pdd, boundaries_dict, grainsize_iow)
     df = sdd_iow.merge(sed_scor, right_index=True, left_on='Sample', how='left').join(KDE_medians, on='Sample')
+    import numpy as np  # TODO: just a temporary test with log(PC1),,,
+    #df['D50 (µm)'] = np.log(df['D50 (µm)'])
 
     if raw_data_checkbox:
         df_expander(mp_pdd, "Filtered particle domain data")
@@ -398,12 +400,14 @@ def main():
         df['yhat'] = glm_res.mu
         df['pearson_resid'] = glm_res.resid_pearson
         col2.write(scatter_chart(df, target_name, 'yhat',
-                                 color='regio_sep',
+                                 #color='regio_sep',
                                  identity=True, equal_axes=False,
                                  width=400, height=300,
                                  title='GLM --- yhat vs. y')[0])
+        df.yhat = np.log(df.yhat)
         col3.write(scatter_chart(df, 'yhat', 'pearson_resid',
-                                 color='regio_sep', title='GLM --- Pearson residuals')[0])
+                                 #color='regio_sep', 
+                                 title='GLM --- Pearson residuals')[0])
 
         resid = glm_res.resid_deviance.copy()
         col3.pyplot(qqplot(resid, line='r'))

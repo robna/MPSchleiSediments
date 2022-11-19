@@ -15,6 +15,6 @@ def glm(data):
     model = smf.glm(formula=Config.glm_formula,
                     data=data,
                     family=family)
-    result = model.fit()
+    result = model.fit(method='lbfgs')
 
     return result
