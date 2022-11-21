@@ -72,6 +72,8 @@ class Config:
                         # 'MSLE': 'neg_mean_squared_log_error',
                     }
     refit_scorer: str = 'R2'  # one of the keys in scoring dict above: will be used to refit at set best estimator of the gridsearch object
+    select_best: str = 'median'  # type of average to be used to identify the best model of a gridsearch: can be 'median' or 'mean'
+    
 
 Config.bandwidths: np.array = 10 ** np.linspace(0, 3,
                                                 Config.bws_to_test)  # creates the range of bandwidths to be tested

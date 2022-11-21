@@ -48,6 +48,10 @@ def loocv(df):
     return pred, metrics
 
 
+def SelectFeatures(model_X, feature_set, feature_sets):
+    return model_X.loc[:, feature_sets[feature_set]]
+
+
 def generate_feature_sets(featurelist, mutual_exclusive, exclusive_keywords, num_feat='all', n_jobs=1, save=False):
     """
     Generate all possible feature combinations of a given size.
@@ -77,7 +81,7 @@ def generate_feature_sets(featurelist, mutual_exclusive, exclusive_keywords, num
         raise ValueError('num_feat must be an integer, a tuple or "all".')
     
     if Path(f'../data/exports/feature_candidates_list_min{min_num}_max{max_num}.pkl').exists():
-        with open(f'../data/feature_candidates_list_min{min_num}_max{max_num}.pkl', 'rb') as f:
+        with open(f'../data/exports/feature_candidates_list_min{min_num}_max{max_num}.pkl', 'rb') as f:
             fl =  pickle.load(f)
             print(f'Loaded feature candidates list from file: {f.name}')
             print(f'Number of feature sets: {len(fl)}')
@@ -122,7 +126,7 @@ def generate_feature_sets(featurelist, mutual_exclusive, exclusive_keywords, num
     return fl
 
 
-def best_median_score(cv_results):
+def best_scored(cv_results):
     """
     Find the best median score from a cross-validation result dictionary.
     :param cv_results: dictionary of cross-validation results
@@ -136,8 +140,13 @@ def best_median_score(cv_results):
                                     and f'test_{Config.refit_scorer}'
                                     in key
                                 ])
-    median_inner_test_scores = np.median(inner_test_scores, axis=0)
-    return median_inner_test_scores.argmax()
+    if Config.select_best == 'median':
+        avg_inner_test_scores = np.median(inner_test_scores, axis=0)
+    elif Config.select_best == 'mean':
+        avg_inner_test_scores = np.mean(inner_test_scores, axis=0)
+    else:
+        raise ValueError(f'Can only select for best mean or median score. You supplied {Config.select_best}')
+    return avg_inner_test_scores.argmax()
     
 
 def get_median_cv_scores(outerCV):
