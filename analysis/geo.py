@@ -27,7 +27,7 @@ def load_zipped_grid(path2zip, path2grid=None, epsg=Config.baw_epsg):
 
     if not isinstance(path2zip, Path):
         path2zip = Path(path2zip)
-    rasta = rasterio.open(f'zip://{path2zip}!{path2zip.stem + ".grd" if path2grid is None else path2grid}', 'r+')
+    rasta = rasterio.open(f'zip://{path2zip}!{path2zip.stem.lstrip(".") + ".grd" if path2grid is None else path2grid}', 'r+')
     rasta.crs = rasterio.crs.CRS.from_epsg(epsg)
     return rasta
 
