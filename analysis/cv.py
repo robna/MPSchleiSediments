@@ -6,7 +6,7 @@ from itertools import combinations
 from joblib import Parallel, delayed, cpu_count
 
 from statsmodels.sandbox.tools.cross_val import LeaveOneOut
-from sklearn.metrics import max_error, mean_squared_error, mean_absolute_error, r2_score
+from sklearn.metrics import max_error, mean_squared_error, mean_absolute_error, r2_score, mean_absolute_percentage_error, median_absolute_error
 
 import glm
 from settings import Config
@@ -34,6 +34,8 @@ def loocv(df):
 
     maxe = max_error(target, pred.pred)
     mae = mean_absolute_error(target, pred.pred)
+    medae = median_absolute_error(target, pred.pred)
+    mape = mean_absolute_percentage_error(target, pred.pred)
     rmse = np.sqrt(mean_squared_error(target, pred.pred))
     r2 = r2_score(target, pred.pred)
     adj_r2 = 1 - (1 - r2) * (n - 1) / (n - p)
@@ -41,9 +43,11 @@ def loocv(df):
     metrics = pd.DataFrame(columns=['Metric', 'Value', ''])
     metrics.loc[0] = ['Max Error', maxe, pred.loc[np.abs(target - pred.pred ).idxmax(), 'Sample']]
     metrics.loc[1] = ['Mean Absolute Error', mae, '']
-    metrics.loc[2] = ['Root Mean Square Error', rmse, '']
-    metrics.loc[3] = ['R²', r2, '']
-    metrics.loc[4] = ['Adjusted R²', adj_r2, '']
+    metrics.loc[2] = ['Median Absolute Error', medae, '']
+    metrics.loc[3] = ['Mean Absolute Percentage Error', mape, '']
+    metrics.loc[4] = ['Root Mean Square Error', rmse, '']
+    metrics.loc[5] = ['R²', r2, '']
+    metrics.loc[6] = ['Adjusted R²', adj_r2, '']
 
     return pred, metrics
 
