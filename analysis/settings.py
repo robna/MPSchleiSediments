@@ -3,8 +3,158 @@ import statsmodels.formula.api as smf
 import statsmodels.api as sm
 
 target = 'Concentration'
-
-predictors = ['Dist_WWTP', 'TOC', 'Q("D50 (µm)")"', 'PC1', 'PC2']  # columns to be used as predictors
+featurelist = [
+    'Depth',
+    # 'LON', 'LAT',
+    'Dist_Land',
+    # 'Dist_Marina',
+    'Dist_WWTP',
+    # 'WWTP_influence_as_tracer_mean_dist',
+    # 'WWTP_influence_as_cumulated_residence',
+    # 'WWTP_influence_as_mean_time_travelled',
+    'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_444',
+    'WWTP_influence_as_endpoints_mean_dist__sed_18µm_allseasons_444',
+    'WWTP_influence_as_cumulated_residence__sed_18µm_allseasons_444',
+    'WWTP_influence_as_mean_time_travelled__sed_18µm_allseasons_444',
+    'WWTP_influence_as_tracer_mean_dist__nosed_18µm_spring_444',
+    'WWTP_influence_as_endpoints_mean_dist__nosed_18µm_spring_444',
+    'WWTP_influence_as_cumulated_residence__nosed_18µm_spring_444',
+    'WWTP_influence_as_mean_time_travelled__nosed_18µm_spring_444',
+    'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_spring_444',
+    'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_spring_444',
+    'WWTP_influence_as_cumulated_residence__nosed_allsizes_spring_444',
+    'WWTP_influence_as_mean_time_travelled__nosed_allsizes_spring_444',
+    'WWTP_influence_as_tracer_mean_dist__sed_18µm_autumn_222',
+    'WWTP_influence_as_endpoints_mean_dist__sed_18µm_autumn_222',
+    'WWTP_influence_as_cumulated_residence__sed_18µm_autumn_222',
+    'WWTP_influence_as_mean_time_travelled__sed_18µm_autumn_222',
+    'WWTP_influence_as_tracer_mean_dist__sed_18µm_autumn_444',
+    'WWTP_influence_as_endpoints_mean_dist__sed_18µm_autumn_444',
+    'WWTP_influence_as_cumulated_residence__sed_18µm_autumn_444',
+    'WWTP_influence_as_mean_time_travelled__sed_18µm_autumn_444',
+    'WWTP_influence_as_tracer_mean_dist__nosed_18µm_autumn_222',
+    'WWTP_influence_as_endpoints_mean_dist__nosed_18µm_autumn_222',
+    'WWTP_influence_as_cumulated_residence__nosed_18µm_autumn_222',
+    'WWTP_influence_as_mean_time_travelled__nosed_18µm_autumn_222',
+    'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_autumn_222',
+    'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222',
+    'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_222',
+    'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_222',
+    'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_allseasons_444',            # *
+    'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_allseasons_444',
+    'WWTP_influence_as_cumulated_residence__nosed_allsizes_allseasons_444',
+    'WWTP_influence_as_mean_time_travelled__nosed_allsizes_allseasons_444',         # *
+    'WWTP_influence_as_tracer_mean_dist__sed_allsizes_allseasons_444',              # *
+    'WWTP_influence_as_endpoints_mean_dist__sed_allsizes_allseasons_444',
+    'WWTP_influence_as_cumulated_residence__sed_allsizes_allseasons_444',
+    'WWTP_influence_as_mean_time_travelled__sed_allsizes_allseasons_444',           # *
+    'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_222',
+    'WWTP_influence_as_endpoints_mean_dist__sed_18µm_allseasons_222',
+    'WWTP_influence_as_cumulated_residence__sed_18µm_allseasons_222',
+    'WWTP_influence_as_mean_time_travelled__sed_18µm_allseasons_222',
+    'WWTP_influence_as_tracer_mean_dist__nosed_18µm_allseasons_222',
+    'WWTP_influence_as_endpoints_mean_dist__nosed_18µm_allseasons_222',
+    'WWTP_influence_as_cumulated_residence__nosed_18µm_allseasons_222',
+    'WWTP_influence_as_mean_time_travelled__nosed_18µm_allseasons_222',
+    'WWTP_influence_as_tracer_mean_dist__nosed_18µm_spring_222',
+    'WWTP_influence_as_endpoints_mean_dist__nosed_18µm_spring_222',
+    'WWTP_influence_as_cumulated_residence__nosed_18µm_spring_222',
+    'WWTP_influence_as_mean_time_travelled__nosed_18µm_spring_222',
+    'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_allseasons_222',
+    'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_allseasons_222',
+    'WWTP_influence_as_cumulated_residence__nosed_allsizes_allseasons_222',
+    'WWTP_influence_as_mean_time_travelled__nosed_allsizes_allseasons_222',
+    'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_autumn_444',
+    'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_444',
+    'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_444',
+    'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_444',
+    'WWTP_influence_as_tracer_mean_dist__sed_18µm_spring_444',
+    'WWTP_influence_as_endpoints_mean_dist__sed_18µm_spring_444',
+    'WWTP_influence_as_cumulated_residence__sed_18µm_spring_444',
+    'WWTP_influence_as_mean_time_travelled__sed_18µm_spring_444',
+    'WWTP_influence_as_tracer_mean_dist__nosed_18µm_autumn_444',
+    'WWTP_influence_as_endpoints_mean_dist__nosed_18µm_autumn_444',
+    'WWTP_influence_as_cumulated_residence__nosed_18µm_autumn_444',
+    'WWTP_influence_as_mean_time_travelled__nosed_18µm_autumn_444',
+    'WWTP_influence_as_tracer_mean_dist__sed_18µm_spring_222',
+    'WWTP_influence_as_endpoints_mean_dist__sed_18µm_spring_222',
+    'WWTP_influence_as_cumulated_residence__sed_18µm_spring_222',
+    'WWTP_influence_as_mean_time_travelled__sed_18µm_spring_222',
+    'WWTP_influence_as_tracer_mean_dist__sed_allsizes_allseasons_222',
+    'WWTP_influence_as_endpoints_mean_dist__sed_allsizes_allseasons_222',
+    'WWTP_influence_as_cumulated_residence__sed_allsizes_allseasons_222',
+    'WWTP_influence_as_mean_time_travelled__sed_allsizes_allseasons_222',
+    'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_spring_222',
+    'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_spring_222',
+    'WWTP_influence_as_cumulated_residence__nosed_allsizes_spring_222',
+    'WWTP_influence_as_mean_time_travelled__nosed_allsizes_spring_222',
+    'WWTP_influence_as_tracer_mean_dist__nosed_0µm_autumn_222',
+    'WWTP_influence_as_endpoints_mean_dist__nosed_0µm_autumn_222',
+    'WWTP_influence_as_cumulated_residence__nosed_0µm_autumn_222',
+    'WWTP_influence_as_mean_time_travelled__nosed_0µm_autumn_222',
+    'WWTP_influence_as_tracer_mean_dist__sed_0µm_allseasons_222',
+    'WWTP_influence_as_endpoints_mean_dist__sed_0µm_allseasons_222',
+    'WWTP_influence_as_cumulated_residence__sed_0µm_allseasons_222',
+    'WWTP_influence_as_mean_time_travelled__sed_0µm_allseasons_222',
+    'WWTP_influence_as_tracer_mean_dist__nosed_0µm_summer_444',
+    'WWTP_influence_as_endpoints_mean_dist__nosed_0µm_summer_444',
+    'WWTP_influence_as_cumulated_residence__nosed_0µm_summer_444',
+    'WWTP_influence_as_mean_time_travelled__nosed_0µm_summer_444',
+    'WWTP_influence_as_tracer_mean_dist__nosed_0µm_autumnspring_222',
+    'WWTP_influence_as_endpoints_mean_dist__nosed_0µm_autumnspring_222',
+    'WWTP_influence_as_cumulated_residence__nosed_0µm_autumnspring_222',
+    'WWTP_influence_as_mean_time_travelled__nosed_0µm_autumnspring_222',
+    'WWTP_influence_as_tracer_mean_dist__nosed_0µm_autumn_444',
+    'WWTP_influence_as_endpoints_mean_dist__nosed_0µm_autumn_444',
+    'WWTP_influence_as_cumulated_residence__nosed_0µm_autumn_444',
+    'WWTP_influence_as_mean_time_travelled__nosed_0µm_autumn_444',
+    'WWTP_influence_as_tracer_mean_dist__nosed_0µm_spring_222',
+    'WWTP_influence_as_endpoints_mean_dist__nosed_0µm_spring_222',
+    'WWTP_influence_as_cumulated_residence__nosed_0µm_spring_222',
+    'WWTP_influence_as_mean_time_travelled__nosed_0µm_spring_222',
+    'WWTP_influence_as_tracer_mean_dist__nosed_0µm_autumnspring_444',
+    'WWTP_influence_as_endpoints_mean_dist__nosed_0µm_autumnspring_444',
+    'WWTP_influence_as_cumulated_residence__nosed_0µm_autumnspring_444',
+    'WWTP_influence_as_mean_time_travelled__nosed_0µm_autumnspring_444',
+    'WWTP_influence_as_tracer_mean_dist__sed_0µm_allseasons_444',
+    'WWTP_influence_as_endpoints_mean_dist__sed_0µm_allseasons_444',
+    'WWTP_influence_as_cumulated_residence__sed_0µm_allseasons_444',
+    'WWTP_influence_as_mean_time_travelled__sed_0µm_allseasons_444',
+    'WWTP_influence_as_tracer_mean_dist__nosed_0µm_summer_222',
+    'WWTP_influence_as_endpoints_mean_dist__nosed_0µm_summer_222',
+    'WWTP_influence_as_cumulated_residence__nosed_0µm_summer_222',
+    'WWTP_influence_as_mean_time_travelled__nosed_0µm_summer_222',
+    'WWTP_influence_as_tracer_mean_dist__nosed_0µm_spring_444',
+    'WWTP_influence_as_endpoints_mean_dist__nosed_0µm_spring_444',
+    'WWTP_influence_as_cumulated_residence__nosed_0µm_spring_444',
+    'WWTP_influence_as_mean_time_travelled__nosed_0µm_spring_444',
+    'WWTP_influence_as_tracer_mean_dist__nosed_0µm_allseasons_444',
+    'WWTP_influence_as_endpoints_mean_dist__nosed_0µm_allseasons_444',
+    'WWTP_influence_as_cumulated_residence__nosed_0µm_allseasons_444',
+    'WWTP_influence_as_mean_time_travelled__nosed_0µm_allseasons_444',
+    'WWTP_influence_as_tracer_mean_dist__nosed_0µm_allseasons_222_',
+    'WWTP_influence_as_endpoints_mean_dist__nosed_0µm_allseasons_222_',
+    'WWTP_influence_as_cumulated_residence__nosed_0µm_allseasons_222_',
+    'WWTP_influence_as_mean_time_travelled__nosed_0µm_allseasons_222_',
+    # 'Dist_WWTP2',
+    # 'Dist_WWTP_revsq',
+    'MODE 1 (µm)',
+    # 'D10 (µm)',
+    'D50 (µm)',
+    # 'D90 (µm)',
+    # 'perc GRAVEL',
+    # 'perc SAND',
+    'perc MUD',
+    # 'perc CLAY',
+    # 'OM_D50',
+    'TOC',
+    # 'Hg',
+    # 'TIC',
+    # 'regio_sep',
+    'PC1',
+    'PC2'
+]
+default_predictors = ['Dist_WWTP', 'TOC', 'Q("D50 (µm)")"', 'PC1', 'PC2']  # columns to be used as predictors
 
 
 class Config:
@@ -17,12 +167,12 @@ class Config:
     # Geospacial settings
     baw_epsg: int = 25832  # epsg code of the baw data
     restrict_tracers_to_depth: float = 30  # for BAW tracer particles depth values larger than this, will be replaced by an interpolation from their neighbours, set to 0 for no depth correction
-    station_buffers: int = 222  # buffer radius in meters around each sample station , in which tracer ocurrences from the BAW simulation are counted
+    station_buffers: int = 444  # buffer radius in meters around each sample station , in which tracer ocurrences from the BAW simulation are counted
     dem_resolution: float = 5  # resolution of the digital elevation model in meters
-    use_seasons: list = ['summer','autumn','spring']  # which seasons to use for the tracer-based WWTP influence estimation, 'summer','autumn',
+    use_seasons: list = ['spring']  # which seasons to use for the tracer-based WWTP influence estimation, 'summer','autumn',
     sed_contact_dist: float = 0.01  # distance in meters to the sediment contact, below which a tracer is considered to have sedimented
     sed_contact_dur: int = 2  # number of timesteps a tracer has to be closer to the sediment than sed_contact_dist to be considered as sedimented
-    arrest_on_nth_sedimentation: int = 3  # set to 0 for no arrest, otherwise any positive integer will truncate at the respective sedimentation event: e.g. set to 1 to only include traces before first sediment contact
+    arrest_on_nth_sedimentation: int = 0  # set to 0 for no arrest, otherwise any positive integer will truncate at the respective sedimentation event: e.g. set to 1 to only include traces before first sediment contact
     tracer_mean_time_fillna: int = 489  # fill value for NaNs in WWTP influence parameter calculated as mean time travelled until first entrance to a samples buffer zone: will be used for samples where no trace made it into their buffer zone (489 is one more than the last time step)
 
     # Settings for streamlit app filters (the actual values of these are controlled by the app filters)
@@ -48,8 +198,8 @@ class Config:
     # Settings for the statsmodels GLM
     glm_family: str = 'Poisson'  # type of family to be used for the GLM
     glm_link: str = None  # Link function for GLM; use None for default link of chosen family
-    glm_formula: str = f'{target} ~ {predictors[0]} + ' \
-                       f'{predictors[1]}'
+    glm_formula: str = f'{target} ~ {default_predictors[0]} + ' \
+                       f'{default_predictors[1]}'
 
     # Settings for the CV notebook
     mutual_exclusive: list = [  # Mutual exclusive list (list of lists detailing predictors that are not allowed together in one model candidate)
@@ -217,8 +367,8 @@ dist_params = {  # paramters of particle properties for generating distributions
 }
 
 baw_tracer_reduction_factors = {  # Amounts of BAW tracers of each simulated size class (ESD) need to be adjusted to represent the actual relative frequency of particles of the respective size class. Fractions here originate from the KDE of MP volume-based ESD distribution.
-    0:1,
-    18: 0,#0.19,
+    0:0,
+    18: 1,#0.19,
     50: 0,#0.48,
     100:0,#1,
     300:0#0.115

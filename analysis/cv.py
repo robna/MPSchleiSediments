@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+import json
+from hashlib import md5
 import pickle
 from pathlib import Path
 from itertools import combinations
@@ -67,7 +69,7 @@ def generate_feature_sets(featurelist, mutual_exclusive, exclusive_keywords, num
     """
 
     if isinstance(featurelist, pd.DataFrame):
-        featurelist = featurelist.columns
+        featurelist = featurelist.columns.to_list()
 
     if num_feat == 'all':
         min_num , max_num = (1, len(featurelist))
@@ -83,9 +85,11 @@ def generate_feature_sets(featurelist, mutual_exclusive, exclusive_keywords, num
             raise ValueError(f'num_feat as list or tuple may only have two elements (min_num, max_num) OR one element (min_num,) where max_num = len(featurelist). You supplied {type(num_feat)} of length {len(num_feat)}.')
     else:
         raise ValueError('num_feat must be an integer, a tuple or "all".')
-    
-    if Path(f'../data/exports/feature_candidates_list_min{min_num}_max{max_num}.pkl').exists():
-        with open(f'../data/exports/feature_candidates_list_min{min_num}_max{max_num}.pkl', 'rb') as f:
+        
+    md5_tail = md5(json.dumps(featurelist, sort_keys=True).encode('utf-8')).hexdigest()[-5:]  # get the hash of featurelist
+    flp = Path(f'../data/exports/feature_candidates_list_min{min_num}_max{max_num}_HASH{md5_tail}.pkl')  # feature list path
+    if flp.exists():
+        with open(flp, 'rb') as f:
             fl =  pickle.load(f)
             print(f'Loaded feature candidates list from file: {f.name}')
             print(f'Number of feature sets: {len(fl)}')
@@ -122,10 +126,7 @@ def generate_feature_sets(featurelist, mutual_exclusive, exclusive_keywords, num
     print(f'Combination generation finished: {len(fl)} combinations generated.')
     
     if save:
-        # with open(f'../data/feature_candidates_list_min{min_num}_max{max_num}.txt', 'w') as f:
-        #     for line in fl:
-        #         f.write(f"{line}\n")
-        with open(f'../data/exports/feature_candidates_list_min{min_num}_max{max_num}.pkl', 'wb') as f:
+        with open(flp, 'wb') as f:
             pickle.dump(fl, f)
     return fl
 

@@ -9,118 +9,22 @@ import glm
 import cv
 from components import pca, PCOA
 from plots import scatter_chart, poly_comp_chart, histograms, biplot, station_map, size_kde_combined_samples_dist_plot
-from settings import Config, shortnames, regio_sep
+from settings import Config, shortnames, regio_sep, featurelist
 
 import streamlit as st
 st.set_page_config(layout="wide")
 
-featurelist = [
-
-    'Concentration', 'MassConcentration', 'MP_D50', 'MP_size_median_from_KDE',  # endogs
-    'ConcentrationA500', 'ConcentrationB500', 'ConcentrationA500_div_B500', # endog derivatives
+endogs = ['Concentration', 'MassConcentration', 'MP_D50', 'MP_size_median_from_KDE',]  # endogs
+endog_derivatives = [
+    'ConcentrationA500', 'ConcentrationB500', 'ConcentrationA500_div_B500',  # endog derivatives
     # 'pred_Ord_Poly_ConcentrationA500', 'pred_TMP_ConcentrationA500','pred_Paint_ConcentrationA500',  # more endog derivatives
     # 'Concentration_paint', 'Concentration_PS_Beads', 'Concentration_ord_poly', 'Concentration_irregular',  # even more endog derivatives
-
+]
+additional_exogs = [
     'LON', 'LAT', 'X', 'Y', 'Depth', 'Dist_Land', 'Dist_Marina', 'Dist_WWTP', 'Dist_WWTP2', 'regio_sep',  # geo related exogs
-    # 'WWTP_influence_as_tracer_mean_dist', 'WWTP_influence_as_cumulated_residence', 'WWTP_influence_as_mean_time_travelled',
-    'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_444',
-    'WWTP_influence_as_endpoints_mean_dist__sed_18µm_allseasons_444',
-    'WWTP_influence_as_cumulated_residence__sed_18µm_allseasons_444',
-    'WWTP_influence_as_mean_time_travelled__sed_18µm_allseasons_444',#0.64,0.77
-    'WWTP_influence_as_tracer_mean_dist__nosed_18µm_spring_444',
-    'WWTP_influence_as_endpoints_mean_dist__nosed_18µm_spring_444',
-    'WWTP_influence_as_cumulated_residence__nosed_18µm_spring_444',#0.31...
-    'WWTP_influence_as_mean_time_travelled__nosed_18µm_spring_444',#0.84 #0.88 gausian###############################
-    'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_spring_444',
-    'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_spring_444',
-    'WWTP_influence_as_cumulated_residence__nosed_allsizes_spring_444',
-    'WWTP_influence_as_mean_time_travelled__nosed_allsizes_spring_444',#0.6
-    'WWTP_influence_as_tracer_mean_dist__sed_18µm_autumn_222',
-    'WWTP_influence_as_endpoints_mean_dist__sed_18µm_autumn_222',
-    'WWTP_influence_as_cumulated_residence__sed_18µm_autumn_222',
-    'WWTP_influence_as_mean_time_travelled__sed_18µm_autumn_222',#0.73
-    'WWTP_influence_as_tracer_mean_dist__sed_18µm_autumn_444',
-    'WWTP_influence_as_endpoints_mean_dist__sed_18µm_autumn_444',
-    'WWTP_influence_as_cumulated_residence__sed_18µm_autumn_444',
-    'WWTP_influence_as_mean_time_travelled__sed_18µm_autumn_444',#0.7
-    'WWTP_influence_as_tracer_mean_dist__nosed_18µm_autumn_222',
-    'WWTP_influence_as_endpoints_mean_dist__nosed_18µm_autumn_222',
-    'WWTP_influence_as_cumulated_residence__nosed_18µm_autumn_222',
-    'WWTP_influence_as_mean_time_travelled__nosed_18µm_autumn_222',#0.76 0.84.......................................
-    'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_autumn_222',
-    'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222',
-    'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_222',
-    'WWWTP_influence_as_mean_time_travelled__sed_allsizes_allseasons_222',#0.49
-    'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_allseasons_444', #0.47 0.75
-    'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_allseasons_444',
-    'WWTP_influence_as_cumulated_residence__nosed_allsizes_allseasons_444',
-    'WWTP_influence_as_mean_time_travelled__nosed_allsizes_allseasons_444',#0.78
-    'WWTP_influence_as_tracer_mean_dist__sed_allsizes_allseasons_444',
-    'WWTP_influence_as_endpoints_mean_dist__sed_allsizes_allseasons_444',
-    'WWTP_influence_as_cumulated_residence__sed_allsizes_allseasons_444',
-    'WWTP_influence_as_mean_time_travelled__sed_allsizes_allseasons_444',#0.7
-    'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_222',
-    'WWTP_influence_as_endpoints_mean_dist__sed_18µm_allseasons_222',
-    'WWTP_influence_as_cumulated_residence__sed_18µm_allseasons_222',
-    'WWTP_influence_as_mean_time_travelled__sed_18µm_allseasons_222',#0.73###############################
-    'WWTP_influence_as_tracer_mean_dist__nosed_18µm_allseasons_222',#0.41 0,46
-    'WWTP_influence_as_endpoints_mean_dist__nosed_18µm_allseasons_222',
-    'WWTP_influence_as_cumulated_residence__nosed_18µm_allseasons_222',
-    'WWTP_influence_as_mean_time_travelled__nosed_18µm_allseasons_222',#0.86#0.86 gaussian log immer besser.....................................
-    'WWTP_influence_as_tracer_mean_dist__nosed_18µm_spring_222',
-    'WWTP_influence_as_endpoints_mean_dist__nosed_18µm_spring_222',
-    'WWTP_influence_as_cumulated_residence__nosed_18µm_spring_222',
-    'WWTP_influence_as_mean_time_travelled__nosed_18µm_spring_222',#0.81#0.86
-    'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_allseasons_222',
-    'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_allseasons_222',
-    'WWTP_influence_as_cumulated_residence__nosed_allsizes_allseasons_222',
-    'WWTP_influence_as_mean_time_travelled__nosed_allsizes_allseasons_222',#0.68 #0.79
-    'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_autumn_444',#0.47,0.73
-    'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_444',
-    'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_444',#0.78,0.79
-    'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_444',#0.84#0.87
-    'WWTP_influence_as_tracer_mean_dist__sed_18µm_spring_444',
-    'WWTP_influence_as_endpoints_mean_dist__sed_18µm_spring_444',
-    'WWTP_influence_as_cumulated_residence__sed_18µm_spring_444',
-    'WWTP_influence_as_mean_time_travelled__sed_18µm_spring_444',#0.52,0.83
-    'WWTP_influence_as_tracer_mean_dist__nosed_18µm_autumn_444',
-    'WWTP_influence_as_endpoints_mean_dist__nosed_18µm_autumn_444',
-    'WWTP_influence_as_cumulated_residence__nosed_18µm_autumn_444',
-    'WWTP_influence_as_mean_time_travelled__nosed_18µm_autumn_444',#0.74 #0.79####################################...............
-    'WWTP_influence_as_tracer_mean_dist__sed_18µm_spring_222',#0.41 0,46
-    'WWTP_influence_as_endpoints_mean_dist__sed_18µm_spring_222',
-    'WWTP_influence_as_cumulated_residence__sed_18µm_spring_222',
-    'WWTP_influence_as_mean_time_travelled__sed_18µm_spring_222', #0.59, 0.84
-    'WWTP_influence_as_tracer_mean_dist__sed_allsizes_allseasons_222',
-    'WWTP_influence_as_endpoints_mean_dist__sed_allsizes_allseasons_222',
-    'WWTP_influence_as_cumulated_residence__sed_allsizes_allseasons_222',#0.75,0.76
-    'WWTP_influence_as_mean_time_travelled__sed_allsizes_allseasons_222',#0.49, 0.73
-    'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_spring_222',#0.47,0.76
-    'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_spring_222',#0.47,0.76
-    'WWTP_influence_as_cumulated_residence__nosed_allsizes_spring_222',#0.75,0.76
-    'WWTP_influence_as_mean_time_travelled__nosed_allsizes_spring_222',#0.51 0.74
-    
-    # 'Split', 'Mass', 'Frequency', 'FrequencyA500', 'FrequencyB500', 'MPmass',  # sampling related exogs
-    
-    'PC1', 'PC2',   # sediment size PCOA outputs
-    # 'SAMPLE TYPE ', 'TEXTURAL GROUP ', 'SEDIMENT NAME ',  # sediments (gradistat) exogs
-    # 'MoM_ari_MEAN', 'MoM_ari_SORTING', 'MoM_ari_SKEWNESS', 'MoM_ari_KURTOSIS',
-    # 'MoM_geo_MEAN', 'MoM_geo_SORTING', 'MoM_geo_SKEWNESS', 'MoM_geo_KURTOSIS',
-    # 'MoM_log_MEAN', 'MoM_log_SORTING', 'MoM_log_SKEWNESS', 'MoM_log_KURTOSIS',
-    # 'FW_geo_MEAN',  'FW_geo_SORTING',  'FW_geo_SKEWNESS',  'FW_geo_KURTOSIS',
-    # 'FW_log_MEAN',  'FW_log_SORTING',  'FW_log_SKEWNESS',  'FW_log_KURTOSIS',
-    'MODE 1 (µm)', #'MODE 2 (µm)', 'MODE 3 (µm)',
-    'D10 (µm)', 'D50 (µm)', 'D90 (µm)',
-    # '(D90 div D10) (µm)', '(D90 - D10) (µm)', '(D75 div D25) (µm)', '(D75 - D25) (µm)',
-    'perc GRAVEL', 'perc SAND', 'perc MUD', 'perc CLAY', 
-    # 'perc V COARSE SAND', 'perc COARSE SAND', 'perc MEDIUM SAND', 'perc FINE SAND', 'perc V FINE SAND',
-    # 'perc V COARSE SILT', 'perc COARSE SILT', 'perc MEDIUM SILT', 'perc FINE SILT', 'perc V FINE SILT',
-    
-    'OM_D50', 'TOC', 'Hg', 'TIC',  # other exogs
+]
 
-    'Sample'  # sample name
-
-    ]
+featurelist = endogs + endog_derivatives + [f for f in additional_exogs if f not in in featurelist] + featurelist + ['Sample']
 
 def use_shortnames(df):
     return df.replace({'Sample': shortnames}).sort_values(by='Sample')
