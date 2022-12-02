@@ -1121,3 +1121,583 @@ outerCV_fold;test_R2;train_R2;test_MAPE;train_MAPE;test_MedAE;train_MedAE;prepro
                                               ['Depth', 'Dist_Land',
                                                'MODE 1 (µm)', 'PC2',
                                                'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_allseasons_444'], ...]})";['Depth', 'Dist_Land', 'MODE 1 (µm)', 'PC2', 'Dist_WWTP'];DummyRegressor(strategy='median');0;-0.1946610266431279;3.313247211084133;1421.0;-0.1670680748766784;3.6861342315512258;1600.0
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Model started:;20221127_100123
+Duration:;15.575 h on 64 cpu cores
+Outliers excluded:;[]
+Scaler:;None
+Number of features per candidate (min, max):;(5, 5)
+Total number of feature combinations tested:;625
+
+Regressors:;[{'regressor': [RandomForestRegressor(random_state=RandomState(MT19937) at 0x7F33A2FBA840)], 'regressor__n_estimators': [10, 100, 300], 'regressor__max_depth': [None, 2, 4], 'regressor__max_features': [None, 'sqrt'], 'regressor__min_samples_split': [2, 10]}]
+Scorer for evaluation (outer fold results are sorted by this!):;MedAE
+Aggregation for evaluation:;median
+
+CV schemes:
+    inner:;LeaveOneOut()
+    outer:;10
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+outerCV_fold;test_R2;train_R2;test_MAPE;train_MAPE;test_MedAE;train_MedAE;preprocessor__selector;features;regressor;feature_combi_ID;allSamples_R2;allSamples_MAPE;allSamples_MedAE;allSamples_R2_refit;allSamples_MAPE_refit;allSamples_MedAE_refit
+8;-0.737131731835182;0.8838437334695599;-4.1462841776899575;-4.958669269022491;-701.4103710946496;-588.4238029663763;"FunctionTransformer(func=<function SelectFeatures at 0x7f33b70f5670>,
+                    kw_args={'feature_set': 520,
+                             'feature_sets': [['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'Dist_WWTP'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_endpoints_mean_dist__sed_18µm...
+                                               'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_allseasons_444'], ...]})";['Depth', 'Dist_Land', 'PC1', 'PC2', 'WWTP_influence_as_mean_time_travelled__sed_18µm_autumn_444'];"RandomForestRegressor(max_depth=4, max_features=None, n_estimators=300,
+                      random_state=RandomState(MT19937) at 0x7F31620D6B40)";520;0.8662678597634919;4.880051356958052;604.3911262765032;0.8959769283084672;3.985233167869261;500.6735889850893
+9;0.6426264171669418;0.9044513188086303;-2.340957529698454;-1.242032545781989;-937.9857860721147;-526.7113088840993;"FunctionTransformer(func=<function SelectFeatures at 0x7f33b70f5670>,
+                    kw_args={'feature_set': 623,
+                             'feature_sets': [['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'Dist_WWTP'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_endpoints_mean_dist__sed_18µm...
+                                               'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_allseasons_444'], ...]})";['Depth', 'Dist_Land', 'PC1', 'PC2', 'WWTP_influence_as_cumulated_residence__nosed_0µm_allseasons_222_'];"RandomForestRegressor(max_depth=4, max_features=None,
+                      random_state=RandomState(MT19937) at 0x7F310CB45340)";623;0.9025813386662165;1.348380124870679;557.8339713035501;0.9228326844565398;1.0424272595062607;539.2220757853258
+2;-0.4829619376107077;0.878972549864473;-0.31303906755525474;-1.1032921070591064;-1717.92;-399.8400000000002;"FunctionTransformer(func=<function SelectFeatures at 0x7f33b70f5670>,
+                    kw_args={'feature_set': 623,
+                             'feature_sets': [['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'Dist_WWTP'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_endpoints_mean_dist__sed_18µm...
+                                               'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_allseasons_444'], ...]})";['Depth', 'Dist_Land', 'PC1', 'PC2', 'WWTP_influence_as_cumulated_residence__nosed_0µm_allseasons_222_'];"RandomForestRegressor(max_features=None,
+                      random_state=RandomState(MT19937) at 0x7F31620D6040)";623;0.5993792296202092;1.0268160064619594;480.8800000000001;0.929616456268785;0.8294759845206501;376.75
+5;0.2696158788534875;0.822193117298912;-4.3525860858170615;-9.508943244392933;-1880.9;-990.55;"FunctionTransformer(func=<function SelectFeatures at 0x7f33b70f5670>,
+                    kw_args={'feature_set': 330,
+                             'feature_sets': [['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'Dist_WWTP'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_endpoints_mean_dist__sed_18µm...
+                                               'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_allseasons_444'], ...]})";['Depth', 'Dist_Land', 'perc MUD', 'PC2', 'WWTP_influence_as_mean_time_travelled__nosed_0µm_autumn_222'];"RandomForestRegressor(max_features=None, n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7F31620D6740)";330;0.8162280745783576;9.009940938724299;1073.3000000000002;0.9275585563988422;1.5032575595364353;396.10000000000036
+4;0.28279111396833234;0.8275547897899289;-5.886719601237939;-9.363888368051475;-1891.7782611832617;-657.7567424242427;"FunctionTransformer(func=<function SelectFeatures at 0x7f33b70f5670>,
+                    kw_args={'feature_set': 205,
+                             'feature_sets': [['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'Dist_WWTP'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_endpoints_mean_dist__sed_18µm...
+                                               'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_allseasons_444'], ...]})";['Depth', 'Dist_Land', 'D50 (µm)', 'PC2', 'WWTP_influence_as_mean_time_travelled__nosed_0µm_autumn_222'];"RandomForestRegressor(max_depth=4, max_features=None, n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7F31620D6540)";205;0.823027149852355;9.027388164811454;802.3633333333332;0.922345816035724;2.019228173728688;449.7357142857145
+7;-10.222087300585338;0.884556002793136;-2.7171280353115534;-4.58621183744117;-2701.63;-351.0633333333333;"FunctionTransformer(func=<function SelectFeatures at 0x7f33b70f5670>,
+                    kw_args={'feature_set': 520,
+                             'feature_sets': [['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'Dist_WWTP'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_endpoints_mean_dist__sed_18µm...
+                                               'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_allseasons_444'], ...]})";['Depth', 'Dist_Land', 'PC1', 'PC2', 'WWTP_influence_as_mean_time_travelled__sed_18µm_autumn_444'];"RandomForestRegressor(max_features=None, n_estimators=300,
+                      random_state=RandomState(MT19937) at 0x7F31620D6D40)";520;0.8679904661010381;4.405332759815723;358.20666666666693;0.8997077655387101;3.8276839371973144;402.88666666666677
+0;-0.8144094907290935;0.7414729607079587;-0.7543704986985809;-5.905447114233367;-2713.55;-585.2000000000007;"FunctionTransformer(func=<function SelectFeatures at 0x7f33b70f5670>,
+                    kw_args={'feature_set': 16,
+                             'feature_sets': [['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'Dist_WWTP'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_endpoints_mean_dist__sed_18µm_...
+                                               'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_allseasons_444'], ...]})";['Depth', 'Dist_Land', 'MODE 1 (µm)', 'PC2', 'WWTP_influence_as_mean_time_travelled__sed_18µm_autumn_222'];"RandomForestRegressor(max_features=None, n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7F33A2FBA940)";16;0.7083117995274928;5.240792067067588;629.9;0.9085267333566179;1.6561055619022744;713.5
+6;-0.35147923589589825;0.9267573896683224;-1.7894534372687538;-0.7631392689408527;-2872.483333333333;-376.55833333333317;"FunctionTransformer(func=<function SelectFeatures at 0x7f33b70f5670>,
+                    kw_args={'feature_set': 523,
+                             'feature_sets': [['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'Dist_WWTP'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_endpoints_mean_dist__sed_18µm...
+                                               'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_allseasons_444'], ...]})";['Depth', 'Dist_Land', 'PC1', 'PC2', 'WWTP_influence_as_cumulated_residence__nosed_18µm_autumn_222'];"RandomForestRegressor(max_features=None, n_estimators=300,
+                      random_state=RandomState(MT19937) at 0x7F31620D6940)";523;0.9068451188014375;0.8624599949080689;383.27333333333354;0.9276511864615207;0.7672234963990439;506.53333333333376
+1;-210.45518463259074;0.9069505610980546;-89.27977222504656;-0.831993806699437;-5079.81;-453.4100000000001;"FunctionTransformer(func=<function SelectFeatures at 0x7f33b70f5670>,
+                    kw_args={'feature_set': 584,
+                             'feature_sets': [['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'Dist_WWTP'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_endpoints_mean_dist__sed_18µm...
+                                               'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_allseasons_444'], ...]})";['Depth', 'Dist_Land', 'PC1', 'PC2', 'WWTP_influence_as_mean_time_travelled__sed_0µm_allseasons_222'];"RandomForestRegressor(max_features=None,
+                      random_state=RandomState(MT19937) at 0x7F31620D6140)";584;0.697775825110005;9.391456234281415;511.99;0.8950465161125318;4.226603133457967;382.30999999999995
+3;-0.7961962398710021;0.8823747399413712;-0.7265556396947268;-1.2566180320012286;-7305.3;-566.7;"FunctionTransformer(func=<function SelectFeatures at 0x7f33b70f5670>,
+                    kw_args={'feature_set': 414,
+                             'feature_sets': [['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'Dist_WWTP'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_endpoints_mean_dist__sed_18µm...
+                                               'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_allseasons_444'], ...]})";['Depth', 'Dist_Land', 'TOC', 'PC2', 'WWTP_influence_as_cumulated_residence__sed_18µm_allseasons_222'];"RandomForestRegressor(max_features=None, n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7F31620D6340)";414;0.753662286295754;1.205321671455438;665.1999999999998;0.9038487917651538;0.4734512202421098;346.2000000000007
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Model started:;20221128_142447
+Duration:;5.25 h on 64 cpu cores
+Outliers excluded:;[]
+Scaler:;None
+Number of features per candidate (min, max):;(5, 5)
+Total number of feature combinations tested:;625
+
+Regressors:;[{'regressor': [RandomForestRegressor(random_state=RandomState(MT19937) at 0x7FD27AF66640)], 'regressor__n_estimators': [10, 100, 300], 'regressor__max_depth': [None, 2, 4], 'regressor__max_features': [None, 'sqrt'], 'regressor__min_samples_split': [2, 10]}]
+Scorer for evaluation (outer fold results are sorted by this!):;R2
+Aggregation for evaluation:;median
+
+CV schemes:
+    inner:;10
+    outer:;10
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+outerCV_fold;test_R2;train_R2;test_MAPE;train_MAPE;test_MedAE;train_MedAE;preprocessor__selector;features;regressor;feature_combi_ID;allSamples_R2;allSamples_MAPE;allSamples_MedAE;allSamples_R2_refit;allSamples_MAPE_refit;allSamples_MedAE_refit
+5;0.7183597873821082;0.5501799109629257;-2.781023152856033;-3.34631289525084;-1171.766125541125;-1190.9661255411252;"FunctionTransformer(func=<function SelectFeatures at 0x7fd27d014670>,
+                    kw_args={'feature_set': 509,
+                             'feature_sets': [['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'Dist_WWTP'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_endpoints_mean_dist__sed_18µm...
+                                               'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_allseasons_444'], ...]})";['Depth', 'Dist_Land', 'PC1', 'PC2', 'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_spring_444'];"RandomForestRegressor(max_depth=2, max_features=None, min_samples_split=10,
+                      n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7FD27AB11840)";509;0.5594373980207101;3.291607436309407;1171.9661255411252;0.5973978071677077;2.309887657599455;737.3301534250063
+4;0.4916490572993365;0.5459930644852081;-5.309290857809743;-3.5940107316245027;-1518.8084432234432;-1304.4647374847373;"FunctionTransformer(func=<function SelectFeatures at 0x7fd27d014670>,
+                    kw_args={'feature_set': 509,
+                             'feature_sets': [['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'Dist_WWTP'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_endpoints_mean_dist__sed_18µm...
+                                               'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_allseasons_444'], ...]})";['Depth', 'Dist_Land', 'PC1', 'PC2', 'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_spring_444'];"RandomForestRegressor(max_depth=2, max_features=None, min_samples_split=10,
+                      n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7FD27AB11640)";509;0.5532864253924997;3.760005582545655;1422.227564102564;0.5973978071677077;2.309887657599455;737.3301534250063
+9;-0.07811645603590223;0.9138784912415863;-3.4835528500488455;-1.2971050377981634;-1289.63;-613.416666666667;"FunctionTransformer(func=<function SelectFeatures at 0x7fd27d014670>,
+                    kw_args={'feature_set': 125,
+                             'feature_sets': [['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'Dist_WWTP'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_endpoints_mean_dist__sed_18µm...
+                                               'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_allseasons_444'], ...]})";['Depth', 'Dist_Land', 'D50 (µm)', 'PC2', 'Dist_WWTP'];"RandomForestRegressor(max_features=None, n_estimators=300,
+                      random_state=RandomState(MT19937) at 0x7FD2145F2140)";125;0.9021301615416313;1.5086967615643585;635.3633333333332;0.9215231860191812;1.414167819359995;621.1133333333332
+0;-0.09450751060718576;0.9160122418528743;-0.8595053932658451;-1.8566030413581172;-2383.34;-517.6000000000004;"FunctionTransformer(func=<function SelectFeatures at 0x7fd27d014670>,
+                    kw_args={'feature_set': 273,
+                             'feature_sets': [['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'Dist_WWTP'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_endpoints_mean_dist__sed_18µm...
+                                               'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_allseasons_444'], ...]})";['Depth', 'Dist_Land', 'perc MUD', 'PC2', 'WWTP_influence_as_cumulated_residence__nosed_18µm_autumn_222'];"RandomForestRegressor(max_features='sqrt', n_estimators=300,
+                      random_state=RandomState(MT19937) at 0x7FD27AF66840)";273;0.894474106394783;1.7279452803139528;559.3066666666664;0.9082450177767617;1.8431538912852816;612.3766666666668
+8;-0.11315303877701255;0.5889402695047207;-4.238777755306596;-2.383900090264608;-775.5313179862358;-889.4918463482466;"FunctionTransformer(func=<function SelectFeatures at 0x7fd27d014670>,
+                    kw_args={'feature_set': 500,
+                             'feature_sets': [['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'Dist_WWTP'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_endpoints_mean_dist__sed_18µm...
+                                               'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_allseasons_444'], ...]})";['Depth', 'Dist_Land', 'PC1', 'PC2', 'Dist_WWTP'];"RandomForestRegressor(max_features=None, min_samples_split=10, n_estimators=300,
+                      random_state=RandomState(MT19937) at 0x7FD27AB11D40)";500;0.5862301398632157;2.563404380429961;861.3063280815335;0.5948305656097592;2.1861268846544943;752.4372428253591
+6;-0.2778856946268584;0.91853652872991;-2.0008079025627294;-1.3679337939161311;-1593.8914491341984;-356.2681936443192;"FunctionTransformer(func=<function SelectFeatures at 0x7fd27d014670>,
+                    kw_args={'feature_set': 500,
+                             'feature_sets': [['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'Dist_WWTP'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_endpoints_mean_dist__sed_18µm...
+                                               'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_allseasons_444'], ...]})";['Depth', 'Dist_Land', 'PC1', 'PC2', 'Dist_WWTP'];"RandomForestRegressor(max_depth=4, max_features=None, n_estimators=300,
+                      random_state=RandomState(MT19937) at 0x7FD27AB11A40)";500;0.8999566096749682;1.42917967539806;386.51120647870664;0.9226624710067217;1.3201033049913784;480.757931096681
+2;-1.4441594444538994;0.8071603568924111;-0.6289703641906862;-2.1949736447216757;-6027.2;-741.05;"FunctionTransformer(func=<function SelectFeatures at 0x7fd27d014670>,
+                    kw_args={'feature_set': 71,
+                             'feature_sets': [['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'Dist_WWTP'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_endpoints_mean_dist__sed_18µm_...
+                                               'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_allseasons_444'], ...]})";['Depth', 'Dist_Land', 'MODE 1 (µm)', 'PC2', 'WWTP_influence_as_cumulated_residence__sed_allsizes_allseasons_222'];"RandomForestRegressor(max_features='sqrt', n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7FD27AB11440)";71;0.3417612732296077;2.0434249401541607;765.5;0.8573627391940399;3.3645002011941534;858.4000000000001
+3;-8.769667553556818;0.9110184381670178;-7.021871488334036;-2.0604049295030795;-13604.54;-732.5862469474969;"FunctionTransformer(func=<function SelectFeatures at 0x7fd27d014670>,
+                    kw_args={'feature_set': 509,
+                             'feature_sets': [['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'Dist_WWTP'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_endpoints_mean_dist__sed_18µm...
+                                               'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_allseasons_444'], ...]})";['Depth', 'Dist_Land', 'PC1', 'PC2', 'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_spring_444'];"RandomForestRegressor(max_features=None, min_samples_split=10, n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7FD27AB11040)";509;0.13023307239505166;2.5405468545512364;749.2286645299146;0.599451409831431;1.844201440666531;538.1741278329514
+7;-11.161126786078828;0.9116054938747389;-2.7165810294038137;-1.397110402505125;-3045.9049610667116;-418.68474406149426;"FunctionTransformer(func=<function SelectFeatures at 0x7fd27d014670>,
+                    kw_args={'feature_set': 500,
+                             'feature_sets': [['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'Dist_WWTP'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_endpoints_mean_dist__sed_18µm...
+                                               'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_allseasons_444'], ...]})";['Depth', 'Dist_Land', 'PC1', 'PC2', 'Dist_WWTP'];"RandomForestRegressor(max_depth=4, max_features=None, n_estimators=300,
+                      random_state=RandomState(MT19937) at 0x7FD27AB11C40)";500;0.8925950588140514;1.5248011083340303;457.3903984903991;0.9226624710067217;1.3201033049913784;480.757931096681
+1;-221.35802715034586;0.9065054243276905;-90.8479361521003;-0.9734246550518485;-5356.2;-586.6049999999999;"FunctionTransformer(func=<function SelectFeatures at 0x7fd27d014670>,
+                    kw_args={'feature_set': 165,
+                             'feature_sets': [['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'Dist_WWTP'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_endpoints_mean_dist__sed_18µm...
+                                               'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_222'],
+                                              ['Depth', 'Dist_Land',
+                                               'MODE 1 (µm)', 'PC2',
+                                               'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_allseasons_444'], ...]})";['Depth', 'Dist_Land', 'D50 (µm)', 'PC2', 'WWTP_influence_as_mean_time_travelled__sed_18µm_allseasons_222'];"RandomForestRegressor(max_features=None,
+                      random_state=RandomState(MT19937) at 0x7FD27AB11140)";165;0.6863873245178136;9.670958025733956;610.4399999999996;0.8821638743272827;4.444206600513968;599.94
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Model started:;20221128_142447
+Duration:;5.25 h on 64 cpu cores
+Outliers excluded:;[]
+Scaler:;None
+Number of features per candidate (min, max):;(5, 5)
+Total number of feature combinations tested:;625
+
+Regressors:;[{'regressor': [RandomForestRegressor(random_state=RandomState(MT19937) at 0x7FD27AF66640)], 'regressor__n_estimators': [10, 100, 300], 'regressor__max_depth': [None, 2, 4], 'regressor__max_features': [None, 'sqrt'], 'regressor__min_samples_split': [2, 10]}]
+Scorer for evaluation (outer fold results are sorted by this!):;R2
+Aggregation for evaluation:;median
+
+CV schemes:
+    inner:;10
+    outer:;10
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+outerCV_fold;test_R2;train_R2;test_MAPE;train_MAPE;test_MedAE;train_MedAE;estimator_refit_on_all;features;regressor;feature_combi_ID;allSamples_R2;allSamples_MAPE;allSamples_MedAE;allSamples_R2_refit;allSamples_MAPE_refit;allSamples_MedAE_refit
+0;-0.09450751060718576;0.9160122418528743;-0.8595053932658451;-1.8566030413581172;-2383.34;-517.6000000000004;"RandomForestRegressor(max_features='sqrt', n_estimators=300,
+                      random_state=RandomState(MT19937) at 0x7FD250341640)";['Depth', 'Dist_Land', 'perc MUD', 'PC2', 'WWTP_influence_as_cumulated_residence__nosed_18µm_autumn_222'];"RandomForestRegressor(max_features='sqrt', n_estimators=300,
+                      random_state=RandomState(MT19937) at 0x7FD27AF66840)";273;0.894474106394783;1.7279452803139528;559.3066666666664;0.9082450177767617;1.8431538912852816;612.3766666666668
+1;-221.35802715034586;0.9065054243276905;-90.8479361521003;-0.9734246550518485;-5356.2;-586.6049999999999;"RandomForestRegressor(max_features=None,
+                      random_state=RandomState(MT19937) at 0x7FD263F90B40)";['Depth', 'Dist_Land', 'D50 (µm)', 'PC2', 'WWTP_influence_as_mean_time_travelled__sed_18µm_allseasons_222'];"RandomForestRegressor(max_features=None,
+                      random_state=RandomState(MT19937) at 0x7FD27AB11140)";165;0.6863873245178136;9.670958025733956;610.4399999999996;0.8821638743272827;4.444206600513968;599.94
+2;-1.4441594444538994;0.8071603568924111;-0.6289703641906862;-2.1949736447216757;-6027.2;-741.05;"RandomForestRegressor(max_features='sqrt', n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7FD250706440)";['Depth', 'Dist_Land', 'MODE 1 (µm)', 'PC2', 'WWTP_influence_as_cumulated_residence__sed_allsizes_allseasons_222'];"RandomForestRegressor(max_features='sqrt', n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7FD27AB11440)";71;0.3417612732296077;2.0434249401541607;765.5;0.8573627391940399;3.3645002011941534;858.4000000000001
+3;-8.769667553556818;0.9110184381670178;-7.021871488334036;-2.0604049295030795;-13604.54;-732.5862469474969;"RandomForestRegressor(max_features=None, min_samples_split=10, n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7FD250706540)";['Depth', 'Dist_Land', 'PC1', 'PC2', 'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_spring_444'];"RandomForestRegressor(max_features=None, min_samples_split=10, n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7FD27AB11040)";509;0.13023307239505166;2.5405468545512364;749.2286645299146;0.599451409831431;1.844201440666531;538.1741278329514
+4;0.4916490572993365;0.5459930644852081;-5.309290857809743;-3.5940107316245027;-1518.8084432234432;-1304.4647374847373;"RandomForestRegressor(max_depth=2, max_features=None, min_samples_split=10,
+                      n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7FD250706940)";['Depth', 'Dist_Land', 'PC1', 'PC2', 'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_spring_444'];"RandomForestRegressor(max_depth=2, max_features=None, min_samples_split=10,
+                      n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7FD27AB11640)";509;0.5532864253924997;3.760005582545655;1422.227564102564;0.5973978071677077;2.309887657599455;737.3301534250063
+5;0.7183597873821082;0.5501799109629257;-2.781023152856033;-3.34631289525084;-1171.766125541125;-1190.9661255411252;"RandomForestRegressor(max_depth=2, max_features=None, min_samples_split=10,
+                      n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7FD2053DAD40)";['Depth', 'Dist_Land', 'PC1', 'PC2', 'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_spring_444'];"RandomForestRegressor(max_depth=2, max_features=None, min_samples_split=10,
+                      n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7FD27AB11840)";509;0.5594373980207101;3.291607436309407;1171.9661255411252;0.5973978071677077;2.309887657599455;737.3301534250063
+6;-0.2778856946268584;0.91853652872991;-2.0008079025627294;-1.3679337939161311;-1593.8914491341984;-356.2681936443192;"RandomForestRegressor(max_depth=4, max_features=None, n_estimators=300,
+                      random_state=RandomState(MT19937) at 0x7FD22A973540)";['Depth', 'Dist_Land', 'PC1', 'PC2', 'Dist_WWTP'];"RandomForestRegressor(max_depth=4, max_features=None, n_estimators=300,
+                      random_state=RandomState(MT19937) at 0x7FD27AB11A40)";500;0.8999566096749682;1.42917967539806;386.51120647870664;0.9226624710067217;1.3201033049913784;480.757931096681
+7;-11.161126786078828;0.9116054938747389;-2.7165810294038137;-1.397110402505125;-3045.9049610667116;-418.68474406149426;"RandomForestRegressor(max_depth=4, max_features=None, n_estimators=300,
+                      random_state=RandomState(MT19937) at 0x7FD22A973440)";['Depth', 'Dist_Land', 'PC1', 'PC2', 'Dist_WWTP'];"RandomForestRegressor(max_depth=4, max_features=None, n_estimators=300,
+                      random_state=RandomState(MT19937) at 0x7FD27AB11C40)";500;0.8925950588140514;1.5248011083340303;457.3903984903991;0.9226624710067217;1.3201033049913784;480.757931096681
+8;-0.11315303877701255;0.5889402695047207;-4.238777755306596;-2.383900090264608;-775.5313179862358;-889.4918463482466;"RandomForestRegressor(max_features=None, min_samples_split=10, n_estimators=300,
+                      random_state=RandomState(MT19937) at 0x7FD26B942940)";['Depth', 'Dist_Land', 'PC1', 'PC2', 'Dist_WWTP'];"RandomForestRegressor(max_features=None, min_samples_split=10, n_estimators=300,
+                      random_state=RandomState(MT19937) at 0x7FD27AB11D40)";500;0.5862301398632157;2.563404380429961;861.3063280815335;0.5948305656097592;2.1861268846544943;752.4372428253591
+9;-0.07811645603590223;0.9138784912415863;-3.4835528500488455;-1.2971050377981634;-1289.63;-613.416666666667;"RandomForestRegressor(max_features=None, n_estimators=300,
+                      random_state=RandomState(MT19937) at 0x7FD26B942C40)";['Depth', 'Dist_Land', 'D50 (µm)', 'PC2', 'Dist_WWTP'];"RandomForestRegressor(max_features=None, n_estimators=300,
+                      random_state=RandomState(MT19937) at 0x7FD2145F2140)";125;0.9021301615416313;1.5086967615643585;635.3633333333332;0.9215231860191812;1.414167819359995;621.1133333333332
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Model started:;20221130_103833
+Duration:;19.175 h on 120 cpu cores
+Outliers excluded:;[]
+Scaler:;None
+Number of features per candidate (min, max):;(3, 5)
+Total number of feature combinations tested:;4896
+
+Regressors:;[{'regressor': [RandomForestRegressor(random_state=RandomState(MT19937) at 0x7FEF328CE840)], 'regressor__n_estimators': [10, 100, 300], 'regressor__max_depth': [None, 2, 4], 'regressor__max_features': [None, 'sqrt'], 'regressor__min_samples_split': [2, 10]}]
+Scorer for evaluation (outer fold results are sorted by this!):;R2
+Aggregation for evaluation:;median
+
+CV schemes:
+    inner:;10
+    outer:;10
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+outerCV_fold;test_R2;train_R2;test_MAPE;train_MAPE;test_MedAE;train_MedAE;features;regressor;feature_combi_ID;allSamples_R2;allSamples_MAPE;allSamples_MedAE;allSamples_R2_refit;allSamples_MAPE_refit;allSamples_MedAE_refit
+5;0.502918743073719;0.9172779761141395;-4.434790817455236;-1.5373383392732305;-583.0433333333331;-450.8999999999998;['Depth', 'perc MUD', 'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222'];"RandomForestRegressor(max_features='sqrt', n_estimators=300,
+                      random_state=RandomState(MT19937) at 0x7FEBA2D5E540)";422;0.9120576038340333;1.8177369661940699;509.96666666666624;0.9255859987587663;1.514696111647305;433.00333333333333
+0;0.18009541193370637;0.8265426933885777;-0.5450011533029465;-4.477644585955802;-1433.5;-365.39999999999964;['PC1', 'PC2', 'WWTP_influence_as_mean_time_travelled__nosed_18µm_autumn_444'];"RandomForestRegressor(max_features=None, n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7FEF328CE940)";2210;0.812765101129303;3.9702067236780145;473.4;0.9453717567788045;1.3851675393583673;293.8
+6;0.10286539735569389;0.9368594441322167;-1.251293093116727;-2.3785929560735286;-2279.403333333333;-853.1265909090909;['Depth', 'PC1', 'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_allseasons_444'];"RandomForestRegressor(max_depth=4, max_features='sqrt', n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7FEBA2D5EA40)";675;0.9239363568792038;2.2694994209486765;920.9948484848483;0.8905084028140979;1.3917224515261066;715.7126984126985
+9;-0.1956827083675563;0.9166938647658438;-2.7557288035456495;-0.957538859487433;-1147.71;-449.03999999999985;['Depth', 'D50 (µm)', 'Dist_WWTP'];"RandomForestRegressor(max_features=None, n_estimators=300,
+                      random_state=RandomState(MT19937) at 0x7FEB87937240)";271;0.9032955949378532;1.1315572411704862;494.63333333333344;0.9225893533495828;1.1319885668389411;520.6633333333334
+3;-0.2967487672954956;0.4458278676712093;-0.5722772066817868;-1.9838946361599572;-3430.9214265271767;-937.0593578738794;['PC1', 'PC2', 'WWTP_influence_as_cumulated_residence__nosed_0µm_autumnspring_222'];"RandomForestRegressor(max_features=None, min_samples_split=10, n_estimators=300,
+                      random_state=RandomState(MT19937) at 0x7FEBA2D5E340)";2237;0.4216643089090998;1.8472864978233599;1057.6487288082271;0.4284020428291312;2.1456444251064983;1150.420157205339
+2;-0.7824054942384449;0.8241933077902684;-0.3924766575898519;-1.1361784130129822;-2393.544444444444;-441.7576984126982;['Depth', 'perc MUD', 'PC2', 'WWTP_influence_as_mean_time_travelled__sed_allsizes_allseasons_444'];"RandomForestRegressor(max_depth=4, max_features=None, n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7FEBA2D5E140)";3307;0.509113848981839;1.0642072753913887;480.36666666666656;0.898523103679196;0.6772481129450546;319.0787301587302
+8;-2.431630117867602;0.962740817263172;-3.1395503774413434;-1.5439711786272292;-1067.8668181818184;-771.4103787878788;['Depth', 'perc MUD', 'PC2', 'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_spring_444'];"RandomForestRegressor(max_depth=4, max_features=None, n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7FEBA2D5ED40)";3280;0.9231372453775968;1.6983820688350464;779.0304545454546;0.9351197174402941;0.9126791852231239;492.32948051948006
+4;-6.214137740632585;0.398490291492138;-16.651338159115383;-4.9761896341539185;-6043.184005994006;-1489.974466783217;['PC1', 'PC2', 'WWTP_influence_as_endpoints_mean_dist__sed_18µm_spring_444'];"RandomForestRegressor(max_features=None, min_samples_split=10, n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7FEBA2D5E840)";2204;0.3170815498282512;6.106042717214706;1999.9648809523806;0.4324471660541309;3.0366087803734136;1286.8919408532643
+7;-10.513875361291765;0.8995363415121245;-2.5961284212856643;-1.3091719155466248;-3032.5416014541024;-365.4869214951709;['Depth', 'Dist_Land', 'PC1', 'Dist_WWTP'];"RandomForestRegressor(max_depth=4, max_features=None,
+                      random_state=RandomState(MT19937) at 0x7FEBA2D5EC40)";2771;0.8820214660553674;1.4337160935213706;440.8886635031631;0.9320701636005881;1.3356295685616657;457.945898989899
+1;-93.75334785284443;0.9180390835866278;-60.9402834607426;-0.8936840536184011;-3192.99;-434.42499999999995;['Depth', 'PC1', 'PC2', 'WWTP_influence_as_mean_time_travelled__nosed_0µm_autumnspring_222'];"RandomForestRegressor(max_features='sqrt', n_estimators=300,
+                      random_state=RandomState(MT19937) at 0x7FEBA2D5E040)";3613;0.8257702078154978;6.704645286565904;507.1700000000001;0.9091625660327989;3.1769769008108555;392.59333333333325
