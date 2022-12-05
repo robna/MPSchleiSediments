@@ -1701,3 +1701,185 @@ outerCV_fold;test_R2;train_R2;test_MAPE;train_MAPE;test_MedAE;train_MedAE;featur
                       random_state=RandomState(MT19937) at 0x7FEBA2D5EC40)";2771;0.8820214660553674;1.4337160935213706;440.8886635031631;0.9320701636005881;1.3356295685616657;457.945898989899
 1;-93.75334785284443;0.9180390835866278;-60.9402834607426;-0.8936840536184011;-3192.99;-434.42499999999995;['Depth', 'PC1', 'PC2', 'WWTP_influence_as_mean_time_travelled__nosed_0µm_autumnspring_222'];"RandomForestRegressor(max_features='sqrt', n_estimators=300,
                       random_state=RandomState(MT19937) at 0x7FEBA2D5E040)";3613;0.8257702078154978;6.704645286565904;507.1700000000001;0.9091625660327989;3.1769769008108555;392.59333333333325
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Model started:;20221204_004513
+Duration:;2.616 h on 120 cpu cores
+Outliers excluded:;['S32', 'S10d', 'S05']
+Scaler:;None
+Number of features per candidate (min, max):;(5, 5)
+Total number of feature combinations tested:;625
+
+Regressors:;[{'regressor': [RandomForestRegressor(random_state=RandomState(MT19937) at 0x7FAA9B8B2940)], 'regressor__n_estimators': [10, 100, 300], 'regressor__max_depth': [None, 2, 4], 'regressor__max_features': [None, 'sqrt'], 'regressor__min_samples_split': [2, 10]}]
+Scorer for evaluation (outer fold results are sorted by this!):;R2
+Aggregation for evaluation:;median
+
+CV schemes:
+    inner:;10
+    outer:;10
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+outerCV_fold;test_R2;train_R2;test_MAPE;train_MAPE;test_MedAE;train_MedAE;features;regressor;feature_combi_ID;allSamples_R2;allSamples_MAPE;allSamples_MedAE;allSamples_R2_refit;allSamples_MAPE_refit;allSamples_MedAE_refit
+8;0.9613969236591696;0.7823130901716754;-0.16214616869781226;-1.165544922226263;-314.39999999999986;-841.6999999999998;['Depth', 'Dist_Land', 'TOC', 'PC2', 'WWTP_influence_as_cumulated_residence__nosed_0µm_autumn_222'];"RandomForestRegressor(max_features=None, n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7FAA444BDC40)";454;0.7837822126707701;1.0938735826885164;733.4499999999998;0.9385858476197994;0.43800421829805514;285.20000000000005
+4;0.9394005891400488;0.8578343317702142;-2.074617078898808;-0.9242175007828294;-543.907777777778;-508.41666666666674;['Depth', 'Dist_Land', 'D50 (µm)', 'PC2', 'WWTP_influence_as_cumulated_residence__nosed_18µm_autumn_222'];"RandomForestRegressor(max_depth=4, max_features=None, n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7FAA444BD540)";148;0.8614133042005581;1.0474745984381129;521.2122222222222;0.9414451042066189;0.9214302882420294;681.2292297979798
+1;0.18910187155969638;0.8113864923069458;-1.2614384939657295;-1.0871366222684873;-1979.686666666667;-586.1000000000004;['Depth', 'Dist_Land', 'MODE 1 (µm)', 'PC2', 'WWTP_influence_as_cumulated_residence__nosed_0µm_allseasons_222_'];"RandomForestRegressor(max_depth=4, max_features=None, n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7FAA444BD040)";123;0.8026300727378264;1.1058118228074776;655.2878571428572;0.9111552212251929;1.0106261726432164;606.1108699633699
+0;-0.23302472215426628;0.8481624812796862;-0.5720926272008153;-0.5757797445788665;-1207.6999999999998;-591.0;['Depth', 'Dist_Land', 'PC1', 'PC2', 'WWTP_influence_as_cumulated_residence__nosed_18µm_autumn_222'];"RandomForestRegressor(max_features=None, n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7FAA9B8B2840)";523;0.8286414928026806;0.5753846962883611;627.5999999999999;0.9400566921476111;0.6456398656732711;384.4000000000001
+6;-0.24086580126797652;0.8840403993250028;-2.0320057832108542;-1.0208504372845606;-2510.0200000000004;-495.0699999999997;['Depth', 'Dist_Land', 'TOC', 'PC2', 'WWTP_influence_as_cumulated_residence__nosed_18µm_autumn_444'];"RandomForestRegressor(max_features='sqrt',
+                      random_state=RandomState(MT19937) at 0x7FAA444BD940)";438;0.8649088753714985;1.1291885100623777;557.845;0.89363745608491;0.8718171140197094;359.4350000000001
+2;-1.0813255483793633;0.9236229397779252;-0.3314254769145786;-0.4521403906750413;-1550.2999999999993;-388.20000000000005;['Depth', 'Dist_Land', 'perc MUD', 'PC2', 'WWTP_influence_as_cumulated_residence__nosed_0µm_autumn_222'];"RandomForestRegressor(max_features=None, n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7FAA444BD140)";329;0.4316387130923218;0.4392066499149917;413.70000000000005;0.9340847273596918;0.48785220369481486;437.79999999999995
+3;-1.0854887565620905;0.7511889889891852;-3.074071704018594;-1.112116878521304;-5908.314285714286;-504.4759523809523;['Depth', 'Dist_Land', 'MODE 1 (µm)', 'PC2', 'WWTP_influence_as_mean_time_travelled__nosed_allsizes_allseasons_444'];"RandomForestRegressor(max_depth=4, max_features=None, n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7FAA444BD340)";32;0.6162807829984538;1.3223263241102996;701.7620238095237;0.8288197274440671;1.188250793626764;434.30805555555617
+7;-3.1694390017577687;0.9080280620057941;-4.612509991424633;-0.8072068788541903;-745.67;-638.2;['Depth', 'Dist_Land', 'D50 (µm)', 'PC2', 'WWTP_influence_as_cumulated_residence__nosed_18µm_allseasons_222'];"RandomForestRegressor(max_features=None,
+                      random_state=RandomState(MT19937) at 0x7FAA444BDB40)";168;0.90338815892439;1.2149179266295949;638.2199999999999;0.9031229695110218;0.7368648626449471;422.6249999999998
+9;-3.228350975181298;0.7945917289827021;-2.110466322363161;-0.5999310835916846;-441.15;-568.5000000000001;['Depth', 'Dist_Land', 'TOC', 'PC2', 'WWTP_influence_as_cumulated_residence__nosed_0µm_autumn_222'];"RandomForestRegressor(max_features=None, n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7FAA350ED040)";454;0.800295667291326;0.7078264577896471;541.4000000000001;0.9385858476197994;0.43800421829805514;285.20000000000005
+5;-12.145985809388588;0.8414465521804682;-3.831838664458211;-0.7123320212099348;-2073.4;-379.9;['Depth', 'Dist_Land', 'D50 (µm)', 'PC2', 'WWTP_influence_as_cumulated_residence__nosed_18µm_autumn_222'];"RandomForestRegressor(max_features=None, n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7FAA444BD740)";148;0.822809579262457;1.0465648758436787;528.2;0.9407855705457833;0.8327650842799125;554.1000000000001
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Model started:;20221204_234041
+Duration:;4.385 h on 120 cpu cores
+Outliers excluded:;['S32', 'S10d', 'S05']
+Scaler:;None
+Number of features per candidate (min, max):;(5, 5)
+Total number of feature combinations tested:;625
+
+Regressors:;[{'regressor': [XGBRegressor(base_score=None, booster=None, callbacks=None,
+             colsample_bylevel=None, colsample_bynode=None,
+             colsample_bytree=None, early_stopping_rounds=None,
+             enable_categorical=False, eval_metric=None, feature_types=None,
+             gamma=None, gpu_id=None, grow_policy=None, importance_type=None,
+             interaction_constraints=None, learning_rate=None, max_bin=None,
+             max_cat_threshold=None, max_cat_to_onehot=None,
+             max_delta_step=None, max_depth=None, max_leaves=None,
+             min_child_weight=None, missing=nan, monotone_constraints=None,
+             n_estimators=100, n_jobs=None, num_parallel_tree=None,
+             predictor=None, random_state=None, ...)], 'regressor__n_estimators': [100, 200, 500], 'regressor__learning_rate': [0.01, 0.1, 0.5], 'regressor__reg_alpha': [0.0, 0.1, 0.5]}]
+Scorer for evaluation (outer fold results are sorted by this!):;MedAE
+Aggregation for evaluation:;median
+
+CV schemes:
+    inner:;LeaveOneOut()
+    outer:;10
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+outerCV_fold;test_R2;train_R2;test_MAPE;train_MAPE;test_MedAE;train_MedAE;features;regressor;feature_combi_ID;allSamples_R2;allSamples_MAPE;allSamples_MedAE;allSamples_R2_refit;allSamples_MAPE_refit;allSamples_MedAE_refit
+9;0.41220789607647934;0.8379176435562523;-0.49644308137402177;-0.20909213440285443;-159.21597290039062;-379.96563720703125;['Depth', 'Dist_Land', 'D50 (µm)', 'PC2', 'WWTP_influence_as_cumulated_residence__sed_18µm_autumn_222'];"XGBRegressor(base_score=None, booster=None, callbacks=None,
+             colsample_bylevel=None, colsample_bynode=None,
+             colsample_bytree=None, early_stopping_rounds=None,
+             enable_categorical=False, eval_metric=None, feature_types=None,
+             gamma=None, gpu_id=None, grow_policy=None, importance_type=None,
+             interaction_constraints=None, learning_rate=0.01, max_bin=None,
+             max_cat_threshold=None, max_cat_to_onehot=None,
+             max_delta_step=None, max_depth=None, max_leaves=None,
+             min_child_weight=None, missing=nan, monotone_constraints=None,
+             n_estimators=200, n_jobs=None, num_parallel_tree=None,
+             predictor=None, random_state=None, ...)";140;0.8427330238718322;0.22961720204365213;309.10186767578125;0.8435917871419399;0.20499812883960472;322.36383056640625
+4;0.9045762440379096;0.839548908083958;-0.7348532629740441;-0.20755403049296361;-288.9460754394531;-384.8203125;['Depth', 'Dist_Land', 'D50 (µm)', 'PC2', 'WWTP_influence_as_cumulated_residence__sed_18µm_autumn_222'];"XGBRegressor(base_score=None, booster=None, callbacks=None,
+             colsample_bylevel=None, colsample_bynode=None,
+             colsample_bytree=None, early_stopping_rounds=None,
+             enable_categorical=False, eval_metric=None, feature_types=None,
+             gamma=None, gpu_id=None, grow_policy=None, importance_type=None,
+             interaction_constraints=None, learning_rate=0.01, max_bin=None,
+             max_cat_threshold=None, max_cat_to_onehot=None,
+             max_delta_step=None, max_depth=None, max_leaves=None,
+             min_child_weight=None, missing=nan, monotone_constraints=None,
+             n_estimators=200, n_jobs=None, num_parallel_tree=None,
+             predictor=None, random_state=None, ...)";140;0.8431134034686364;0.26405037683022226;336.88319396972656;0.8435917871419399;0.20499812883960472;322.36383056640625
+7;0.8259643193023913;0.5228805513249554;-2.188075366060905;-0.4458805171441735;-327.3199462890625;-980.0106201171875;['Depth', 'Dist_Land', 'PC1', 'PC2', 'WWTP_influence_as_endpoints_mean_dist__sed_0µm_allseasons_222'];"XGBRegressor(base_score=None, booster=None, callbacks=None,
+             colsample_bylevel=None, colsample_bynode=None,
+             colsample_bytree=None, early_stopping_rounds=None,
+             enable_categorical=False, eval_metric=None, feature_types=None,
+             gamma=None, gpu_id=None, grow_policy=None, importance_type=None,
+             interaction_constraints=None, learning_rate=0.01, max_bin=None,
+             max_cat_threshold=None, max_cat_to_onehot=None,
+             max_delta_step=None, max_depth=None, max_leaves=None,
+             min_child_weight=None, missing=nan, monotone_constraints=None,
+             n_estimators=100, n_jobs=None, num_parallel_tree=None,
+             predictor=None, random_state=None, ...)";582;0.5422372563228546;0.6325442509566805;510.70550537109375;0.5434869312334668;0.44351333336535687;777.8923187255859
+5;-1.2095290145355015;0.839368187046907;-0.7781518913393058;-0.22004143538588264;-525.6070175170898;-372.0631103515625;['Depth', 'Dist_Land', 'MODE 1 (µm)', 'PC2', 'WWTP_influence_as_cumulated_residence__nosed_18µm_allseasons_222'];"XGBRegressor(base_score=None, booster=None, callbacks=None,
+             colsample_bylevel=None, colsample_bynode=None,
+             colsample_bytree=None, early_stopping_rounds=None,
+             enable_categorical=False, eval_metric=None, feature_types=None,
+             gamma=None, gpu_id=None, grow_policy=None, importance_type=None,
+             interaction_constraints=None, learning_rate=0.01, max_bin=None,
+             max_cat_threshold=None, max_cat_to_onehot=None,
+             max_delta_step=None, max_depth=None, max_leaves=None,
+             min_child_weight=None, missing=nan, monotone_constraints=None,
+             n_estimators=200, n_jobs=None, num_parallel_tree=None,
+             predictor=None, random_state=None, ...)";43;0.8409925052849847;0.27983898423803516;382.0631103515625;0.8447822816407536;0.22023526056418855;378.8187255859375
+0;-0.49829831678957603;0.9924938288694911;-0.4114861825019919;-0.03541804394445933;-890.4791259765625;-34.97021484375;['Depth', 'Dist_Land', 'PC1', 'PC2', 'WWTP_influence_as_cumulated_residence__nosed_18µm_spring_222'];"XGBRegressor(base_score=None, booster=None, callbacks=None,
+             colsample_bylevel=None, colsample_bynode=None,
+             colsample_bytree=None, early_stopping_rounds=None,
+             enable_categorical=False, eval_metric=None, feature_types=None,
+             gamma=None, gpu_id=None, grow_policy=None, importance_type=None,
+             interaction_constraints=None, learning_rate=0.01, max_bin=None,
+             max_cat_threshold=None, max_cat_to_onehot=None,
+             max_delta_step=None, max_depth=None, max_leaves=None,
+             min_child_weight=None, missing=nan, monotone_constraints=None,
+             n_estimators=500, n_jobs=None, num_parallel_tree=None,
+             predictor=None, random_state=None, ...)";547;0.965394236229529;0.07571105878990925;37.11553955078125;0.9925554164446936;0.055383244569744215;47.55670166015625
+1;0.6270615846829946;0.8444888172587287;-0.690149274454185;-0.2348746265223446;-1132.129150390625;-369.2138671875;['Depth', 'Dist_Land', 'PC1', 'PC2', 'WWTP_influence_as_mean_time_travelled__sed_allsizes_allseasons_444'];"XGBRegressor(base_score=None, booster=None, callbacks=None,
+             colsample_bylevel=None, colsample_bynode=None,
+             colsample_bytree=None, early_stopping_rounds=None,
+             enable_categorical=False, eval_metric=None, feature_types=None,
+             gamma=None, gpu_id=None, grow_policy=None, importance_type=None,
+             interaction_constraints=None, learning_rate=0.01, max_bin=None,
+             max_cat_threshold=None, max_cat_to_onehot=None,
+             max_delta_step=None, max_depth=None, max_leaves=None,
+             min_child_weight=None, missing=nan, monotone_constraints=None,
+             n_estimators=200, n_jobs=None, num_parallel_tree=None,
+             predictor=None, random_state=None, ...)";536;0.8418638739286701;0.2836540530864703;469.8411560058594;0.8458475846800715;0.22378800792035938;386.56475830078125
+6;-0.23091677372972352;0.9929033510381017;-1.7860015452056268;-0.03291464250852364;-2141.776611328125;-46.21197509765625;['Depth', 'Dist_Land', 'perc MUD', 'PC2', 'WWTP_influence_as_cumulated_residence__sed_18µm_autumn_222'];"XGBRegressor(base_score=None, booster=None, callbacks=None,
+             colsample_bylevel=None, colsample_bynode=None,
+             colsample_bytree=None, early_stopping_rounds=None,
+             enable_categorical=False, eval_metric=None, feature_types=None,
+             gamma=None, gpu_id=None, grow_policy=None, importance_type=None,
+             interaction_constraints=None, learning_rate=0.01, max_bin=None,
+             max_cat_threshold=None, max_cat_to_onehot=None,
+             max_delta_step=None, max_depth=None, max_leaves=None,
+             min_child_weight=None, missing=nan, monotone_constraints=None,
+             n_estimators=500, n_jobs=None, num_parallel_tree=None,
+             predictor=None, random_state=None, ...)";265;0.9715998057640342;0.22074538208321326;57.09027099609375;0.9926077769614521;0.03187361931417734;34.96380615234375
+8;-2.675555591911016;0.9926329621732953;-1.6506234987739916;-0.03100952464598603;-2647.57373046875;-40.8302001953125;['Depth', 'Dist_Land', 'perc MUD', 'PC2', 'WWTP_influence_as_cumulated_residence__nosed_18µm_autumn_222'];"XGBRegressor(base_score=None, booster=None, callbacks=None,
+             colsample_bylevel=None, colsample_bynode=None,
+             colsample_bytree=None, early_stopping_rounds=None,
+             enable_categorical=False, eval_metric=None, feature_types=None,
+             gamma=None, gpu_id=None, grow_policy=None, importance_type=None,
+             interaction_constraints=None, learning_rate=0.01, max_bin=None,
+             max_cat_threshold=None, max_cat_to_onehot=None,
+             max_delta_step=None, max_depth=None, max_leaves=None,
+             min_child_weight=None, missing=nan, monotone_constraints=None,
+             n_estimators=500, n_jobs=None, num_parallel_tree=None,
+             predictor=None, random_state=None, ...)";273;0.970263599655628;0.1466962370837007;45.80963134765625;0.9926775551854622;0.03159935651465496;32.271331787109375
+2;-1.0029699721110905;0.8391755277490873;-0.4005229167813768;-0.21078106606454838;-3264.7373046875;-185.3507080078125;['Depth', 'Dist_Land', 'TOC', 'PC2', 'WWTP_influence_as_cumulated_residence__nosed_allsizes_spring_444'];"XGBRegressor(base_score=None, booster=None, callbacks=None,
+             colsample_bylevel=None, colsample_bynode=None,
+             colsample_bytree=None, early_stopping_rounds=None,
+             enable_categorical=False, eval_metric=None, feature_types=None,
+             gamma=None, gpu_id=None, grow_policy=None, importance_type=None,
+             interaction_constraints=None, learning_rate=0.01, max_bin=None,
+             max_cat_threshold=None, max_cat_to_onehot=None,
+             max_delta_step=None, max_depth=None, max_leaves=None,
+             min_child_weight=None, missing=nan, monotone_constraints=None,
+             n_estimators=200, n_jobs=None, num_parallel_tree=None,
+             predictor=None, random_state=None, ...)";386;0.43243798961283497;0.23111055006992287;423.3117980957031;0.843153524307522;0.2053713533785595;374.239990234375
+3;-3.8969451179091674;0.8420646131985661;-4.922233802912057;-0.21058817859952195;-7302.9619140625;-219.9815673828125;['Depth', 'Dist_Land', 'perc MUD', 'PC2', 'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_444'];"XGBRegressor(base_score=None, booster=None, callbacks=None,
+             colsample_bylevel=None, colsample_bynode=None,
+             colsample_bytree=None, early_stopping_rounds=None,
+             enable_categorical=False, eval_metric=None, feature_types=None,
+             gamma=None, gpu_id=None, grow_policy=None, importance_type=None,
+             interaction_constraints=None, learning_rate=0.01, max_bin=None,
+             max_cat_threshold=None, max_cat_to_onehot=None,
+             max_delta_step=None, max_depth=None, max_leaves=None,
+             min_child_weight=None, missing=nan, monotone_constraints=None,
+             n_estimators=200, n_jobs=None, num_parallel_tree=None,
+             predictor=None, random_state=None, ...)";305;0.4844315271369114;0.7154073526330078;368.9259033203125;0.8445019367804394;0.20576212316617792;406.7473449707031
