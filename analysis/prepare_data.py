@@ -38,6 +38,10 @@ def get_pdd():
     # mp_pdd = mp_pdd.loc[~mp_pdd.polymer_type.isin(['AcrR', 'AlkR', 'EPX'])]  # exclude paint flakes
 
     if Config.vertical_merge:
+        rng = np.random.RandomState(42)
+        for n, g in mp_pdd.groupby(['Sample']):
+            srn = float(rng.random(1)) / 1_000_000  # generate a small random number
+            mp_pdd.loc[mp_pdd.Sample == n, 'Sampling_weight_kg'] = g['Sampling_weight_kg'] + srn  # add a small random number to every original sample's mass in order to make it unique. After vertical merge, these small additions will be removed by rounding
         mp_pdd = merge_vertical(mp_pdd)
 
     return mp_pdd
@@ -161,7 +165,7 @@ def aggregate_SDD(mp_pdd):
         FrequencyA500=('Size_1_µm', lambda x: (x >= 500).sum()),
         FrequencyB500=('Size_1_µm', lambda x: (x < 500).sum()),
         MPmass=('particle_mass_µg', 'sum'),
-        Mass=('Sampling_weight_kg', lambda x: x.unique().sum()),
+        Mass=('Sampling_weight_kg', lambda x: round(x.unique().sum(), 3)),
         # using "mean" here is actually weird as all entries are the same. Is there something like "first"?
         # LON=('GPS_LON', np.mean),  # TODO: switched to geodata from sampling log
         # LAT=('GPS_LAT', np.mean),  # TODO: switched to geodata from sampling log
