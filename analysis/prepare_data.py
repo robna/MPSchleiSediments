@@ -8,6 +8,19 @@ import outliers
 import geo
 
 
+def merge_vertical(df, avg=False):
+    """
+    Merges the vertical samples of the same site into one sample
+    """
+
+    if df.index.name == 'Sample':
+        df = df.reset_index()
+    df.Sample = df.Sample.str.replace('_15cm', '')
+    if avg:
+        df = df.groupby('Sample').mean(numeric_only=True)
+    return df
+
+
 def get_pdd():
     """
     Reads the MP particle domain data (PDD) from the CSV file and does some preprocessing
@@ -24,6 +37,9 @@ def get_pdd():
 
     # mp_pdd = mp_pdd.loc[~mp_pdd.polymer_type.isin(['AcrR', 'AlkR', 'EPX'])]  # exclude paint flakes
 
+    if Config.vertical_merge:
+        mp_pdd = merge_vertical(mp_pdd)
+
     return mp_pdd
 
 
@@ -33,6 +49,10 @@ def get_grainsizes():
     """
 
     grainsize_iow = pd.read_csv('../data/sediment_grainsize_IOW_vol_log-cau_not-closed.csv')
+
+    if Config.vertical_merge:
+        grainsize_iow = merge_vertical(grainsize_iow)
+
     grainsize_cau = pd.read_csv('../data/sediment_grainsize_CAU_vol_log-cau_closed.csv')
     grainsize_cau.dropna(subset=grainsize_cau.iloc[:,1:].columns, how='all', inplace=True)  # CAU sediment data contains empty sammples which are dropped here
 
@@ -141,11 +161,11 @@ def aggregate_SDD(mp_pdd):
         FrequencyA500=('Size_1_µm', lambda x: (x >= 500).sum()),
         FrequencyB500=('Size_1_µm', lambda x: (x < 500).sum()),
         MPmass=('particle_mass_µg', 'sum'),
-        Mass=('Sampling_weight_kg', np.mean),
+        Mass=('Sampling_weight_kg', lambda x: x.unique().sum()),
         # using "mean" here is actually weird as all entries are the same. Is there something like "first"?
         # LON=('GPS_LON', np.mean),  # TODO: switched to geodata from sampling log
         # LAT=('GPS_LAT', np.mean),  # TODO: switched to geodata from sampling log
-        Split=('Fraction_analysed', np.mean),
+        Split=('Fraction_analysed', lambda x: x.unique().mean()),
         MP_D50=('size_geom_mean', np.median)
         ##MP_D50_A500 = ('size_geom_mean' >= 500.median()),
         # MP_D50_B500 = ('size_geom_mean', lambda x: (x<500).median())
@@ -167,12 +187,18 @@ def additional_sdd_merging(mp_sdd, how='left'):
 
     # import gradistat results
     sed_gradistat = pd.read_csv('../data/GRADISTAT_IOW_vol_log-cau_not-closed.csv', index_col=0)
+    if Config.vertical_merge:
+        sed_gradistat = merge_vertical(sed_gradistat, avg=True)
 
     # import organic matter size, TOC, Hg data
     sed_om = pd.read_csv('../data/Schlei_OM.csv', index_col=0)
+    if Config.vertical_merge:
+        sed_om = merge_vertical(sed_om, avg=True)
 
     # import sampling log data
     slogs = pd.read_csv('../data/Metadata_IOW_sampling_log.csv', index_col=0)
+    if Config.vertical_merge:
+        slogs = merge_vertical(slogs, avg=True)
 
     # # import distance to waste water treatment plant  # TODO: can be removed (also in merge section): Dist_WWTP now included in slogs
     # dist_wwtp = pd.read_csv('../data/Schlei_Sed_Dist_WWTP.csv', index_col=0)
@@ -184,7 +210,7 @@ def additional_sdd_merging(mp_sdd, how='left'):
         sed_gradistat.reset_index(), on=['Sample'], how=how).merge(  # add sediment gradistat
         sed_om.reset_index()[['Sample', 'OM_D50', 'TOC', 'Hg', 'TIC']], on=['Sample'], how=how).merge(  # add OM data
         # dist_wwtp.reset_index(), on=['Sample'], how=how).merge(  # add distance to WWTP
-        pd.DataFrame.from_dict(regio_sep, orient='index', columns=['regio_sep']), left_on='Sample', right_index=True, how=how)  # add flags for regions
+        pd.DataFrame.from_dict(regio_sep, orient='index', columns=['regio_sep']), left_on='Sample', right_index=True, how='left')  # add flags for regions
 
     # calculate distance from shore
     mp_sdd_amended['Dist_Land'] = geo.get_distance_to_shore(mp_sdd_amended['LON'], mp_sdd_amended['LAT'])
