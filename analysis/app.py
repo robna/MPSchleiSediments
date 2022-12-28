@@ -24,7 +24,7 @@ additional_exogs = [
     'LON', 'LAT', 'X', 'Y', 'Depth', 'Dist_Land', 'Dist_Marina', 'Dist_WWTP', 'Dist_WWTP2', 'regio_sep',  # geo related exogs
 ]
 
-featurelist = endogs + endog_derivatives + [f for f in additional_exogs if f not in in featurelist] + featurelist + ['Sample']
+featurelist = endogs + endog_derivatives + [f for f in additional_exogs if f not in featurelist] + featurelist + ['Sample']
 
 def use_shortnames(df):
     return df.replace({'Sample': shortnames}).sort_values(by='Sample')
