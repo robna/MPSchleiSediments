@@ -4089,3 +4089,249 @@ outerCV_fold;test_R2;train_R2;test_MAPE;train_MAPE;test_MedAE;train_MedAE;featur
 8;0.06983088562902573;0.46889723428127805;-1.3697394431344032;-2.5481971283461395;-1879.6445100004648;-1000.4984909329099;['WWTP_influence_as_cumulated_residence__nosed_18µm_autumn_222', 'MODE 1 (µm)'];TweedieRegressor(alpha=1, link='log', max_iter=100000, power=2);401;0.46746631245084536;2.4640215794024445;1080.8146494966222;0.45498471496897475;2.5988519105367587;1090.6342955907262
 1;0.5697043057446461;0.37264410715072316;-13.727382310780571;-2.259631886953485;-1911.663641936821;-1097.9989670501905;['WWTP_influence_as_mean_time_travelled__nosed_0µm_spring_222', 'PC1'];TweedieRegressor(alpha=1, link='log', max_iter=100000, power=2);867;0.38681087368982525;3.48831943236353;1109.3923234195386;0.3693240353977606;3.210667957120993;1113.58100495576
 9;-0.1044930878032746;0.4186996021053;-3.8919980013378583;-2.854235508892356;-2144.339703169634;-1018.2168206069679;['WWTP_influence_as_cumulated_residence__nosed_18µm_spring_444', 'TOC'];TweedieRegressor(alpha=1, link='log', max_iter=100000, power=2);308;0.4159094108717717;2.9283614012098913;1083.5674477597108;0.40968809917795146;3.243213116351158;1146.352554588249
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Model started:;20221229_113750
+Duration:;0.138 h on 4 cpu cores
+Outliers excluded:;['S32', 'S05']
+Samples:;['S01', 'S02', 'S03', 'S04', 'S06', 'S07', 'S08', 'S10', 'S11', 'S13', 'S14', 'S15', 'S16', 'S17', 'S19', 'S20', 'S21', 'S22', 'S23', 'S24', 'S25', 'S26', 'S27', 'S29', 'S30', 'S31']
+Vertical merge:;True
+Scaler:;None
+Number of features per candidate (min, max):;2
+Total number of feature combinations tested:;1018
+
+Regressors:;[{'regressor': [TweedieRegressor(max_iter=100000)], 'regressor__power': [2], 'regressor__alpha': [0], 'regressor__link': ['log']}]
+Scorer for evaluation (outer fold results are sorted by this!):;R2
+Aggregation for evaluation:;median
+
+CV schemes:
+    inner:;10
+    outer:;10
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+outerCV_fold;test_R2;train_R2;test_MAPE;train_MAPE;test_MedAE;train_MedAE;preprocessor__selector;features;regressor;feature_combi_ID;allSamples_R2;allSamples_MAPE;allSamples_MedAE;allSamples_R2_refit;allSamples_MAPE_refit;allSamples_MedAE_refit
+4;0.9884918997632586;0.8766806957914326;-0.23772149770272658;-1.0066501417322191;-195.83801380591905;-813.3263846343953;"FunctionTransformer(func=<function SelectFeatures at 0x7f77809d2550>,
+                    kw_args={'feature_set': 769,
+                             'feature_sets': [['Depth', 'Dist_Land'],
+                                              ['Depth', 'Dist_WWTP'],
+                                              ['Depth',
+                                               'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth',
+                                               'WWTP_influence_as_endpoints_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth',
+                                               'WWTP_influence_as_cumulated_residence__s...
+                                               'WWTP_influence_as_mean_time_travelled__nosed_18µm_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_222'], ...]})";['WWTP_influence_as_mean_time_travelled__sed_0µm_allseasons_222', 'perc MUD'];TweedieRegressor(alpha=0, link='log', max_iter=100000, power=2);769;0.8808086936743815;0.9179276058826622;706.7900170322931;0.8809170258335528;0.9360517961337105;711.5858661941035
+3;0.5313004704774407;0.8316464396589889;-2.043348565911616;-0.9324011414233755;-806.8242030330676;-703.311971626954;"FunctionTransformer(func=<function SelectFeatures at 0x7f77809d2550>,
+                    kw_args={'feature_set': 407,
+                             'feature_sets': [['Depth', 'Dist_Land'],
+                                              ['Depth', 'Dist_WWTP'],
+                                              ['Depth',
+                                               'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth',
+                                               'WWTP_influence_as_endpoints_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth',
+                                               'WWTP_influence_as_cumulated_residence__s...
+                                               'WWTP_influence_as_mean_time_travelled__nosed_18µm_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_222'], ...]})";['WWTP_influence_as_mean_time_travelled__nosed_18µm_autumn_222', 'MODE 1 (µm)'];TweedieRegressor(alpha=0, link='log', max_iter=100000, power=2);407;0.8306432039963745;1.0605873827104801;755.0680873300108;0.8124150132862663;0.9809222415568081;725.7639862373634
+1;0.48744005077769414;0.8965566863589302;-0.2912207948817864;-0.9893447430781646;-2650.5875069809754;-680.7545532973779;"FunctionTransformer(func=<function SelectFeatures at 0x7f77809d2550>,
+                    kw_args={'feature_set': 771,
+                             'feature_sets': [['Depth', 'Dist_Land'],
+                                              ['Depth', 'Dist_WWTP'],
+                                              ['Depth',
+                                               'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth',
+                                               'WWTP_influence_as_endpoints_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth',
+                                               'WWTP_influence_as_cumulated_residence__s...
+                                               'WWTP_influence_as_mean_time_travelled__nosed_18µm_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_222'], ...]})";['WWTP_influence_as_mean_time_travelled__sed_0µm_allseasons_222', 'PC1'];TweedieRegressor(alpha=0, link='log', max_iter=100000, power=2);771;0.877899873912671;0.9087919798247364;691.0005394151535;0.8727333345189766;0.8882878358769729;528.5772936054404
+0;0.4122256027659663;0.9551343140484208;-0.3671731447895064;-1.0243691740413328;-966.7731458198114;-953.6383821892259;"FunctionTransformer(func=<function SelectFeatures at 0x7f77809d2550>,
+                    kw_args={'feature_set': 313,
+                             'feature_sets': [['Depth', 'Dist_Land'],
+                                              ['Depth', 'Dist_WWTP'],
+                                              ['Depth',
+                                               'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth',
+                                               'WWTP_influence_as_endpoints_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth',
+                                               'WWTP_influence_as_cumulated_residence__s...
+                                               'WWTP_influence_as_mean_time_travelled__nosed_18µm_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_222'], ...]})";['WWTP_influence_as_mean_time_travelled__nosed_18µm_spring_444', 'perc MUD'];TweedieRegressor(alpha=0, link='log', max_iter=100000, power=2);313;0.9467494606545034;0.9485388629738142;960.2057640045186;0.9457388834875144;1.0096587160621981;995.3211035322529
+2;0.2886878227770969;0.8040429018160625;-0.32954460998552665;-1.049980829192659;-1923.9132173600265;-702.6544130186353;"FunctionTransformer(func=<function SelectFeatures at 0x7f77809d2550>,
+                    kw_args={'feature_set': 291,
+                             'feature_sets': [['Depth', 'Dist_Land'],
+                                              ['Depth', 'Dist_WWTP'],
+                                              ['Depth',
+                                               'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth',
+                                               'WWTP_influence_as_endpoints_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth',
+                                               'WWTP_influence_as_cumulated_residence__s...
+                                               'WWTP_influence_as_mean_time_travelled__nosed_18µm_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_222'], ...]})";['WWTP_influence_as_mean_time_travelled__sed_18µm_allseasons_444', 'PC1'];TweedieRegressor(alpha=0, link='log', max_iter=100000, power=2);291;0.6866854699519402;0.9668535731302976;725.985561246234;0.7538136098591282;1.0016976396972284;422.1308008085134
+5;0.24327602604576826;0.9395987357095216;-1.056694068151958;-0.9185472875001931;-1553.1320984272093;-471.6794676231748;"FunctionTransformer(func=<function SelectFeatures at 0x7f77809d2550>,
+                    kw_args={'feature_set': 529,
+                             'feature_sets': [['Depth', 'Dist_Land'],
+                                              ['Depth', 'Dist_WWTP'],
+                                              ['Depth',
+                                               'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth',
+                                               'WWTP_influence_as_endpoints_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth',
+                                               'WWTP_influence_as_cumulated_residence__s...
+                                               'WWTP_influence_as_mean_time_travelled__nosed_18µm_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_222'], ...]})";['WWTP_influence_as_mean_time_travelled__nosed_18µm_allseasons_222', 'perc MUD'];TweedieRegressor(alpha=0, link='log', max_iter=100000, power=2);529;0.9278023194491928;0.9344873006523199;658.7351299457243;0.9292118471896154;1.0546207896485424;732.7191186021195
+6;0.15433549301099814;0.922014915307023;-1.9629938886090499;-0.9743557327617851;-725.7032383234491;-915.8802765491259;"FunctionTransformer(func=<function SelectFeatures at 0x7f77809d2550>,
+                    kw_args={'feature_set': 315,
+                             'feature_sets': [['Depth', 'Dist_Land'],
+                                              ['Depth', 'Dist_WWTP'],
+                                              ['Depth',
+                                               'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth',
+                                               'WWTP_influence_as_endpoints_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth',
+                                               'WWTP_influence_as_cumulated_residence__s...
+                                               'WWTP_influence_as_mean_time_travelled__nosed_18µm_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_222'], ...]})";['WWTP_influence_as_mean_time_travelled__nosed_18µm_spring_444', 'PC1'];TweedieRegressor(alpha=0, link='log', max_iter=100000, power=2);315;0.922787756026657;1.0504048216731132;824.0114160606288;0.9335776256626244;0.9831924227113399;862.3528161000715
+9;0.036469407039559476;0.9141692190467723;-0.5924747272437535;-1.0820234319222353;-199.41168553300545;-1008.8031961698432;"FunctionTransformer(func=<function SelectFeatures at 0x7f77809d2550>,
+                    kw_args={'feature_set': 315,
+                             'feature_sets': [['Depth', 'Dist_Land'],
+                                              ['Depth', 'Dist_WWTP'],
+                                              ['Depth',
+                                               'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth',
+                                               'WWTP_influence_as_endpoints_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth',
+                                               'WWTP_influence_as_cumulated_residence__s...
+                                               'WWTP_influence_as_mean_time_travelled__nosed_18µm_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_222'], ...]})";['WWTP_influence_as_mean_time_travelled__nosed_18µm_spring_444', 'PC1'];TweedieRegressor(alpha=0, link='log', max_iter=100000, power=2);315;0.9170601029669474;1.0443658392546598;881.6364251939369;0.9335776256626244;0.9831924227113399;862.3528161000715
+8;-1.8047636529427225;0.8521548487636093;-0.5062773606623808;-0.8944407222170324;-2057.4247944787926;-534.6355037208524;"FunctionTransformer(func=<function SelectFeatures at 0x7f77809d2550>,
+                    kw_args={'feature_set': 794,
+                             'feature_sets': [['Depth', 'Dist_Land'],
+                                              ['Depth', 'Dist_WWTP'],
+                                              ['Depth',
+                                               'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth',
+                                               'WWTP_influence_as_endpoints_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth',
+                                               'WWTP_influence_as_cumulated_residence__s...
+                                               'WWTP_influence_as_mean_time_travelled__nosed_18µm_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_222'], ...]})";['WWTP_influence_as_mean_time_travelled__nosed_0µm_summer_444', 'TOC'];TweedieRegressor(alpha=0, link='log', max_iter=100000, power=2);794;0.8360330158235958;0.8645820020974437;534.6355037208524;0.8607567195051139;1.113796255715337;956.0083874070566
+7;-5.243071988868703;0.9421749498307911;-3.253745033611732;-1.105234635591397;-1654.476350480425;-802.0326356478153;"FunctionTransformer(func=<function SelectFeatures at 0x7f77809d2550>,
+                    kw_args={'feature_set': 601,
+                             'feature_sets': [['Depth', 'Dist_Land'],
+                                              ['Depth', 'Dist_WWTP'],
+                                              ['Depth',
+                                               'WWTP_influence_as_tracer_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth',
+                                               'WWTP_influence_as_endpoints_mean_dist__sed_18µm_allseasons_444'],
+                                              ['Depth',
+                                               'WWTP_influence_as_cumulated_residence__s...
+                                               'WWTP_influence_as_mean_time_travelled__nosed_18µm_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_tracer_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_endpoints_mean_dist__nosed_allsizes_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_cumulated_residence__nosed_allsizes_autumn_222'],
+                                              ['Depth',
+                                               'WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_222'], ...]})";['WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_444', 'perc MUD'];TweedieRegressor(alpha=0, link='log', max_iter=100000, power=2);601;0.9334714733129237;1.270504666208346;802.0326356478153;0.9296408234482529;1.1826710316208047;825.6796966993343
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Model started:;20221229_115335
+Duration:;0.141 h on 4 cpu cores
+Outliers excluded:;['S32', 'S05']
+Samples:;['S01', 'S02', 'S03', 'S04', 'S06', 'S07', 'S08', 'S10', 'S11', 'S13', 'S14', 'S15', 'S16', 'S17', 'S19', 'S20', 'S21', 'S22', 'S23', 'S24', 'S25', 'S26', 'S27', 'S29', 'S30', 'S31']
+Vertical merge:;True
+Scaler:;StandardScaler()
+Number of features per candidate (min, max):;2
+Total number of feature combinations tested:;1018
+
+Regressors:;[{'regressor': [TweedieRegressor(max_iter=100000)], 'regressor__power': [2], 'regressor__alpha': [0], 'regressor__link': ['log']}]
+Scorer for evaluation (outer fold results are sorted by this!):;R2
+Aggregation for evaluation:;median
+
+CV schemes:
+    inner:;10
+    outer:;10
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+outerCV_fold;test_R2;train_R2;test_MAPE;train_MAPE;test_MedAE;train_MedAE;features;regressor;feature_combi_ID;allSamples_R2;allSamples_MAPE;allSamples_MedAE;allSamples_R2_refit;allSamples_MAPE_refit;allSamples_MedAE_refit
+4;0.9884900135895565;0.876678318866216;-0.23772279538395882;-1.0066412914115126;-195.84084547056767;-813.3360465863728;['WWTP_influence_as_mean_time_travelled__sed_0µm_allseasons_222', 'perc MUD'];TweedieRegressor(alpha=0, link='log', max_iter=100000, power=2);769;0.8808063678106076;0.9179199264852562;706.7841638825394;0.8809173114258582;0.9360555745597173;711.5858254720204
+3;0.5313908023351233;0.8316359275005516;-2.0431877347595413;-0.9323671222495141;-806.7707610390489;-703.285384808645;['WWTP_influence_as_mean_time_travelled__nosed_18µm_autumn_222', 'MODE 1 (µm)'];TweedieRegressor(alpha=0, link='log', max_iter=100000, power=2);407;0.8306344636258776;1.0605387313852863;755.0280729238469;0.8124168807526334;0.980941661991268;725.7578791706023
+1;0.48719248239762347;0.8965647847816904;-0.29130105250712846;-0.9893862893828451;-2651.4649808939903;-680.7080431895379;['WWTP_influence_as_mean_time_travelled__sed_0µm_allseasons_222', 'PC1'];TweedieRegressor(alpha=0, link='log', max_iter=100000, power=2);771;0.8778946685886926;0.9088379928202625;690.9894403391231;0.872732807451835;0.8882970043468651;528.5741806015772
+0;0.4121799412667615;0.9551386539837355;-0.367179922075162;-1.0243794324287168;-966.7561778395461;-953.6582201846848;['WWTP_influence_as_mean_time_travelled__nosed_18µm_spring_444', 'perc MUD'];TweedieRegressor(alpha=0, link='log', max_iter=100000, power=2);313;0.9467530155018697;0.9485487196956145;960.2071990121154;0.9457407817998185;1.0096556258837464;995.2699082233636
+2;0.2888871989974302;0.8039872259522356;-0.3294467219477459;-1.0500100030867079;-1922.4126741806685;-702.6084879331436;['WWTP_influence_as_mean_time_travelled__sed_18µm_allseasons_444', 'PC1'];TweedieRegressor(alpha=0, link='log', max_iter=100000, power=2);291;0.6867486728542065;0.9668680860322122;725.8272770154757;0.7538102163494398;1.0016587570561848;422.05674336880156
+5;0.2432654387726344;0.939613812457804;-1.0566968624412103;-0.9185912937667691;-1553.1564187843392;-472.63435288879555;['WWTP_influence_as_mean_time_travelled__nosed_18µm_allseasons_222', 'perc MUD'];TweedieRegressor(alpha=0, link='log', max_iter=100000, power=2);529;0.9278168612645593;0.9345265516907431;658.6218316602601;0.9292111343082152;1.054628971543423;732.6863448683234
+6;0.15417356433911966;0.9220357203633971;-1.9630778467185153;-0.974389407195344;-725.7678040588635;-915.518385481877;['WWTP_influence_as_mean_time_travelled__nosed_18µm_spring_444', 'PC1'];TweedieRegressor(alpha=0, link='log', max_iter=100000, power=2);315;0.9228077801549693;1.0504423640817415;823.716744211418;0.9335790852023604;0.983189188959137;862.2648602350805
+9;0.03633328376546885;0.9141590474145724;-0.5925213424971825;-1.082036045886752;-199.42628107314158;-1008.7613707066932;['WWTP_influence_as_mean_time_travelled__nosed_18µm_spring_444', 'PC1'];TweedieRegressor(alpha=0, link='log', max_iter=100000, power=2);315;0.9170502713658489;1.044381068702939;881.6281418301671;0.9335790852023604;0.983189188959137;862.2648602350805
+8;-1.8046852614353144;0.8522113341887578;-0.5062514080996284;-0.8944540069914183;-2057.3709502971064;-534.6208076276823;['WWTP_influence_as_mean_time_travelled__nosed_0µm_summer_444', 'TOC'];TweedieRegressor(alpha=0, link='log', max_iter=100000, power=2);794;0.8360894767829886;0.8645922686151267;534.6208076276823;0.8607561434588485;1.113784856278015;956.023250777226
+7;-5.241984612913384;0.942170221551303;-3.253513320896469;-1.1052209444907117;-1654.3357161927179;-803.2473863610526;['WWTP_influence_as_mean_time_travelled__nosed_allsizes_autumn_444', 'perc MUD'];TweedieRegressor(alpha=0, link='log', max_iter=100000, power=2);601;0.9334686627574463;1.2704742042142314;803.2473863610526;0.9296566194071445;1.182707456862766;825.7859580447721
