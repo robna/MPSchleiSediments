@@ -2241,3 +2241,89 @@ outerCV_fold;test_R2;train_R2;test_MAPE;train_MAPE;test_MedAE;train_MedAE;featur
                       random_state=RandomState(MT19937) at 0x7FD73E66DB40)";289;0.903194864732119;0.902838313316456;591.188261904762;0.89552476678223;0.654629692224841;489.983867872324
 7;-8.73770914634784;0.899269113922412;-4.4461674296565;-0.678422325347494;-2091.63931691919;-593.380279761905;['D50 (µm)', 'WWTP_influence_as_cumulated_residence__nosed_0µm_allseasons_222_'];"RandomForestRegressor(max_depth=4, max_features='sqrt',
                       random_state=RandomState(MT19937) at 0x7FD73E66DD40)";289;0.88597984931596;0.968248871832801;593.380279761905;0.865468626998885;0.793782271259849;636.632845806971
+;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------;;;;;;;;;;;;;;;
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;
+Model started:;20230105_112950;;;;;;;;;;;;;;
+Duration:;3.968 h on 120 cpu cores;;;;;;;;;;;;;;
+Outliers excluded:;[];;;;;;;;;;;;;;
+Samples:;['S01', 'S02', 'S03', 'S04', 'S05', 'S06', 'S07', 'S08', 'S10', 'S11', 'S13', 'S14', 'S15', 'S16', 'S17', 'S19', 'S20', 'S21', 'S22', 'S23', 'S24', 'S25', 'S26', 'S27', 'S29', 'S30', 'S31', 'S32'];;;;;;;;;;;;;;
+Vertical merge:;True;;;;;;;;;;;;;;
+Scaler:;None;;;;;;;;;;;;;;
+Number of features per candidate (min, max):;(2, 4);;;;;;;;;;;;;;
+Total number of feature combinations tested:;2685;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;
+Regressors:;[{'regressor': [RandomForestRegressor(random_state=RandomState(MT19937) at 0x7FD704816240)], 'regressor__n_estimators': [10, 100], 'regressor__max_depth': [None, 2, 4], 'regressor__max_features': [None, 'sqrt']}];;;;;;;;;;;;;;
+Scorer for evaluation (outer fold results are sorted by this!):;R2;;;;;;;;;;;;;;
+Aggregation for evaluation:;median;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;
+CV schemes:;;;;;;;;;;;;;;;
+    inner:;10;;;;;;;;;;;;;;
+    outer:;10;;;;;;;;;;;;;;
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------;;;;;;;;;;;;;;;
+outerCV_fold;test_R2;train_R2;test_MAPE;train_MAPE;test_MedAE;train_MedAE;features;regressor;feature_combi_ID;allSamples_R2;allSamples_MAPE;allSamples_MedAE;allSamples_R2_refit;allSamples_MAPE_refit;allSamples_MedAE_refit
+4;0.944988760165301;0.82331293031247;-0.834758419104175;-1.73574398529018;-420.4;-479.6;['Depth', 'PC1', 'PC2', 'Dist_WWTP'];"RandomForestRegressor(max_features=None, n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7FD704816A40)";2307;0.827796210839536;1.63920981748454;479.25;0.849676158865743;0.879501784936842;425.35
+8;0.608616849031597;0.908948359929521;-0.880170140418239;-2.08863835371593;-1216.80982900433;-751.315936868686;['Depth', 'perc MUD', 'Dist_WWTP'];"RandomForestRegressor(max_depth=4, max_features='sqrt',
+                      random_state=RandomState(MT19937) at 0x7FD736D10140)";732;0.906511670242749;2.00231919562324;803.876481782106;0.915634854556777;1.73899007281006;545.853066919192
+9;0.482190135323937;0.921741005271402;-2.36329178484351;-1.45610530900605;-1436.27;-379.07;['Depth', 'PC1', 'Dist_WWTP'];"RandomForestRegressor(max_features='sqrt',
+                      random_state=RandomState(MT19937) at 0x7FD736D10340)";858;0.916994319630501;1.52090434299444;480.995;0.932400967816908;1.06849860036642;360.98
+3;0.383901241134107;0.89200491273198;-2.08619493125798;-1.5030390271095;-835.666666666667;-822.104761904762;['Depth', 'perc MUD', 'WWTP_influence_as_cumulated_residence__nosed_0µm_allseasons_222_'];"RandomForestRegressor(max_depth=4, max_features='sqrt', n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7FD704816740)";793;0.84816622876504;1.56552001683969;828.885714285715;0.825817758610672;1.12531665638465;721.672916666667
+2;0.106078863855854;0.926963258648908;-0.307639920288337;-0.931714639622999;-1668.1;-490.9;['Depth', 'PC1', 'PC2', 'WWTP_influence_as_cumulated_residence__nosed_18µm_autumn_222'];"RandomForestRegressor(max_features=None, n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7FD704816440)";2318;0.615369347179617;0.864849491122857;514.05;0.874925278378352;0.54809991000594;489.35
+5;0.0700430406535574;0.932507161283189;-1.08422700869707;-1.6730916212045;-1354.88207792208;-536.743636363636;['PC1', 'Dist_WWTP'];"RandomForestRegressor(max_depth=4, max_features='sqrt', n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7FD704816B40)";417;0.915654307431722;1.60999898415014;562.603484848485;0.849361733982082;1.2029531262193;532.397597402597
+0;-0.527710741265306;0.918650126022996;-0.580311817292483;-0.9229547755444;-2286.1;-305.8;['Depth', 'PC1', 'PC2', 'WWTP_influence_as_cumulated_residence__nosed_0µm_allseasons_222_'];"RandomForestRegressor(max_features=None, n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7FD748140B40)";2368;0.896723404236473;0.886243030017409;465.6;0.863068363489074;0.836216472570151;390.3
+1;-1.68607945278837;0.855542648856815;-12.7320895946353;-0.873515302946772;-3670.63333333333;-462.175238095238;['Depth', 'PC1', 'PC2', 'WWTP_influence_as_cumulated_residence__nosed_18µm_spring_222'];"RandomForestRegressor(max_depth=4, max_features=None, n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7FD704816340)";2330;0.673216714972715;2.14407683419912;561.541666666667;0.849973919884617;0.84086236426682;345.67106060606
+7;-13.7109909741439;0.896311174733777;-2.76093804791782;-1.12364483965298;-2453.98;-424.69;['Depth', 'PC1', 'PC2', 'Dist_WWTP'];"RandomForestRegressor(max_features=None,
+                      random_state=RandomState(MT19937) at 0x7FD736D10040)";2307;0.873477257423342;1.29906911196707;465.745;0.8970601369479;1.30268237473123;369.835
+6;-27.7817700086655;0.855663388972938;-2.8305410878757;-1.09529017248384;-4222.5;-652.8;['Dist_Land', 'MODE 1 (µm)', 'WWTP_influence_as_cumulated_residence__nosed_allsizes_allseasons_444'];"RandomForestRegressor(max_features=None, n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7FD704816D40)";999;0.818143777457257;1.28120991341868;676.7;0.828749387291206;1.23875467021399;657.15
+;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------;;;;;;;;;;;;;;;
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;
+Model started:;20230105_154834;;;;;;;;;;;;;;
+Duration:;2.354 h on 120 cpu cores;;;;;;;;;;;;;;
+Outliers excluded:;['S32', 'S05'];;;;;;;;;;;;;;
+Samples:;['S01', 'S02', 'S03', 'S04', 'S06', 'S07', 'S08', 'S10', 'S11', 'S13', 'S14', 'S15', 'S16', 'S17', 'S19', 'S20', 'S21', 'S22', 'S23', 'S24', 'S25', 'S26', 'S27', 'S29', 'S30', 'S31'];;;;;;;;;;;;;;
+Vertical merge:;True;;;;;;;;;;;;;;
+Scaler:;None;;;;;;;;;;;;;;
+Number of features per candidate (min, max):;(2, 3);;;;;;;;;;;;;;
+Total number of feature combinations tested:;1672;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;
+Regressors:;[{'regressor': [RandomForestRegressor(random_state=RandomState(MT19937) at 0x7F47BA8EC840)], 'regressor__n_estimators': [10, 100], 'regressor__max_depth': [None, 2, 4], 'regressor__max_features': [None, 'sqrt']}];;;;;;;;;;;;;;
+Scorer for evaluation (outer fold results are sorted by this!):;R2;;;;;;;;;;;;;;
+Aggregation for evaluation:;median;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;
+CV schemes:;;;;;;;;;;;;;;;
+    inner:;10;;;;;;;;;;;;;;
+    outer:;10;;;;;;;;;;;;;;
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------;;;;;;;;;;;;;;;
+outerCV_fold;test_R2;train_R2;test_MAPE;train_MAPE;test_MedAE;train_MedAE;features;regressor;feature_combi_ID;allSamples_R2;allSamples_MAPE;allSamples_MedAE;allSamples_R2_refit;allSamples_MAPE_refit;allSamples_MedAE_refit
+4;0.914950397408595;0.882654983473988;-1.84316062727254;-0.547822798846874;-110;-212.1;['MODE 1 (µm)', 'WWTP_influence_as_mean_time_travelled__nosed_18µm_autumn_444'];"RandomForestRegressor(max_features=None, n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7F479BC4C640)";192;0.885313974991474;0.697284855972912;211.1;0.825414751053551;0.581182074167604;471.8
+0;0.81920004645511;0.772486587054651;-0.137759297795025;-0.609761005302567;-259.1;-219.7;['PC1', 'WWTP_influence_as_mean_time_travelled__nosed_18µm_autumn_444'];"RandomForestRegressor(max_features=None, n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7F47BA8EC940)";444;0.773558982668911;0.555299269820927;239.4;0.816305435734052;0.573197355211133;399.55
+1;0.76231945684883;0.806862532462425;-0.573925882027643;-0.765447826893088;-1616.2;-367.2;['PC1', 'WWTP_influence_as_mean_time_travelled__nosed_18µm_autumn_444'];"RandomForestRegressor(max_features=None, n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7F479BC4C140)";444;0.808943306834052;0.743349140947075;424.5;0.816305435734052;0.573197355211133;399.55
+3;0.368388812810655;0.880650019844208;-4.6592334141021;-0.561208480742449;-1659.52761904762;-529.323333333333;['MODE 1 (µm)', 'WWTP_influence_as_cumulated_residence__nosed_0µm_allseasons_222_'];"RandomForestRegressor(max_depth=4, max_features=None, n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7F479BC4C440)";221;0.87534745085597;1.03405751151472;753.95380952381;0.948076575407454;0.5369240412187;524.48375
+8;0.0651720293830422;0.892988745569333;-0.611488856881095;-0.534847234441171;-1527.3375;-322.453333333334;['PC1', 'WWTP_influence_as_cumulated_residence__nosed_0µm_allseasons_222_'];"RandomForestRegressor(max_depth=4, max_features=None, n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7F479BC4CD40)";473;0.888139228800046;0.540742743859627;401.630555555556;0.944746654623734;0.523902643825934;273.053333333333
+5;-0.175337910588662;0.887355460052701;-1.67307141363383;-0.43470860288812;-2605.9;-290.4;['Depth', 'PC1', 'WWTP_influence_as_cumulated_residence__nosed_allsizes_spring_222'];"RandomForestRegressor(max_features=None, n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7F479BC4C840)";890;0.869470802460569;0.577596619512624;377.4;0.819106009756542;0.675823389816125;401.85
+2;-0.424609266153146;0.9334986423386;-0.381592633824291;-0.57466570378157;-4704.5;-413.040476190476;['D50 (µm)', 'WWTP_influence_as_cumulated_residence__nosed_0µm_allseasons_222_'];"RandomForestRegressor(max_depth=4, max_features=None, n_estimators=10,
+                      random_state=RandomState(MT19937) at 0x7F479BC4C240)";284;0.445047227873;0.552388041863423;452.020238095238;0.94873214888814;0.583536801228602;558.76875
+9;-1.14615171588867;0.90862584002226;-0.985236240465026;-0.576023051679979;-307.745;-569.58;['Depth', 'D50 (µm)', 'WWTP_influence_as_cumulated_residence__nosed_0µm_allseasons_222_'];"RandomForestRegressor(max_features=None,
+                      random_state=RandomState(MT19937) at 0x7F47B0F55040)";725;0.911572598653055;0.607500989278829;492.18;0.897911476393059;0.465552133621671;347.815
+6;-6.38145114517632;0.911850914778584;-3.9313519591197;-0.650462176166186;-1987.9780232684;-536.335690476191;['D50 (µm)', 'WWTP_influence_as_cumulated_residence__nosed_0µm_allseasons_222_'];"RandomForestRegressor(max_depth=4, max_features=None,
+                      random_state=RandomState(MT19937) at 0x7F479BC4CA40)";284;0.903194864732119;0.902838313316456;591.188261904762;0.89552476678223;0.654629692224841;489.983867872324
+7;-8.73770914634784;0.899269113922412;-4.4461674296565;-0.678422325347494;-2091.63931691919;-593.380279761905;['D50 (µm)', 'WWTP_influence_as_cumulated_residence__nosed_0µm_allseasons_222_'];"RandomForestRegressor(max_depth=4, max_features='sqrt',
+                      random_state=RandomState(MT19937) at 0x7F479BC4CC40)";284;0.88597984931596;0.968248871832801;593.380279761905;0.865468626998885;0.793782271259849;636.632845806971
