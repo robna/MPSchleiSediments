@@ -1,6 +1,7 @@
 # exported intermediate data
 /data/exports/geo
 /data/exports/models/*.pkl
+/data/exports/*.pkl
 
 # Ignore hidden files
 .*

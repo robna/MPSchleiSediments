@@ -20,6 +20,7 @@ hvplot = "*"
 folium = "*"
 mapclassify = "*"
 ipykernel = "*"
+ipywidgets = "*"
 
 [dev-packages]
 
