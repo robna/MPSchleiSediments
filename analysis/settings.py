@@ -200,6 +200,7 @@ class Config:
     # Settings for the statsmodels GLM
     glm_family: str = 'Poisson'  # type of family to be used for the GLM
     glm_link: str = None  # Link function for GLM; use None for default link of chosen family
+    glm_tweedie_power: float = 2.0  # Tweedie power for GLM; only used if family is Tweedie
     glm_formula: str = f'{target} ~ {default_predictors[0]} + ' \
                        f'{default_predictors[1]}'
 

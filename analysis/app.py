@@ -281,7 +281,7 @@ def main():
     new_chap('GLM')
     if st.checkbox('Calculate GLM'):
         col1, col2 = st.columns(2)
-        families = ['Gaussian', 'Poisson', 'Gamma', 'Tweedie', 'NegativeBinomial']
+        families = ['Gaussian', 'Poisson', 'Gamma', 'Tweedie', 'InverseGaussian', 'NegativeBinomial']
         family = col1.radio('Select distribution family:', families, index=families.index('Gaussian'))
         # for neg.binom use CT-alpha-estimator from here: https://web.archive.org/web/20210303054417/https://dius.com.au/2017/08/03/using-statsmodels-glms-to-model-beverage-consumption/
         Config.glm_family = family
@@ -289,6 +289,8 @@ def main():
         links = [None, 'identity', 'Power', 'inverse_power', 'sqrt', 'log']
         link = col2.selectbox('Select link function (use None for default link of family):', links, index=3)
         Config.glm_link = link
+        tweedie_power = col2.number_input('Tweedie power (only applied if family "Tweedie" is chosen):', value=2.0, min_value=0.0, max_value=3.0, step=0.1)
+        Config.glm_tweedie_power = tweedie_power
 
         Config.glm_formula = st.text_input('GLM formula:', 'Concentration ~ Dist_WWTP + PC1')
         target_name = Config.glm_formula.split('~')[0].strip()
