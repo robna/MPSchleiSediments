@@ -35,8 +35,9 @@ def loocv(df):
     pred.loc[:, target_name] = target
 
     maxe = max_error(target, pred.pred)
-    mae = mean_absolute_error(target, pred.pred)
     medae = median_absolute_error(target, pred.pred)
+    medape = median_absolute_percentage_error(target, pred.pred)
+    mae = mean_absolute_error(target, pred.pred)
     mape = mean_absolute_percentage_error(target, pred.pred)
     rmse = np.sqrt(mean_squared_error(target, pred.pred))
     r2 = r2_score(target, pred.pred)
@@ -44,12 +45,13 @@ def loocv(df):
 
     metrics = pd.DataFrame(columns=['Metric', 'Value', ''])
     metrics.loc[0] = ['Max Error', maxe, pred.loc[np.abs(target - pred.pred ).idxmax(), 'Sample']]
-    metrics.loc[1] = ['Mean Absolute Error', mae, '']
-    metrics.loc[2] = ['Median Absolute Error', medae, '']
-    metrics.loc[3] = ['Mean Absolute Percentage Error', mape, '']
-    metrics.loc[4] = ['Root Mean Square Error', rmse, '']
-    metrics.loc[5] = ['R²', r2, '']
-    metrics.loc[6] = ['Adjusted R²', adj_r2, '']
+    metrics.loc[1] = ['Median Absolute Error', medae, '']
+    metrics.loc[2] = ['Median Absolute Percentage Error', medape, '']
+    metrics.loc[3] = ['Mean Absolute Error', mae, '']
+    metrics.loc[4] = ['Mean Absolute Percentage Error', mape, '']
+    metrics.loc[5] = ['Root Mean Square Error', rmse, '']
+    metrics.loc[6] = ['R²', r2, '']
+    metrics.loc[7] = ['Adjusted R²', adj_r2, '']
 
     return pred, metrics
 
@@ -173,4 +175,14 @@ def get_median_cv_scores(outerCV):
 
             res[f'median_test_{k}'] = res_df[f'median_test_{k}'].to_numpy()
             res[f'rank_by_median_test_{k}'] = res_df[f'rank_by_median_test_{k}'].to_numpy()
-            
+
+
+def median_absolute_percentage_error(y_true, y_pred):
+    """
+    Median Absolute Percentage Error
+    :param y_true: true values
+    :param y_pred: predicted values
+    :return: Median Absolute Percentage Error
+    """
+
+    return np.median(np.abs((y_true - y_pred) / y_true))
