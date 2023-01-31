@@ -133,9 +133,17 @@ def generate_feature_sets(featurelist, mutual_exclusive, exclusive_keywords, num
     return fl
 
 
+def iqm(n):
+    """
+    Returns the interquartile mean input array n
+    Found here: https://codegolf.stackexchange.com/a/86469
+    """
+    return sum(sorted(list(n)*4)[len(n):-len(n)])/len(n)/2
+
+
 def best_scored(cv_results):
     """
-    Find the best median score from a cross-validation result dictionary.
+    Find the best median / mean / interquartile mean score from a cross-validation result dictionary.
     :param cv_results: dictionary of cross-validation results
     :return: index of best median score
     """
@@ -151,8 +159,10 @@ def best_scored(cv_results):
         avg_inner_test_scores = np.median(inner_test_scores, axis=0)
     elif Config.select_best == 'mean':
         avg_inner_test_scores = np.mean(inner_test_scores, axis=0)
+    elif Config.select_best == 'iqm':
+        avg_inner_test_scores = np.array([iqm(s) for s in inner_test_scores.T])
     else:
-        raise ValueError(f'Can only select for best mean or median score. You supplied {Config.select_best}')
+        raise ValueError(f'Can only select for best mean, median or iqm score. You supplied {Config.select_best}')
     return avg_inner_test_scores.argmax()
     
 
@@ -166,7 +176,8 @@ def get_median_cv_scores(outerCV):
         res = outerCV['estimator'][outer_fold].cv_results_
         res_df = pd.DataFrame(res)
         for k, v in Config.scoring.items():
-            res[f'rank_by_mean_test_{k}'] = res.pop(f'rank_test_{k}')
+            if f'rank_test_{k}' in res:
+                res[f'rank_by_mean_test_{k}'] = res.pop(f'rank_test_{k}')
             res_df[f'median_test_{k}'] = res_df.filter(regex=f'^split._test_{k}').median(axis=1)
             if all(res_df[f'median_test_{k}'].isna()):
                 res_df[f'rank_by_median_test_{k}'] = np.nan
@@ -177,12 +188,34 @@ def get_median_cv_scores(outerCV):
             res[f'rank_by_median_test_{k}'] = res_df[f'rank_by_median_test_{k}'].to_numpy()
 
 
-def median_absolute_percentage_error(y_true, y_pred):
+def get_iqm_cv_scores(outerCV):
+    """
+    Add iqm cross-validation scores to nested CV results.
+    :param outerCV: result object of nested cross-validation
+    """
+
+    for outer_fold in range(len(outerCV['estimator'])):
+        res = outerCV['estimator'][outer_fold].cv_results_
+        res_df = pd.DataFrame(res)
+        for k, v in Config.scoring.items():
+            if f'rank_test_{k}' in res:
+                res[f'rank_by_mean_test_{k}'] = res.pop(f'rank_test_{k}')
+            res_df[f'iqm_test_{k}'] = [iqm(s) for s in res_df.filter(regex=f'^split._test_{k}').values]
+            if all(res_df[f'iqm_test_{k}'].isna()):
+                res_df[f'rank_by_iqm_test_{k}'] = np.nan
+            else:
+                res_df[f'rank_by_iqm_test_{k}'] = res_df[f'iqm_test_{k}'].rank(ascending=False).astype(int)
+
+            res[f'iqm_test_{k}'] = res_df[f'iqm_test_{k}'].to_numpy()
+            res[f'rank_by_iqm_test_{k}'] = res_df[f'rank_by_iqm_test_{k}'].to_numpy()
+
+
+def median_absolute_percentage_error(y_true, y_pred, epsilon=np.finfo(np.float64).eps):
     """
     Median Absolute Percentage Error
     :param y_true: true values
     :param y_pred: predicted values
+    :param epsilon: a small positive value to avoid division by zero
     :return: Median Absolute Percentage Error
     """
-
-    return np.median(np.abs((y_true - y_pred) / y_true))
+    return np.median(np.abs(y_true - y_pred) / np.maximum(epsilon, np.abs(y_true)))
