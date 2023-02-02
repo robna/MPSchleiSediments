@@ -170,7 +170,7 @@ def aggregate_SDD(mp_pdd):
         # LON=('GPS_LON', np.mean),  # TODO: switched to geodata from sampling log
         # LAT=('GPS_LAT', np.mean),  # TODO: switched to geodata from sampling log
         Split=('Fraction_analysed', lambda x: x.unique().mean()),
-        MP_D50=('size_geom_mean', np.median)
+        MP_D50=(Config.size_dim, np.median)
         ##MP_D50_A500 = ('size_geom_mean' >= 500.median()),
         # MP_D50_B500 = ('size_geom_mean', lambda x: (x<500).median())
     ).reset_index()

@@ -152,7 +152,7 @@ def get_wwtp_influence(sdd, trackpoints=None, tracks_file=None, buffer_radius=Co
         # turn sdd into a GeoDataFrame with conversion from Lat/Lon to to epsg of gdf
         sdd_gdf = gpd.GeoDataFrame(sdd, geometry=gpd.points_from_xy(sdd.LON, sdd.LAT), crs=4326).to_crs(trackpoints.crs)
         # approach 1: mean distance based influence factor
-        sdd[col_prefix+'_as_tracer_mean_dist'] = sdd_gdf.geometry.apply(lambda x: trackpoints.distance(x).mean())  # mean distance of all particles at all time steps to each sample station
+        sdd[col_prefix+'_as_tracer_mean_dist'] = sdd_gdf.geometry.apply(lambda x: trackpoints.distance(x).mean())  # mean straight-line distance of all drifters at all time steps to each sampling station
         # approach 2: mean distance based influence factor, but only distances to each tracer end point
         sdd[col_prefix+'_as_endpoints_mean_dist'] = sdd_gdf.geometry.apply(lambda x: tracklines.apply(lambda y: Point(y.coords[-1])).distance(x).mean())
         # approach 3 and 4: buffer based influence factor
@@ -160,8 +160,8 @@ def get_wwtp_influence(sdd, trackpoints=None, tracks_file=None, buffer_radius=Co
         # spatially join the sample domain data with the particle tracks, where the buffer zone of a sample contains a particle location at any time step
         dfsjoin = gpd.sjoin(sdd_gdf, trackpoints, how='left', predicate='contains')
         # group sdd by Sample and sum the number of particles that were encountered in the buffer zone
-        sdd[col_prefix+'_as_cumulated_residence'] = dfsjoin.reset_index().groupby('index').time_step.count()  # Robins approach
-        sdd[col_prefix+'_as_mean_time_travelled'] = dfsjoin.reset_index().groupby(['index', 'simPartID']).nth(0).groupby('index').time_step.mean()  # Kristinas approach
+        sdd[col_prefix+'_as_cumulated_residence'] = dfsjoin.reset_index().groupby('index').time_step.count()  # summed occurrences of presence of all drifters at all time steps inside station buffer zones
+        sdd[col_prefix+'_as_mean_time_travelled'] = dfsjoin.reset_index().groupby(['index', 'simPartID']).nth(0).groupby('index').time_step.mean()  # mean of time steps of all drifters at first entrance to station buffer zones
         sdd[col_prefix+'_as_mean_time_travelled'].fillna(Config.tracer_mean_time_fillna, inplace=True)
         sdd.drop(columns=['geometry'], inplace=True)
         # save calculated WWTP influence factors (the last 3 columns of sdd) to a csv file
