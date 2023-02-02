@@ -259,18 +259,18 @@ def scatter_chart(
     return chart, params
 
 
-def poly_comp_chart(mp_pdd, sdd_iow):
-    poly_comp = prepare_data.aggregate_SDD(mp_pdd.groupby(['Sample', 'polymer_type']))
+def poly_comp_chart(mp_pdd, sdd_iow, color='polymer_type'):
+    poly_comp = prepare_data.aggregate_SDD(mp_pdd.groupby(['Sample', color]))
     poly_comp = poly_comp.merge(sdd_iow[['Sample', 'Dist_WWTP', 'perc MUD']], on='Sample')
-    selection = alt.selection_multi(fields=['polymer_type'], bind='legend')
+    selection = alt.selection_multi(fields=[color], bind='legend')
 
     chart_abs = alt.Chart(poly_comp.reset_index()).mark_bar().encode(
         x=alt.X('Dist_WWTP', scale=alt.Scale(type='linear')),
         # , sort = alt.SortField(field='Dist_WWTP', order='ascending')),
         y=alt.Y('Concentration', stack=True),
-        color=alt.Color('polymer_type', scale=alt.Scale(scheme='rainbow')),
+        color=alt.Color(color, scale=alt.Scale(scheme='rainbow')),
         opacity=alt.condition(selection, alt.value(1), alt.value(0.3)),
-        tooltip=['Sample', 'polymer_type', 'Concentration', 'Dist_WWTP']
+        tooltip=['Sample', color, 'Concentration', 'Dist_WWTP']
     ).add_selection(
         selection
     )
@@ -280,10 +280,10 @@ def poly_comp_chart(mp_pdd, sdd_iow):
     chart_tot = chart_rel.mark_bar().encode(
         x=alt.value(10),
         y=alt.Y('all_stations_summed:Q', stack='normalize'),
-        tooltip=['polymer_type', 'all_stations_summed:Q']
+        tooltip=[color, 'all_stations_summed:Q']
     ).transform_aggregate(
         all_stations_summed='sum(Concentration)',
-        groupby=['polymer_type']
+        groupby=[color]
     )
 
     chart = alt.hconcat(chart_abs.interactive(), chart_rel, chart_tot).resolve_scale('independent')

@@ -222,7 +222,8 @@ def main():
         st.write(KDE_size_plot)
 
     if st.checkbox('Polymer composition'):
-        st.write(poly_comp_chart(mp_pdd, df))
+        composition_of_ = st.radio('Select property:', ['polymer_type', 'Shape'], index=0)
+        st.write(poly_comp_chart(mp_pdd, df, composition_of_))
 
         com = prepare_data.aggregate_SDD(
                     mp_pdd.groupby(['Sample', 'polymer_type'])
