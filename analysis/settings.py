@@ -12,13 +12,13 @@ featurelist = [
     'WWTP_influence_as_mean_time_travelled__nosed_18µm_allseasons_222',#pre-final GLM
     'WWTP_influence_as_cumulated_residence__nosed_0µm_allseasons_222_',#pre-final RF*
     'WWTP_influence_as_mean_time_travelled__nosed_0µm_allseasons_222_',#pre-final GLM*
-    'D50 (µm)', #pre-final RF
-    'perc MUD', # pre-final GLM
+    'SED_D50', #pre-final RF
+    'perc_MUD', # pre-final GLM
     'PC1', # pre-final GLM + RF*
     'PC2'
 ]
 
-default_predictors = ['Dist_WWTP', 'TOC', 'Q("D50 (µm)")"', 'PC1', 'PC2']  # columns to be used as predictors
+default_predictors = ['Dist_WWTP', 'TOC', 'Q("SED_D50")"', 'PC1', 'PC2']  # columns to be used as predictors
 
 
 class Config:
@@ -70,15 +70,15 @@ class Config:
 
     # Settings for the CV notebook
     mutual_exclusive: list = [  # Mutual exclusive list (list of lists detailing predictors that are not allowed together in one model candidate)
-        ['MODE 1 (µm)', 'D50 (µm)'],
-        ['MODE 1 (µm)', 'PC1'],
-        ['MODE 1 (µm)', 'perc MUD'],
-        ['MODE 1 (µm)', 'TOC'],
-        ['D50 (µm)', 'PC1'],
-        ['D50 (µm)', 'perc MUD'],
-        ['D50 (µm)', 'TOC'],
-        ['perc MUD', 'PC1'],
-        ['perc MUD', 'TOC'],
+        ['SED_MODE1', 'SED_D50'],
+        ['SED_MODE1', 'PC1'],
+        ['SED_MODE1', 'perc_MUD'],
+        ['SED_MODE1', 'TOC'],
+        ['SED_D50', 'PC1'],
+        ['SED_D50', 'perc_MUD'],
+        ['SED_D50', 'TOC'],
+        ['perc_MUD', 'PC1'],
+        ['perc_MUD', 'TOC'],
         ['PC1', 'TOC'],
         ['Dist_Land', 'Depth']
         ]
@@ -195,7 +195,17 @@ shortnames = {
     'Schlei_S29': 'S29',
     'Schlei_S30': 'S30',
     'Schlei_S31': 'S31',
-    'Schlei_S32': 'S32'
+    'Schlei_S32': 'S32',
+    'D10 (µm)': 'SED_D10',
+    'D50 (µm)': 'SED_D50',
+    'D90 (µm)': 'SED_D90',
+    'perc CLAY': 'perc_CLAY',
+    'perc MUD': 'perc_MUD',
+    'perc SAND': 'perc_SAND',
+    'perc GRAVEL': 'perc_GRAVEL',
+    'MODE 1 (µm)': 'SED_MODE1',
+    'MODE 2 (µm)': 'SED_MODE2',
+    'MODE 3 (µm)': 'SED_MODE3',
 }
 
 densities = {  # Polymer densities in kg m⁻³

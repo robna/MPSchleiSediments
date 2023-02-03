@@ -8,6 +8,11 @@ import outliers
 import geo
 
 
+def fix_gradistat_names(df):
+    df = df.rename(columns=shortnames)
+    return df.loc[:, [col for col in df.columns if col in shortnames.values()]]
+
+
 def merge_vertical(df, avg=False):
     """
     Merges the vertical samples of the same site into one sample
@@ -193,6 +198,7 @@ def additional_sdd_merging(mp_sdd, how='left'):
     sed_gradistat = pd.read_csv('../data/GRADISTAT_IOW_vol_log-cau_not-closed.csv', index_col=0)
     if Config.vertical_merge:
         sed_gradistat = merge_vertical(sed_gradistat, avg=True)
+        sed_gradistat = fix_gradistat_names(sed_gradistat)
 
     # import organic matter size, TOC, Hg data
     sed_om = pd.read_csv('../data/Schlei_OM.csv', index_col=0)

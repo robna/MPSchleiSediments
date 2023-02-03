@@ -55,18 +55,18 @@ def pdd2sdd(mp_pdd, regions):
         sdd_iow.regio_sep.isin(regions)]  # filter based on selected regions
 
 #     sdd_iow['pred_Ord_Poly_ConcentrationA500'] = np.exp(
-#          0.505 + 0.0452 * sdd_iow['perc MUD'] + 0.0249 * 2.22 * sdd_iow['TOC'])  # TODO: temporarily added to compare to the prediction from Kristinas Warnow paper
-#         #-0.2425 + 0.0683 * sdd_iow['perc MUD'] - 0.0001 * sdd_iow['Dist_WWTP']+ 0.0205 * 2.22 * sdd_iow['TOC']
+#          0.505 + 0.0452 * sdd_iow['perc_MUD'] + 0.0249 * 2.22 * sdd_iow['TOC'])  # TODO: temporarily added to compare to the prediction from Kristinas Warnow paper
+#         #-0.2425 + 0.0683 * sdd_iow['perc_MUD'] - 0.0001 * sdd_iow['Dist_WWTP']+ 0.0205 * 2.22 * sdd_iow['TOC']
        
     
 #     sdd_iow['pred_Paint_ConcentrationA500'] = np.exp(
-#         2.352 + 0.032 * sdd_iow['perc MUD'] - 0.003 * sdd_iow['Dist_Marina'])  
+#         2.352 + 0.032 * sdd_iow['perc_MUD'] - 0.003 * sdd_iow['Dist_Marina'])  
         
 #  #TODO: temporarily added to compare to the prediction from Kristinas Warnow paper
 
 #     sdd_iow['pred_TMP_ConcentrationA500'] = np.exp(
-#         -0.4207 + 0.0826 * sdd_iow['perc MUD'] + 0.056 * 8.33 * sdd_iow['TIC'] - 0.0002 * sdd_iow['Dist_WWTP'])  
-#         #2.4491 + 0.0379 * sdd_iow['perc MUD'])
+#         -0.4207 + 0.0826 * sdd_iow['perc_MUD'] + 0.056 * 8.33 * sdd_iow['TIC'] - 0.0002 * sdd_iow['Dist_WWTP'])  
+#         #2.4491 + 0.0379 * sdd_iow['perc_MUD'])
     return sdd_iow
 
 
@@ -192,9 +192,7 @@ def main():
     sdd_iow = pdd2sdd(mp_pdd, regionfilter)
     KDE_medians, KDE_size_plot = get_size_kde(mp_pdd, boundaries_dict, grainsize_iow)
     df = sdd_iow.merge(sed_scor, right_index=True, left_on='Sample', how='left').join(KDE_medians, on='Sample')
-    import numpy as np  # TODO: just a temporary test with log(PC1),,,
-    #df['D50 (µm)'] = np.log(df['D50 (µm)'])
-
+    
     if raw_data_checkbox:
         df_expander(mp_pdd, "Filtered particle domain data")
         with st.expander("Plot particle properties"):
@@ -256,7 +254,7 @@ def main():
 #%%
     new_chap('Feature analysis')  # TODO: we have 2 x PC1 / PC2 (from sediment PCOA and from here), this is confusing...
     if st.checkbox('Feature analysis'):
-        feats = ['Depth', 'Dist_Land', 'Dist_WWTP', 'PC1', 'PC2', 'MODE 1 (µm)', 'D50 (µm)', 'perc MUD', 'TOC']
+        feats = ['Depth', 'Dist_Land', 'Dist_WWTP', 'PC1', 'PC2', 'SED_MODE1', 'SED_D50', 'perc_MUD', 'TOC']
         featfilter = st.multiselect('Select features:', featurelist, default=feats)
 
         st.write(df.set_index('Sample')[featfilter].dropna())
@@ -269,7 +267,7 @@ def main():
 
 #%%
     new_chap('Single predictor correlation and colinearity check')
-    sample_chart_selections, cols = get_selections(featurelist, ('perc MUD', 'Concentration', 'regio_sep'), key='_sdd')
+    sample_chart_selections, cols = get_selections(featurelist, ('perc_MUD', 'Concentration', 'regio_sep'), key='_sdd')
 
     scatters, reg_params = scatter_chart(df, **sample_chart_selections, title='', width=800, height=600)
 

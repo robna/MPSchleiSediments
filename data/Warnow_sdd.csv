@@ -1,4 +1,4 @@
-ID,Sample,Concentration,Concentration_paint,Concentration_PS_Beads,Concentration_ord_poly,Concentration_irregular,Dist_WWTP,Dist_Marina,D50 (µm),TOC,TIC,perc MUD,regio_sep
+ID,Sample,Concentration,Concentration_paint,Concentration_PS_Beads,Concentration_ord_poly,Concentration_irregular,Dist_WWTP,Dist_Marina,SED_D50,TOC,TIC,perc_MUD,regio_sep
 W1,Warnow_S1,93,0.00001,85,8,85,5220,1428,28.2,18.59,1.04,65.85,warnow
 W2,Warnow_S2,75,49,35,4,75,1980,85,49.1025,13.45,1.42,56.98,warnow
 W3,Warnow_S3,97,5,0,93,88,230,501,70.005,8.32,1.78,48.115,warnow
