@@ -94,6 +94,7 @@ def scatter_chart(
     reg=None, reg_groups=False,
     equal_axes=False,
     identity=False,
+    identity_factor=1,
     mix_lines=False,
     xtransform=False, ytransform=False, xscale='linear', yscale='linear',
     title='', width=400, height=300):
@@ -220,10 +221,12 @@ def scatter_chart(
             clip=True
         ).encode(
             x=alt.X(x, scale=alt.Scale(domain=[minX, maxX])),
-            y=alt.Y(x, scale=alt.Scale(domain=[minY, maxY]))
+            y=alt.Y('xx:Q', scale=alt.Scale(domain=[minY, maxY]))
+        ).transform_calculate(
+            xx=f'{identity_factor} * datum.{x}'
         )
 
-        identityR2 = r2_score(df[x], df[y])
+        identityR2 = r2_score(df[x], df[y]*identity_factor)
         
         identityR2Text = alt.Chart(df).mark_text(  # TODO: could use empty dataset "{'values':[{}]}" instead of "df" to print text only once?
             fontSize=12,
@@ -259,9 +262,7 @@ def scatter_chart(
     return chart, params
 
 
-def poly_comp_chart(mp_pdd, sdd_iow, color='polymer_type'):
-    poly_comp = prepare_data.aggregate_SDD(mp_pdd.groupby(['Sample', color]))
-    poly_comp = poly_comp.merge(sdd_iow[['Sample', 'Dist_WWTP', 'perc MUD']], on='Sample')
+def poly_comp_chart(poly_comp, color='polymer_type'):
     selection = alt.selection_multi(fields=[color], bind='legend')
 
     chart_abs = alt.Chart(poly_comp.reset_index()).mark_bar().encode(
@@ -279,14 +280,21 @@ def poly_comp_chart(mp_pdd, sdd_iow, color='polymer_type'):
 
     chart_tot = chart_rel.mark_bar().encode(
         x=alt.value(10),
-        y=alt.Y('all_stations_summed:Q', stack='normalize'),
-        tooltip=[color, 'all_stations_summed:Q']
-    ).transform_aggregate(
+        y=alt.Y('total_share:Q', stack='normalize', axis=alt.Axis(format='.0%')),
+        tooltip=alt.Tooltip([color, 'total_share:Q'],),# format='.0%'),  # TODO: how to make a tooltip with several entries of different formats, i.e. polymer type as string and total_share as '.0%'?
+    ).transform_joinaggregate(
+        total='sum(Concentration)',
+    ).transform_joinaggregate(
         all_stations_summed='sum(Concentration)',
+        groupby=[color]
+    ).transform_calculate(
+        share="datum.all_stations_summed / datum.total"
+    ).transform_aggregate(
+        total_share='mean(share)',
         groupby=[color]
     )
 
-    chart = alt.hconcat(chart_abs.interactive(), chart_rel, chart_tot).resolve_scale('independent')
+    chart = alt.hconcat(chart_abs.interactive(), chart_rel, chart_tot.interactive()).resolve_scale('independent')
     chart.save('../plots/poly_comp_chart.html')  # activate save chart to html file
 
     return chart  # | chart.encode(y=alt.Y('Concentration',stack='normalize'))

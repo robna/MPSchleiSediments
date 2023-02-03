@@ -21,7 +21,7 @@ endog_derivatives = [
     # 'Concentration_paint', 'Concentration_PS_Beads', 'Concentration_ord_poly', 'Concentration_irregular',  # even more endog derivatives
 ]
 additional_exogs = [
-    'LON', 'LAT', 'X', 'Y', 'Depth', 'Dist_Land', 'Dist_Marina', 'Dist_WWTP', 'Dist_WWTP2', 'regio_sep',  # geo related exogs
+    'LON', 'LAT', 'X', 'Y', 'Depth', 'Dist_Land', 'Dist_Marina', 'Dist_WWTP', 'Dist_WWTP2', 'regio_sep', 'OM_D50', 'Split', 'TOC', # geo related exogs
 ]
 
 featurelist = endogs + endog_derivatives + [f for f in additional_exogs if f not in featurelist] + featurelist + ['Sample']
@@ -170,6 +170,7 @@ def get_selections(optionlist, defaults, key=0):
     sel.yscale = col3.radio('Y-Axis type:', ['linear', 'log', 'sqrt'], index=0, key='yscale'+str(key))
     sel.equal_axes = col3.checkbox('Equal axes?', key='equal_axes'+str(key))
     sel.identity = col3.checkbox('Show identity line (dashed)?', key='identity'+str(key))
+    sel.identity_factor = col3.number_input('Line slope (1 for identity):', value=1.0, min_value=0.0, max_value=2.0, step=0.1, key='identity_factor'+str(key))
     sel.mix_lines = col3.checkbox('Show conservative mixing lines?', key='mix_lines'+str(key))
     sel.labels = col3.selectbox('Labels:', [None, *optionlist], index=0, key='labels'+str(key))
     cols = (col1, col2, col3)
@@ -223,27 +224,22 @@ def main():
 
     if st.checkbox('Polymer composition'):
         composition_of_ = st.radio('Select property:', ['polymer_type', 'Shape'], index=0)
-        st.write(poly_comp_chart(mp_pdd, df, composition_of_))
-
         comp0 = prepare_data.aggregate_SDD(
-                    mp_pdd.groupby(['Sample', 'polymer_type'])
+                    mp_pdd.groupby(['Sample', composition_of_])
             ).merge(sdd_iow[['Sample', 'Dist_WWTP', 'regio_sep']], on='Sample'
             )
         comp1 = comp0.pivot(
                 index=['Sample'],
-                columns=['polymer_type'],
+                columns=[composition_of_],
                 values=['Concentration']
             ).droplevel(0,axis=1
             ).fillna(0
             )
         comp2 = comp1.sum().rename('Concentration').to_frame().reset_index()
         
-        col1, col2 = st.columns(2)
-        col1.write(poly_comp_chart(mp_pdd, df))
-        col2.write(poly_comp_pie(comp2))
-        st.write(comp0)
-        st.write(comp1)
-        st.write(comp2)
+        col1, col2 = st.columns([2,1])
+        col1.write(poly_comp_chart(comp0, composition_of_))
+        #col2.write(poly_comp_pie(comp2))
         st.write(biplot(
             scor=PCOA(comp1)[0],
             load=PCOA(comp1)[1],
