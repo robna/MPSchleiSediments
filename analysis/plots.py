@@ -292,6 +292,34 @@ def poly_comp_chart(mp_pdd, sdd_iow, color='polymer_type'):
     return chart  # | chart.encode(y=alt.Y('Concentration',stack='normalize'))
 
 
+def poly_comp_pie(com2):
+    """
+    Pie chart of polymer composition, transferred from analysis notebook for use in app.
+    Selection handled by streamlit widgets!
+    """
+    base = alt.Chart(com2).encode(
+        theta=alt.Theta('Concentration', stack=True),
+        color=alt.Color('ranked_polymer_type:N'),
+        tooltip=['polymer_type', 'ShareOfTotal:N']
+    ).transform_window(
+        rank='row_number()',
+        sort=[alt.SortField("Concentration", order="descending")],
+    ).transform_calculate(
+        ranked_polymer_type="datum.rank < 6 ? datum.polymer_type : ''"
+    ).transform_joinaggregate(
+        total='sum(Concentration)',
+    ).transform_calculate(
+        ShareOfTotal="datum.Concentration / datum.total"
+    )
+
+    pie = base.mark_arc(outerRadius=100, innerRadius=30, padAngle=0.01, cornerRadius=4)
+    text = base.mark_text(radius=120, size=16).encode(text=alt.Text("ShareOfTotal:N", format='.0%'))
+    
+    return alt.layer(
+        pie, text
+    )
+
+
 def station_map(data):
     data = data.loc[:, ['Sample', 'GPS_LON', 'GPS_LAT']]
     st.write(pdk.Deck(

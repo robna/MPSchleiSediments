@@ -8,7 +8,7 @@ import KDE_utils
 import glm
 import cv
 from components import pca, PCOA
-from plots import scatter_chart, poly_comp_chart, histograms, biplot, station_map, size_kde_combined_samples_dist_plot
+from plots import scatter_chart, poly_comp_chart, poly_comp_pie, histograms, biplot, station_map, size_kde_combined_samples_dist_plot
 from settings import Config, shortnames, regio_sep, featurelist
 
 import streamlit as st
@@ -225,17 +225,29 @@ def main():
         composition_of_ = st.radio('Select property:', ['polymer_type', 'Shape'], index=0)
         st.write(poly_comp_chart(mp_pdd, df, composition_of_))
 
-        com = prepare_data.aggregate_SDD(
+        comp0 = prepare_data.aggregate_SDD(
                     mp_pdd.groupby(['Sample', 'polymer_type'])
             ).merge(sdd_iow[['Sample', 'Dist_WWTP', 'regio_sep']], on='Sample'
-            ).pivot(index=['Sample'], columns=['polymer_type'], values=['Concentration']
+            )
+        comp1 = comp0.pivot(
+                index=['Sample'],
+                columns=['polymer_type'],
+                values=['Concentration']
             ).droplevel(0,axis=1
-            ).fillna(0)
+            ).fillna(0
+            )
+        comp2 = comp1.sum().rename('Concentration').to_frame().reset_index()
         
+        col1, col2 = st.columns(2)
+        col1.write(poly_comp_chart(mp_pdd, df))
+        col2.write(poly_comp_pie(comp2))
+        st.write(comp0)
+        st.write(comp1)
+        st.write(comp2)
         st.write(biplot(
-            scor=PCOA(com)[0],
-            load=PCOA(com)[1],
-            expl=PCOA(com)[2],
+            scor=PCOA(comp1)[0],
+            load=PCOA(comp1)[1],
+            expl=PCOA(comp1)[2],
             discr=sdd_iow,
             x='PC1',
             y='PC2',
