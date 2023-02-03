@@ -89,7 +89,7 @@ def generate_feature_sets(featurelist, mutual_exclusive, exclusive_keywords, num
         raise ValueError('num_feat must be an integer, a tuple or "all".')
         
     md5_tail = md5(json.dumps(featurelist, sort_keys=True).encode('utf-8')).hexdigest()[-5:]  # get the hash of featurelist
-    flp = Path(f'../data/exports/feature_candidates_list_min{min_num}_max{max_num}_HASH{md5_tail}.pkl')  # feature list path
+    flp = Path(f'../data/exports/cache/feature_candidates_list_min{min_num}_max{max_num}_HASH{md5_tail}.pkl')  # feature list path
     if flp.exists():
         with open(flp, 'rb') as f:
             fl =  pickle.load(f)

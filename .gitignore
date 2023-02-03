@@ -1,7 +1,8 @@
-# exported intermediate data
+# exported data
 /data/exports/geo
 /data/exports/models/*.pkl
-/data/exports/*.pkl
+/data/exports/cache
+/data/exports/plots
 
 # Ignore hidden files
 .*
@@ -11,9 +12,6 @@
 __pypackages__/
 .env
 .vscode
-
-# Saved plots
-/plots/
 
 # Pycharm settings
 .idea/
@@ -147,3 +145,5 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+/.luarc.json

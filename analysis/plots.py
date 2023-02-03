@@ -257,7 +257,7 @@ def scatter_chart(
         title=title
     ).interactive()
 
-    # chart.save('../plots/scatter_chart.html')  # activate save chart to html file
+    # chart.save('../data/exports/plots/scatter_chart.html')  # activate save chart to html file
 
     return chart, params
 
@@ -295,7 +295,7 @@ def poly_comp_chart(poly_comp, color='polymer_type'):
     )
 
     chart = alt.hconcat(chart_abs.interactive(), chart_rel, chart_tot.interactive()).resolve_scale('independent')
-    chart.save('../plots/poly_comp_chart.html')  # activate save chart to html file
+    chart.save('../data/exports/plots/poly_comp_chart.html')  # activate save chart to html file
 
     return chart  # | chart.encode(y=alt.Y('Concentration',stack='normalize'))
 
@@ -467,7 +467,7 @@ def biplot(scor, load, expl, discr, x, y, sc, ntf=5, normalise=None,
         width=figsize[0], height=figsize[1]
     )
 
-    # figure.save('../plots/biplot.html')
+    # figure.save('../data/exports/plots/biplot.html')
 
     return figure
 
@@ -523,7 +523,7 @@ def sns_contour_plot(data,x,y,hue,xlim=False,ylim=False,log=(False,False),figsiz
         p.ax_joint.set_yscale('log')
     p.fig.set_size_inches(figsize[0], figsize[1])
 
-    p.savefig('../plots/sns_contour_plot.svg')
+    p.savefig('../data/exports/plots/sns_contour_plot.svg')
 
     return p
 

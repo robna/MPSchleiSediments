@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from math import floor, ceil
 from statsmodels.graphics.gofplots import qqplot
 from sklearn.metrics import r2_score
@@ -319,7 +320,8 @@ def main():
                                  identity=True, equal_axes=False,
                                  width=400, height=300,
                                  title='GLM --- yhat vs. y')[0])
-        df.yhat = np.log(df.yhat)
+        if col3.checkbox('log yhat?'):
+            df.yhat = np.log(df.yhat)
         col3.write(scatter_chart(df, 'yhat', 'pearson_resid',
                                  #color='regio_sep', 
                                  title='GLM --- Pearson residuals')[0])
