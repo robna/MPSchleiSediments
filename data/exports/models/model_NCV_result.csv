@@ -3618,3 +3618,61 @@ outerCV_fold;test_R2;train_R2;test_MAPE;train_MAPE;test_MedAE;train_MedAE;test_M
 7;-1.130857949810971;0.652532879298327;-9.74701759387065;-2.07895534571248;-1201.2666666666664;-1406.125;-9.74701759387065;-0.44365559001719856;auto;1;3.1;uniform;0.6584600292635601;2.668806287878493;1387.2916666666665;0.5337453789647328
 6;-2.6595268017679325;0.6565559109875958;-5.6315523536053975;-2.3992960487465127;-1436.9571428571428;-1374.2708333333335;-5.6315523536053975;-0.4474932224239291;auto;1;3.1;uniform;0.6600555170101399;2.647931149120273;1374.2708333333335;0.530222267352557
 9;-36.55505413920294;0.6486635671597809;-5.3208539069083995;-2.621804426994309;-1365.75;-1257.757575757576;-5.3208539069083995;-0.46502064254791575;auto;1;3.1363636363636362;uniform;0.656572101891956;2.829423617756931;1286.778409090909;0.537665089807839
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Model started:;20230207_040936
+Duration:;3.445 h on 120 cpu cores
+Outliers excluded:;['S32', 'S05']
+Samples:;['S01', 'S02', 'S03', 'S04', 'S06', 'S07', 'S08', 'S10', 'S11', 'S13', 'S14', 'S15', 'S16', 'S17', 'S19', 'S20', 'S21', 'S22', 'S23', 'S24', 'S25', 'S26', 'S27', 'S29', 'S30', 'S31']
+Vertical merge:;True
+Scaler:;None
+Number of features per candidate (min, max):;(2, 5)
+Total number of feature combinations tested:;211
+Available features: 12; ['Depth', 'Dist_Land', 'WWTP_influence_as_mean_time_travelled__sed_18µm_allseasons_444', 'WWTP_influence_as_mean_time_travelled__sed_18µm_autumn_222', 'WWTP_influence_as_cumulated_residence__nosed_18µm_autumn_222', 'WWTP_influence_as_mean_time_travelled__nosed_18µm_allseasons_222', 'WWTP_influence_as_cumulated_residence__nosed_0µm_allseasons_222_', 'WWTP_influence_as_mean_time_travelled__nosed_0µm_allseasons_222_', 'SED_D50', 'perc_MUD', 'PC1', 'PC2']
+
+Regressors:;[{'regressor': [TweedieRegressor(max_iter=100000)], 'regressor__power': [2], 'regressor__alpha': [1], 'regressor__link': ['log']}, {'regressor': [RandomForestRegressor(random_state=RandomState(MT19937) at 0x7F02C0B96940)], 'regressor__n_estimators': [10, 100], 'regressor__max_depth': [None, 2, 4], 'regressor__max_features': [None, 0.3333333333333333], 'regressor__min_samples_split': [2, 10], 'regressor__min_samples_leaf': [1, 3, 5], 'regressor__bootstrap': [True, False]}, {'regressor': [XGBRegressor(base_score=None, booster=None, callbacks=None,
+             colsample_bylevel=None, colsample_bynode=None,
+             colsample_bytree=None, early_stopping_rounds=None,
+             enable_categorical=False, eval_metric=None, feature_types=None,
+             gamma=None, gpu_id=None, grow_policy=None, importance_type=None,
+             interaction_constraints=None, learning_rate=None, max_bin=None,
+             max_cat_threshold=None, max_cat_to_onehot=None,
+             max_delta_step=None, max_depth=None, max_leaves=None,
+             min_child_weight=None, missing=nan, monotone_constraints=None,
+             n_estimators=100, n_jobs=None, num_parallel_tree=None,
+             predictor=None, random_state=398764591, ...)], 'regressor__booster': ['gblinear'], 'regressor__objective': ['reg:gamma'], 'regressor__n_estimators': [300], 'regressor__reg_alpha': [0.1], 'regressor__reg_lambda': [0.0]}, {'regressor': [XGBRegressor(base_score=None, booster=None, callbacks=None,
+             colsample_bylevel=None, colsample_bynode=None,
+             colsample_bytree=None, early_stopping_rounds=None,
+             enable_categorical=False, eval_metric=None, feature_types=None,
+             gamma=None, gpu_id=None, grow_policy=None, importance_type=None,
+             interaction_constraints=None, learning_rate=None, max_bin=None,
+             max_cat_threshold=None, max_cat_to_onehot=None,
+             max_delta_step=None, max_depth=None, max_leaves=None,
+             min_child_weight=None, missing=nan, monotone_constraints=None,
+             n_estimators=100, n_jobs=None, num_parallel_tree=None,
+             predictor=None, random_state=398764591, ...)], 'regressor__booster': ['gbtree'], 'regressor__objective': ['reg:gamma'], 'regressor__n_estimators': [300], 'regressor__tree_method': ['exact'], 'regressor__learning_rate': [0.1, 0.25], 'regressor__max_depth': [2, 3, 4], 'regressor__min_child_weight': [5, 7]}]
+Scorer for evaluation (outer fold results are sorted by this!):;R2
+Aggregation for evaluation:;median
+
+CV schemes:
+    inner:;10
+    outer:;10
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Median outer CV test set R2:; 0.6794476459901007
+IQM outer CV test set R2:; 0.6350062970809958
+Mean outer CV test set R2:; 0.46959133934601327
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+outerCV_fold;test_R2;train_R2;test_MAPE;train_MAPE;test_MedAE;train_MedAE;test_MedAPE;train_MedAPE;feature_combi_ID;features;regressor__booster;regressor__learning_rate;regressor__max_depth;regressor__min_child_weight;regressor__n_estimators;regressor__objective;regressor__tree_method;allSamples_R2;allSamples_MAPE;allSamples_MedAE;allSamples_MedAPE;allSamples_R2_refit;allSamples_MAPE_refit;allSamples_MedAE_refit;allSamples_MedAPE_refit
+9;0.9932412783228185;0.9965219380384717;-0.0869692133433168;-0.027062915241383666;-15.28961181640625;-15.172691345214844;-0.0869692133433168;-0.019544872123418017;70;['Depth', 'WWTP_influence_as_mean_time_travelled__nosed_18µm_allseasons_222', 'SED_D50'];gbtree;0.25;2;5;300;reg:gamma;exact;0.996642853496736;0.03167109201845544;15.172691345214844;0.019544872123418017;0.9986693570556147;0.01762093342449373;23.88848876953125;0.011582731643869897
+7;0.986441884218406;0.9999927760994765;-0.8559024926172845;-0.003305141622322092;-90.12487030029297;-4.87359619140625;-0.8559024926172845;-0.002981754866899747;172;['Depth', 'WWTP_influence_as_mean_time_travelled__nosed_0µm_allseasons_222_', 'SED_D50', 'PC2'];gbtree;0.25;3;5;300;reg:gamma;exact;0.9999706614045922;0.0688895532373192;5.761474609375;0.0034938200102586922;0.9999734937146922;0.002902643464542085;3.1153564453125;0.0021326581542817314
+6;0.8455092271646564;0.9591401539382886;-1.1390120950438067;-0.08010337146643057;-299.28021240234375;-71.3956298828125;-1.1390120950438067;-0.04958175334327122;148;['Depth', 'Dist_Land', 'WWTP_influence_as_cumulated_residence__nosed_0µm_allseasons_222_', 'PC1'];gbtree;0.25;3;7;300;reg:gamma;exact;0.9599730814044325;0.16155788866469026;85.020263671875;0.06623690825186497;0.9624574286237689;0.07694304538359155;83.760498046875;0.05440029500258528
+3;0.7447676344743275;0.9994957782528133;-4.118630758768675;-0.028167549984597647;-972.3443603515625;-12.82470703125;-2.2718326176438377;-0.01028020512413918;121;['WWTP_influence_as_mean_time_travelled__nosed_18µm_allseasons_222', 'SED_D50', 'PC2'];gbtree;0.25;3;5;300;reg:gamma;exact;0.9955994692945244;0.5001440740750681;16.35736083984375;0.011730197204597056;0.9999280075258142;0.006668896593062286;6.9937744140625;0.004592784896101545
+4;0.7354478156304964;0.9797592727213065;-0.4414757875281113;-0.11270347913603791;-420.2782287597656;-90.58316040039062;-0.37864787825546475;-0.09851166951722203;74;['Depth', 'WWTP_influence_as_cumulated_residence__nosed_0µm_allseasons_222_', 'SED_D50'];gbtree;0.1;2;5;300;reg:gamma;exact;0.9759384296798048;0.15063874548896947;109.66096496582031;0.1131564623509735;0.9747333520924331;0.13032599153252244;117.5301513671875;0.09918105820805918
+5;0.6234474763497049;0.9825792763206934;-0.7912655111995847;-0.08400234261754172;-1323.23486328125;-76.0169677734375;-0.8965302467346191;-0.04987782490611588;163;['Depth', 'WWTP_influence_as_cumulated_residence__nosed_18µm_autumn_222', 'SED_D50', 'PC2'];gbtree;0.25;2;7;300;reg:gamma;exact;0.9764157325737306;0.16560963130008513;86.30514526367188;0.07248035226935566;0.9957215891593794;0.05691814590380561;70.93722534179688;0.04760246387326678
+0;0.4875787905990956;0.9852124067397106;-0.31589303234267113;-0.1138905929868159;-747.3538208007812;-109.63327026367188;-0.4175309952445652;-0.07760179560662571;172;['Depth', 'WWTP_influence_as_mean_time_travelled__nosed_0µm_allseasons_222_', 'SED_D50', 'PC2'];gbtree;0.1;2;5;300;reg:gamma;exact;0.9774868499548521;0.1371985667586454;133.80149841308594;0.10761465901827746;0.9839981406658312;0.10410719449898251;95.88734436035156;0.07500434143308748
+1;0.32207030953805416;0.9901871880472004;-0.8728809947368675;-0.031226485951029614;-2360.724365234375;-27.816162109375;-0.42129647582116786;-0.022071937461952112;70;['Depth', 'WWTP_influence_as_mean_time_travelled__nosed_18µm_allseasons_222', 'SED_D50'];gbtree;0.25;3;5;300;reg:gamma;exact;0.9561217421075449;0.1283404677340109;48.85833740234375;0.028094805079172086;0.9995491081364007;0.012145565647936448;12.4490966796875;0.007081318098549752
+8;-0.37905227078770687;0.9945093116394913;-0.980279492678081;-0.10103786045147894;-1862.4635009765625;-72.670166015625;-0.980279492678081;-0.0450967061441966;163;['Depth', 'WWTP_influence_as_cumulated_residence__nosed_18µm_autumn_222', 'SED_D50', 'PC2'];gbtree;0.1;2;5;300;reg:gamma;exact;0.9859726910681667;0.16867183216121756;87.1207275390625;0.04994215419013852;0.9919355329387818;0.09522331374030836;117.58164978027344;0.05471672248202422
+2;-0.6635387520497196;0.9999100305796298;-0.6209888948131369;-0.01014809189265653;-2272.255859375;-11.32366943359375;-0.8350091108078108;-0.0081179377347103;166;['Depth', 'WWTP_influence_as_mean_time_travelled__nosed_18µm_allseasons_222', 'SED_D50', 'PC2'];gbtree;0.25;3;5;300;reg:gamma;exact;0.3692368738213221;0.08062972299886581;11.875579833984375;0.00921538189776171;0.9999992056218981;0.0015105734226361633;1.240234375;0.0006987151384466039
