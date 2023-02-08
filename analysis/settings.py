@@ -20,9 +20,15 @@ featurelist = [
 
 default_predictors = ['Dist_WWTP', 'TOC', 'Q("SED_D50")"', 'PC1', 'PC2']  # columns to be used as predictors
 
+sediment_data_filepaths = {
+    'IOW_Volume': 'data/sediment_grainsize_IOW_vol_log-cau_not-closed.csv',
+    'IOW_Counts': 'data/sediment_grainsize_IOW_count_log-cau_not-closed.csv',
+    'CAU_Volume': 'data/sediment_grainsize_CAU_vol_log-cau_closed.csv'
+}
 
 class Config:
     # General data preparation settings
+    sediment_grainsize_basis: str = 'Volume'  # 'Volume' for volume based grainsize distribution, 'Count' for count based
     min_part_count: float = 0  # how many MP particles are required to be considered as a valid sample 
     rebinning: bool = False  # whether or not to aggregate sizes to coarser bins
     closing: int = 1  # make comp data closed to int value: 0 for no closure, 1 for fraction, 100 for percentages
@@ -49,7 +55,7 @@ class Config:
 
     # KDE settings
     optimise_bw: bool = False  # if True: compute an individual bandwidth for each sample before computing the KDE
-    bws_to_test: int = 200  # if optimise_bw = True: how many bandwidth values should be tried out?
+    bws_to_test: int = 100  # if optimise_bw = True: how many bandwidth values should be tried out?
     fixed_bw: int = 75  # if optimise_bw = False: fixed bandwidth value to use for all kde's
     kernel: str = 'gaussian'  # type of kernel to be used
     kde_weights: str = 'particle_volume_share'  # None for count-based distributions, 'particle_volume_share' for volume-based distributions or 'particle_mass_share' for mass-based distributions

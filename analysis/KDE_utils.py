@@ -19,7 +19,8 @@ def optimise_bandwidth(data, weights=None):
 
     grid = GridSearchCV(KernelDensity(kernel=Config.kernel),
                         {'bandwidth': Config.bandwidths},
-                        cv=LeaveOneOut())
+                        cv=5,
+                        n_jobs=-1)
     grid.fit(np.array(data)[:, np.newaxis], sample_weight=weights)
     bw = grid.best_params_['bandwidth']
     return bw
@@ -47,7 +48,7 @@ def calculate_kde(data, x_d, weights=None, bw=Config.fixed_bw, optimise=Config.o
     return pdf, params, kde
 
 
-def per_sample_kde(pdd_MP, x_d, weight_col=None, size_dim=Config.size_dim):
+def per_sample_kde(pdd_MP, x_d, weight_col=None, size_dim=Config.size_dim, bw=Config.fixed_bw, optimise=Config.optimise_bw):
     """
     Loop through the MP df (grouped by samples) and calculate one kde per sample.
     Returns a df with the x-values in the first column
@@ -56,14 +57,14 @@ def per_sample_kde(pdd_MP, x_d, weight_col=None, size_dim=Config.size_dim):
 
     pdfs = pd.DataFrame({'x_d': x_d}).T  # initialise results df to be filled in loop
 
-    for SampleName, SampleGroup in pdd_MP.groupby(['Sample']):
+    for SampleName, SampleGroup in pdd_MP.groupby('Sample'):
         if weight_col is not None:
             weights = SampleGroup[weight_col].values
         else:
             weights = None
 
         x = SampleGroup[size_dim].values
-        pdf, params, _ = calculate_kde(x, x_d, weights)
+        pdf, params, _ = calculate_kde(x, x_d, weights, bw, optimise)
 
         pdfs.loc[SampleName] = pdf
 

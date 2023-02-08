@@ -10,7 +10,7 @@ import glm
 import cv
 from components import pca, PCOA
 from plots import scatter_chart, poly_comp_chart, poly_comp_pie, histograms, biplot, station_map, size_kde_combined_samples_dist_plot
-from settings import Config, shortnames, regio_sep, featurelist
+from settings import Config, shortnames, regio_sep, featurelist, sediment_data_filepaths
 
 import streamlit as st
 st.set_page_config(layout="wide")
@@ -22,7 +22,7 @@ endog_derivatives = [
     # 'Concentration_paint', 'Concentration_PS_Beads', 'Concentration_ord_poly', 'Concentration_irregular',  # even more endog derivatives
 ]
 additional_exogs = [
-    'LON', 'LAT', 'X', 'Y', 'Depth', 'Dist_Land', 'Dist_Marina', 'Dist_WWTP', 'Dist_WWTP2', 'regio_sep', 'OM_D50', 'Split', 'TOC', # geo related exogs
+    'LON', 'LAT', 'X', 'Y', 'Depth', 'Dist_Land', 'Dist_Marina', 'Dist_WWTP', 'Dist_WWTP2', 'regio_sep', 'OM_D50', 'Split', 'TOC', 'SED_MODE1'
 ]
 
 featurelist = endogs + endog_derivatives + [f for f in additional_exogs if f not in featurelist] + featurelist + ['Sample']
@@ -35,14 +35,15 @@ def use_shortnames(df):
 def data_load_and_prep():
     mp_pdd = prepare_data.get_pdd()
     #mp_pdd = use_shortnames(mp_pdd)
+    return mp_pdd
 
-    # Also import sediment data (sediment frequencies per size bin from master sizer export)
-    grainsize_iow, grainsize_cau, boundaries_dict = prepare_data.get_grainsizes()
+
+def load_grainsize_data():
+    # Import sediment data (sediment frequencies per size bin from master sizer export)
+    grainsize_iow, grainsize_cau, boundaries_dict = prepare_data.get_grainsizes(sediment_data_filepaths[f'IOW_{Config.sediment_grainsize_basis}'])
     #grainsize_iow = use_shortnames(grainsize_iow.reset_index().rename(columns={'index': 'Sample'})).set_index('Sample')
-
     sed_scor, sed_load, sed_expl = PCOA(grainsize_iow, 2)
-
-    return mp_pdd, sed_scor, grainsize_iow, boundaries_dict
+    return sed_scor, grainsize_iow, boundaries_dict
 
 
 @st.cache()
@@ -74,7 +75,7 @@ def pdd2sdd(mp_pdd, regions):
 #@st.cache()
 def get_size_kde(mp_pdd, boundaries_dict, grainsize_iow):
     boundaries = boundaries_dict['center']
-    mp_size_pdfs = KDE_utils.per_sample_kde(mp_pdd, boundaries, size_dim = Config.size_dim, weight_col=Config.kde_weights)  # calculate mp size probability density functions
+    mp_size_pdfs = KDE_utils.per_sample_kde(mp_pdd, boundaries, size_dim = Config.size_dim, weight_col=Config.kde_weights, bw=Config.fixed_bw, optimise=Config.optimise_bw)  # calculate mp size probability density functions
     mp_size_pmf = KDE_utils.probDens2prob(mp_size_pdfs)  # calculate mp size probability mass functions, i.e. probability of finding a MP particle in a specific size bin
     mp_size_pmf.columns = grainsize_iow.columns[:-1]  # when using "centers" of size bin boundaries for KDE, we need to adjust the column names to match with the sediment df again!
     _, _, mp_sed_melt = prepare_data.equalise_mp_and_sed(mp_size_pmf, grainsize_iow)  # if needed: returns truncated copies of mp_size_pmf and grainsize_iow as element [0] and [1].
@@ -89,15 +90,16 @@ def get_size_kde(mp_pdd, boundaries_dict, grainsize_iow):
 
 def filters(mp_pdd):
     
+    Config.sediment_grainsize_basis = st.sidebar.radio('Sediment grain size distribution basis', ['Volume', 'Counts'], index=0)
     Config.size_dim = st.sidebar.radio('Select size dimension', ['size_geom_mean', 'Size_1_µm', 'Size_2_µm', 'Size_3_µm',
                                                                  'vESD', 'particle_volume_µm3', 'particle_mass_µg'])
     size_lims = floor(mp_pdd[Config.size_dim].min() / 10) * 10, ceil(mp_pdd[Config.size_dim].max() / 10) * 10
-    Config.lower_size_limit = st.sidebar.number_input('Lower size limit',
+    Config.lower_size_limit = st.sidebar.number_input('Lower size limit (with respect to selected size dimension)',
                                                       value=size_lims[0],
                                                       min_value=size_lims[0],
                                                       max_value=size_lims[1],
                                                       step=100)
-    Config.upper_size_limit = st.sidebar.number_input('Upper size limit',
+    Config.upper_size_limit = st.sidebar.number_input('Upper size limit (with respect to selected size dimension)',
                                                       value=size_lims[1],
                                                       min_value=size_lims[0],
                                                       max_value=size_lims[1],
@@ -116,6 +118,9 @@ def filters(mp_pdd):
                                                          step=100)
 
     Config.kde_weights = st.sidebar.radio('Select basis for size distributions (selecting "None" means, distributions are particle count-based)', [None, 'particle_volume_share', 'particle_mass_share'])
+    Config.optimise_bw = st.sidebar.checkbox('Optimise KDE bandwidth for each sample? (very slow, check console output...)')
+    if not Config.optimise_bw:
+        Config.fixed_bw = st.sidebar.number_input('Fixed bandwidth for MP size distribution KDEs (no optimisation)', value=75.0, min_value=0.0, max_value=200.0, step=10.0)
     samplefilter = st.sidebar.multiselect('Select samples:', mp_pdd.Sample.unique(), default=mp_pdd.Sample.unique())
     shapefilter = st.sidebar.multiselect('Select shapes:', ['irregular', 'fibre'], default=['irregular', 'fibre'])
     polymerfilter = st.sidebar.multiselect('Select polymers:', mp_pdd.polymer_type.unique(),
@@ -171,7 +176,10 @@ def get_selections(optionlist, defaults, key=0):
     sel.yscale = col3.radio('Y-Axis type:', ['linear', 'log', 'sqrt'], index=0, key='yscale'+str(key))
     sel.equal_axes = col3.checkbox('Equal axes?', key='equal_axes'+str(key))
     sel.identity = col3.checkbox('Show identity line (dashed)?', key='identity'+str(key))
-    sel.identity_factor = col3.number_input('Line slope (1 for identity):', value=1.0, min_value=0.0, max_value=2.0, step=0.1, key='identity_factor'+str(key))
+    sel.linref = col3.checkbox('Show linear reference line (dotted)?', key='linref'+str(key))
+    if sel.linref is True:
+        sel.linref_slope = col3.number_input('Line slope:', value=1.0, min_value=0.0, max_value=2.0, step=0.1, key='linref_slope'+str(key))
+        sel.linref_intercept = col3.number_input('Line offset:', value=0.0, min_value=-100.0, max_value=100.0, step=10.0, key='linref_intercept'+str(key))
     sel.mix_lines = col3.checkbox('Show conservative mixing lines?', key='mix_lines'+str(key))
     sel.labels = col3.selectbox('Labels:', [None, *optionlist], index=0, key='labels'+str(key))
     cols = (col1, col2, col3)
@@ -183,19 +191,21 @@ def main():
     st.title('Microplastics and sediment analysis')
     new_chap()
     
-    mp_pdd, sed_scor, grainsize_iow, boundaries_dict = data_load_and_prep()  # load data
+    mp_pdd = data_load_and_prep()  # load data
 
     raw_data_checkbox = st.sidebar.checkbox('Show raw data')
     if raw_data_checkbox:
-        df_expander(mp_pdd, "Original particle domain data")            
+        df_expander(mp_pdd, "Original MP particle domain data")            
 
     mp_pdd, regionfilter = filters(mp_pdd)  # provide side bar menus and filter data
     sdd_iow = pdd2sdd(mp_pdd, regionfilter)
+
+    sed_scor, grainsize_iow, boundaries_dict = load_grainsize_data()
     KDE_medians, KDE_size_plot = get_size_kde(mp_pdd, boundaries_dict, grainsize_iow)
     df = sdd_iow.merge(sed_scor, right_index=True, left_on='Sample', how='left').join(KDE_medians, on='Sample')
     
     if raw_data_checkbox:
-        df_expander(mp_pdd, "Filtered particle domain data")
+        df_expander(mp_pdd, "Filtered MP particle domain data")
         with st.expander("Plot particle properties"):
             particle_chart_selections, cols = get_selections(mp_pdd.columns.tolist(), ('size_geom_mean', 'Size_3_µm', 'Shape'), key='_raw')
             particle_scatters, particle_reg_params = scatter_chart(
@@ -206,7 +216,10 @@ def main():
             cols[2].text("")  # empty line to make some distance
             cols[2].write('Regression parameters:')
             cols[2].write(particle_reg_params)
-        df_expander(df, "Sample domain data", height=1000)
+        df_expander(df, "MP Sample domain data", height=1000)
+
+    if raw_data_checkbox:
+        df_expander(grainsize_iow, f"Sediment grainsize data (IOW), loaded from: {sediment_data_filepaths[f'IOW_{Config.sediment_grainsize_basis}']}")
         
 #%%
     # new_cap('Map')

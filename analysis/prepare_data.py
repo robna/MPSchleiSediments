@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import geopandas as gpd
 from skbio.stats.composition import closure
-from settings import densities, regio_sep, shortnames, Config
+from settings import densities, regio_sep, shortnames, sediment_data_filepaths, Config
 from KDE_utils import unbound_kde
 import outliers
 import geo
@@ -38,13 +38,13 @@ def get_pdd():
     mp_pdd, gpn = outliers.low_freq_out(mp_pdd)  # remove low frequency outliers
     # mp_pdd = mp_pdd.loc[mp_pdd.Shape=='irregular']  # filter to only use fibres or irregulars
     mp_pdd['polymer_type'] = mp_pdd['polymer_type'].map(shortnames).fillna(mp_pdd['polymer_type'])  # use abbreviations for polymer names but retain original names for polymers not present in shortnames
-    mp_pdd.columns = mp_pdd.columns.str.replace("[\[( )\]]", "")  # remove brackets from column names
+    mp_pdd.columns = mp_pdd.columns.str.replace("[\[( )\]]", "", regex=True)  # remove brackets from column names
 
     # mp_pdd = mp_pdd.loc[~mp_pdd.polymer_type.isin(['AcrR', 'AlkR', 'EPX'])]  # exclude paint flakes
 
     if Config.vertical_merge:
         rng = np.random.RandomState(42)
-        for n, g in mp_pdd.groupby(['Sample']):
+        for n, g in mp_pdd.groupby('Sample'):
             srn = float(rng.random(1)) / 1_000_000  # generate a small random number
             mp_pdd.loc[mp_pdd.Sample == n, 'Sampling_weight_kg'] = g['Sampling_weight_kg'] + srn  # add a small random number to every original sample's mass in order to make it unique. After vertical merge, these small additions will be removed by rounding
         mp_pdd = merge_vertical(mp_pdd)
@@ -52,17 +52,20 @@ def get_pdd():
     return mp_pdd
 
 
-def get_grainsizes():
+def get_grainsizes(
+        IOW_sed_gs_path=sediment_data_filepaths[f'IOW_{Config.sediment_grainsize_basis}'],
+        CAU_sed_gs_path=sediment_data_filepaths['CAU_Volume'],
+        ):
     """
     Reads the sediment grainsize data from the CSV file and does some preprocessing
     """
 
-    grainsize_iow = pd.read_csv('../data/sediment_grainsize_IOW_vol_log-cau_not-closed.csv')
+    grainsize_iow = pd.read_csv('../' + IOW_sed_gs_path)
 
     if Config.vertical_merge:
         grainsize_iow = merge_vertical(grainsize_iow)
 
-    grainsize_cau = pd.read_csv('../data/sediment_grainsize_CAU_vol_log-cau_closed.csv')
+    grainsize_cau = pd.read_csv('../' + CAU_sed_gs_path)
     grainsize_cau.dropna(subset=grainsize_cau.iloc[:,1:].columns, how='all', inplace=True)  # CAU sediment data contains empty sammples which are dropped here
 
     # Get the binning structure of the imported sediment data and optionally rebin it (make binning coarser) for faster computation
@@ -146,7 +149,7 @@ def height_vol_dens_mass(df):
     # ----------
     df['particle_mass_[µg]'] = df['particle_volume_[µm3]'] * df['density'] * 1e-9
     # calculate volume and mass share of each particle grouped by Sample
-    for sample_name, Sample in df.groupby(['Sample'], sort=False):
+    for sample_name, Sample in df.groupby('Sample', sort=False):
         Sample['particle_volume_share'] = Sample['particle_volume_[µm3]'] / Sample['particle_volume_[µm3]'].sum()
         df.loc[Sample.index, 'particle_volume_share'] = Sample['particle_volume_share']
         Sample['particle_mass_share'] = Sample['particle_mass_[µg]'] / Sample['particle_mass_[µg]'].sum()
@@ -163,7 +166,7 @@ def aggregate_SDD(mp_pdd):
     """Calculates certain Sample domain data (SDD) aggregation from the particle domain data (PDD)"""
 
     if isinstance(mp_pdd, pd.DataFrame):  # if raw DF is submitted instead of groupby object, then group first
-        mp_pdd = mp_pdd.groupby(['Sample'])
+        mp_pdd = mp_pdd.groupby('Sample')
 
     mp_sdd = mp_pdd.agg(
         Frequency=('Sample', 'count'),
@@ -342,7 +345,7 @@ def sediment_preps(sed_df):
     dataframe suitable for the following data analyses
     """
 
-    sed_df = sed_df.groupby('Sample').mean()  # average all repeated Master Sizer measurements on individual samples
+    sed_df = sed_df.groupby('Sample').mean(numeric_only=True)  # average all repeated Master Sizer measurements on individual samples
     # sed_df.rename(columns={'0.01': '0'}, inplace=True)  # renaming lowest size bin to 0
     sed_df = sed_df.loc[:,
              pd.to_numeric(sed_df.columns, errors='coerce') > 0]  # only keep columns that hold size bin data
