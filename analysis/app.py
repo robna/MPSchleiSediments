@@ -84,15 +84,17 @@ def get_size_kde(mp_pdd, boundaries_dict, grainsize_iow):
     KDE_medians = pd.DataFrame(boundaries_dict).center[size_bin_number_containing_median]
     KDE_medians.name = 'MP_size_median_from_KDE'
     KDE_medians.index = size_bin_number_containing_median.index
-    KDE_size_plot = size_kde_combined_samples_dist_plot(mp_sed_melt)
-    return KDE_medians, KDE_size_plot
+    return KDE_medians, mp_sed_melt
 
 
 def filters(mp_pdd):
     
-    Config.sediment_grainsize_basis = st.sidebar.radio('Sediment grain size distribution basis', ['Volume', 'Counts'], index=0)
+    Config.sediment_grainsize_basis = st.sidebar.radio('Select basis for sediment grain size distributions', ['Volume', 'Counts'], index=0)
+    Config.kde_weights = st.sidebar.radio('Select basis for MP size distributions (selecting "None" means distributions are particle count-based, "particle_volume_share" means volume distributions, "particle_mass_share" means mass distributions)', [None, 'particle_volume_share', 'particle_mass_share'])
+    Config.fixed_bw = st.sidebar.number_input('Fixed bandwidth for MP size distribution KDEs (no optimisation)', value=75.0, min_value=0.0, max_value=200.0, step=10.0)
+    Config.optimise_bw = st.sidebar.checkbox('Optimise KDE bandwidth for each sample? (very slow, check console output...)')
     Config.size_dim = st.sidebar.radio('Select size dimension', ['size_geom_mean', 'Size_1_µm', 'Size_2_µm', 'Size_3_µm',
-                                                                 'vESD', 'particle_volume_µm3', 'particle_mass_µg'])
+                                                                 'vESD', 'particle_volume_µm3', 'particle_mass_µg'], index=4)
     size_lims = floor(mp_pdd[Config.size_dim].min() / 10) * 10, ceil(mp_pdd[Config.size_dim].max() / 10) * 10
     Config.lower_size_limit = st.sidebar.number_input('Lower size limit (with respect to selected size dimension)',
                                                       value=size_lims[0],
@@ -117,10 +119,6 @@ def filters(mp_pdd):
                                                          max_value=density_lims[1],
                                                          step=100)
 
-    Config.kde_weights = st.sidebar.radio('Select basis for size distributions (selecting "None" means, distributions are particle count-based)', [None, 'particle_volume_share', 'particle_mass_share'])
-    Config.optimise_bw = st.sidebar.checkbox('Optimise KDE bandwidth for each sample? (very slow, check console output...)')
-    if not Config.optimise_bw:
-        Config.fixed_bw = st.sidebar.number_input('Fixed bandwidth for MP size distribution KDEs (no optimisation)', value=75.0, min_value=0.0, max_value=200.0, step=10.0)
     samplefilter = st.sidebar.multiselect('Select samples:', mp_pdd.Sample.unique(), default=mp_pdd.Sample.unique())
     shapefilter = st.sidebar.multiselect('Select shapes:', ['irregular', 'fibre'], default=['irregular', 'fibre'])
     polymerfilter = st.sidebar.multiselect('Select polymers:', mp_pdd.polymer_type.unique(),
@@ -139,9 +137,11 @@ def filters(mp_pdd):
     return mp_pdd, regionfilter
 
 
-def df_expander(df, title, height=300):
+def df_expander(df, title, height=300, row_sums=False):
     with st.expander(title):
-        st.dataframe(df, height=height)
+        if row_sums:
+            st.write('**Sum of row is shown in front of first column**')
+        st.dataframe(df.set_index(df.sum(axis=1), append=True).rename_axis([df.index.name, 'Sum of row']) if row_sums else df, height=height)
         st.write('Shape: ', df.shape)
         col1, col2 = st.columns([1,3])
         col1.write(df.dtypes)
@@ -201,7 +201,7 @@ def main():
     sdd_iow = pdd2sdd(mp_pdd, regionfilter)
 
     sed_scor, grainsize_iow, boundaries_dict = load_grainsize_data()
-    KDE_medians, KDE_size_plot = get_size_kde(mp_pdd, boundaries_dict, grainsize_iow)
+    KDE_medians, mp_sed_melt = get_size_kde(mp_pdd, boundaries_dict, grainsize_iow)
     df = sdd_iow.merge(sed_scor, right_index=True, left_on='Sample', how='left').join(KDE_medians, on='Sample')
     
     if raw_data_checkbox:
@@ -219,7 +219,7 @@ def main():
         df_expander(df, "MP Sample domain data", height=1000)
 
     if raw_data_checkbox:
-        df_expander(grainsize_iow, f"Sediment grainsize data (IOW), loaded from: {sediment_data_filepaths[f'IOW_{Config.sediment_grainsize_basis}']}")
+        df_expander(grainsize_iow, f"Sediment grainsize data (IOW), loaded from: {sediment_data_filepaths[f'IOW_{Config.sediment_grainsize_basis}']}", row_sums=True)
         
 #%%
     # new_cap('Map')
@@ -231,8 +231,8 @@ def main():
 #%%
     new_chap('MP properties')
     if st.checkbox('Particle sizes'):
-        st.write(histograms(mp_pdd))
-        st.write(KDE_size_plot)
+        st.write(histograms(mp_pdd, title=f'Distribution of measured MP particle {Config.size_dim}'))
+        st.write(size_kde_combined_samples_dist_plot(mp_sed_melt, title='KDE modelled size distribution of MP and sediment as average of all samples'))
 
     if st.checkbox('Polymer composition'):
         composition_of_ = st.radio('Select property:', ['polymer_type', 'Shape'], index=0)

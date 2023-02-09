@@ -223,7 +223,7 @@ def scatter_chart(
     if identity:
         identityLine = base.mark_line(
             color= 'black',
-            strokeDash=[3,8],
+            strokeDash=[10,20],
             strokeWidth=0.6,
             clip=True
         ).encode(
@@ -248,7 +248,7 @@ def scatter_chart(
     if linref:
         linrefLine = base.mark_line(
             color= 'black',
-            strokeDash=[3,8],
+            strokeDash=[3,3],
             strokeWidth=0.6,
             clip=True
         ).encode(
@@ -392,7 +392,7 @@ def station_map(data):
     st.write(r)
 
 
-def histograms(df):
+def histograms(df, title=''):
     brush = alt.selection_interval(encodings=['x'])
     base = alt.Chart(df).properties(width=1000, height=200)
 
@@ -402,8 +402,20 @@ def histograms(df):
         tooltip='count():Q'
     )
 
+    cum_size = base.mark_line(interpolate='step-after', color='black').encode(
+        x=Config.size_dim,
+        y='cumulative_count:Q',
+        tooltip=[Config.size_dim, 'cumulative_count:Q']
+    ).transform_window(
+        cum="count()",
+        sort=[{"field": Config.size_dim}]
+    ).transform_calculate(
+        cumulative_count=f'datum.cum / {len(df)}'
+    )
+
     rule = base.mark_rule(color='red').encode(
         x=f'median({Config.size_dim}):Q',
+        tooltip=alt.Tooltip([f'median({Config.size_dim}):Q'], format=".2f"),
         size=alt.value(3)
     )
 
@@ -412,10 +424,11 @@ def histograms(df):
         #                  bin=alt.Bin(maxbins=50, extent=brush),
         #                  scale=alt.Scale(domain=brush)
         #                  ),
-        bar.add_selection(brush) + rule
+        alt.layer(bar.add_selection(brush), cum_size, rule
+    ).resolve_axis(y='independent').resolve_scale(y='independent')
     )
 
-    return chart
+    return chart.properties(title=title).configure_title(fontSize=20, offset=5, orient='top', anchor='middle')
 
 
 def biplot(scor, load, expl, discr, x, y, sc, ntf=5, normalise=None,
@@ -642,7 +655,7 @@ def plotly_contour_plot(df, x, y, color, nbins=100, ncontours=10, figsize=(800, 
     return fig
 
 
-def size_kde_combined_samples_dist_plot(mp_sed_melt):
+def size_kde_combined_samples_dist_plot(mp_sed_melt, title=''):
     """
     KDE plots of MP and Sediment for all stations combined
     (i.e. KDE calculated on separate samples,
@@ -676,5 +689,11 @@ def size_kde_combined_samples_dist_plot(mp_sed_melt):
         color=alt.Color('particle_type')
     )
 
-    return alt.layer(dists, cumsum).resolve_scale(y='independent').properties(width=800, height=400)
+    # medians = cumsum.mark_rule(strokeWidth=3).encode(
+    #     y='median(value):Q',
+    #     # y=alt.value(0),
+    #     # y2=''
+    # )
+
+    return alt.layer(dists, cumsum).resolve_scale(y='independent').properties(width=800, height=400, title=title)#.configure_title(fontSize=20, offset=5, orient='top', anchor='middle')
     
