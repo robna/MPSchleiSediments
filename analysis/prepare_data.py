@@ -54,8 +54,7 @@ def get_pdd():
 
 def get_grainsizes(
         IOW_sed_gs_path=sediment_data_filepaths[f'IOW_{Config.sediment_grainsize_basis}'],
-        CAU_sed_gs_path=sediment_data_filepaths['CAU_Volume'],
-        ):
+        CAU_sed_gs_path=sediment_data_filepaths['CAU_Volume_logscale']):
     """
     Reads the sediment grainsize data from the CSV file and does some preprocessing
     """
@@ -201,7 +200,7 @@ def additional_sdd_merging(mp_sdd, how='left'):
     sed_gradistat = pd.read_csv('../data/GRADISTAT_IOW_vol_log-cau_not-closed.csv', index_col=0)
     if Config.vertical_merge:
         sed_gradistat = merge_vertical(sed_gradistat, avg=True)
-        sed_gradistat = fix_gradistat_names(sed_gradistat)
+    sed_gradistat = fix_gradistat_names(sed_gradistat)
 
     # import organic matter size, TOC, Hg data
     sed_om = pd.read_csv('../data/Schlei_OM.csv', index_col=0)
@@ -231,9 +230,10 @@ def additional_sdd_merging(mp_sdd, how='left'):
     mp_sdd_amended = geo.get_wwtp_influence(mp_sdd_amended, tracks_file='../data/BAW_tracer_simulations.zip', file_postfix='_IOW')
     
     # concatenate with Warnow data: only activate if you want to use Warnow data for comparison
-    # warnow = pd.read_csv('../data/Warnow_sdd.csv', index_col=0)
-    # warnow["ConcentrationA500"] = warnow["Concentration"]
-    # mp_sdd_amended = pd.concat([mp_sdd_amended, warnow], sort=False)
+    if Config.warnow:
+        warnow = pd.read_csv('../data/Warnow_sdd.csv', index_col=0)
+        warnow["ConcentrationA500"] = warnow["Concentration"]
+        mp_sdd_amended = pd.concat([mp_sdd_amended, warnow], sort=False)
     
     # optionally: uncomment to export the final data
     # sdd_iow.to_csv('../csv/MP_Stats_SchleiSediments.csv')

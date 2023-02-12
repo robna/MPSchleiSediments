@@ -46,15 +46,14 @@ def load_grainsize_data():
     return sed_scor, grainsize_iow, boundaries_dict
 
 
-@st.cache()
-def pdd2sdd(mp_pdd, regions):
+@st.cache(suppress_st_warning=True)
+def pdd2sdd(mp_pdd):
     # ...some data wrangling to prepare particle domain data and sample domain data for MP and combine with certain sediment aggregates.
     mp_sdd = prepare_data.aggregate_SDD(mp_pdd)
 
     sdd_iow = prepare_data.additional_sdd_merging(mp_sdd)
     #sdd_iow = use_shortnames(sdd_iow)
-    sdd_iow = sdd_iow.loc[
-        sdd_iow.regio_sep.isin(regions)]  # filter based on selected regions
+    sdd_iow = sdd_filters(sdd_iow)  # additional filters in siedbar can be used to limit which samples are included
 
 #     sdd_iow['pred_Ord_Poly_ConcentrationA500'] = np.exp(
 #          0.505 + 0.0452 * sdd_iow['perc_MUD'] + 0.0249 * 2.22 * sdd_iow['TOC'])  # TODO: temporarily added to compare to the prediction from Kristinas Warnow paper
@@ -72,7 +71,7 @@ def pdd2sdd(mp_pdd, regions):
     return sdd_iow
 
 
-#@st.cache()
+@st.cache()
 def get_size_kde(mp_pdd, boundaries_dict, grainsize_iow):
     boundaries = boundaries_dict['center']
     mp_size_pdfs = KDE_utils.per_sample_kde(mp_pdd, boundaries, size_dim = Config.size_dim, weight_col=Config.kde_weights, bw=Config.fixed_bw, optimise=Config.optimise_bw)  # calculate mp size probability density functions
@@ -87,14 +86,30 @@ def get_size_kde(mp_pdd, boundaries_dict, grainsize_iow):
     return KDE_medians, mp_sed_melt
 
 
-def filters(mp_pdd):
+def general_settings():
+    st.sidebar.write('**General controls**')
+    raw_data_checkbox = st.sidebar.checkbox('Show raw data?')
+    vertical_merge = st.sidebar.checkbox('Merge sediment corer samples (10 - 15 cm layer) ' \
+                                                'with their respective sediment surface samples ' \
+                                                '(0 - 5 cm layer) into single samples per station?',
+                                                value=True, key='vertical_merge')
     
-    Config.sediment_grainsize_basis = st.sidebar.radio('Select basis for sediment grain size distributions', ['Volume', 'Counts'], index=0)
-    Config.kde_weights = st.sidebar.radio('Select basis for MP size distributions (selecting "None" means distributions are particle count-based, "particle_volume_share" means volume distributions, "particle_mass_share" means mass distributions)', [None, 'particle_volume_share', 'particle_mass_share'])
-    Config.fixed_bw = st.sidebar.number_input('Fixed bandwidth for MP size distribution KDEs (no optimisation)', value=75.0, min_value=0.0, max_value=200.0, step=10.0)
+    st.sidebar.write('**Settings for particle size calculations (KDE, etc.)**')
+    Config.sediment_grainsize_basis = st.sidebar.radio('Select basis for sediment grain size distributions', ['Volume_logscale', 'Volume_linscale', 'Counts_logscale'], index=0)
+    Config.kde_weights = st.sidebar.radio('Select basis for MP size distributions ' \
+                                          '(selecting "None" means distributions are particle count-based, ' \
+                                          '"particle_volume_share" means volume distributions, ' \
+                                          '"particle_mass_share" means mass distributions)',
+                                          [None, 'particle_volume_share', 'particle_mass_share'])
+    Config.fixed_bw = st.sidebar.number_input('Fixed bandwidth for MP size distribution KDEs (no optimisation)', value=20.0, min_value=0.0, max_value=200.0, step=10.0)
     Config.optimise_bw = st.sidebar.checkbox('Optimise KDE bandwidth for each sample? (very slow, check console output...)')
     Config.size_dim = st.sidebar.radio('Select size dimension', ['size_geom_mean', 'Size_1_µm', 'Size_2_µm', 'Size_3_µm',
                                                                  'vESD', 'particle_volume_µm3', 'particle_mass_µg'], index=4)
+    return raw_data_checkbox, vertical_merge
+
+
+def pdd_filters(mp_pdd):
+    st.sidebar.write('**Filters for particle domain data**')
     size_lims = floor(mp_pdd[Config.size_dim].min() / 10) * 10, ceil(mp_pdd[Config.size_dim].max() / 10) * 10
     Config.lower_size_limit = st.sidebar.number_input('Lower size limit (with respect to selected size dimension)',
                                                       value=size_lims[0],
@@ -131,10 +146,23 @@ def filters(mp_pdd):
                         & (mp_pdd.density >= Config.lower_density_limit)
                         & (mp_pdd.density <= Config.upper_density_limit)
                         ]  # filter mp_pdd based on selected values
+    return mp_pdd
 
-    regionfilter = st.sidebar.multiselect('Select regions:', set(regio_sep.values()),
+
+def sdd_filters(sdd):
+    st.sidebar.write('**Filters for samples domain data**')
+    regionfilter = st.sidebar.multiselect('Select regions (works on sample domain data):', set(regio_sep.values()),
                                           default=set(regio_sep.values()))
-    return mp_pdd, regionfilter
+    prop_filter = st.sidebar.selectbox('Select property for custom filtering:', sdd.select_dtypes('number').columns)
+    prop_range = st.sidebar.slider(f'Select lower and upper limit for {prop_filter}:',
+                                   float(sdd[prop_filter].min()), float(sdd[prop_filter].max()),
+                                  [float(sdd[prop_filter].min()), float(sdd[prop_filter].max())]
+                                  )
+    sdd = sdd.loc[sdd.regio_sep.isin(regionfilter)
+                  & (sdd[prop_filter] >= prop_range[0])
+                  & (sdd[prop_filter] <= prop_range[1])
+                 ]
+    return sdd
 
 
 def df_expander(df, title, height=300, row_sums=False):
@@ -165,23 +193,23 @@ def get_selections(optionlist, defaults, key=0):
     col1, col2, col3 = st.columns((2,1,1))
     class sel_dict(object): pass  # create dummy class to get access to __dict__
     sel = sel_dict()
-    sel.y = col1.selectbox('y-Values:', optionlist, index=optionlist.index(defaults[1]), key='y'+str(key))
-    sel.x = col1.selectbox('x-Values:', optionlist, index=optionlist.index(defaults[0]), key='x'+str(key))
-    sel.color = col1.selectbox('Color:', [None, *optionlist], index=optionlist.index(defaults[2])+1, key='color'+str(key))
-    sel.xtransform = col2. checkbox('Log transform x-data', key='xtransform'+str(key))
-    sel.ytransform = col2. checkbox('Log transform y-data', key='ytransform'+str(key))
-    sel.reg = col2.radio('Regression type:', [None, 'linear', 'log', 'exp', 'pow'], index=0, key='reg'+str(key))
-    sel.reg_groups = col2.checkbox('Calculate separate regressions by color?', key='reg_groups'+str(key))
-    sel.xscale = col3.radio('X-Axis type:', ['linear', 'log', 'sqrt'], index=0, key='xscale'+str(key))
-    sel.yscale = col3.radio('Y-Axis type:', ['linear', 'log', 'sqrt'], index=0, key='yscale'+str(key))
-    sel.equal_axes = col3.checkbox('Equal axes?', key='equal_axes'+str(key))
-    sel.identity = col3.checkbox('Show identity line (dashed)?', key='identity'+str(key))
-    sel.linref = col3.checkbox('Show linear reference line (dotted)?', key='linref'+str(key))
+    sel.y = col1.selectbox('y-Values:', optionlist, index=optionlist.index(defaults[1]), key=str(key)+'y')
+    sel.x = col1.selectbox('x-Values:', optionlist, index=optionlist.index(defaults[0]), key=str(key)+'x')
+    sel.color = col1.selectbox('Color:', [None, *optionlist], index=optionlist.index(defaults[2])+1, key=str(key)+'color')
+    sel.xtransform = col2. checkbox('Log transform x-data', key=str(key)+'xtransform')
+    sel.ytransform = col2. checkbox('Log transform y-data', key=str(key)+'ytransform')
+    sel.reg = col2.radio('Regression type:', [None, 'linear', 'log', 'exp', 'pow'], index=0, key=str(key)+'reg')
+    sel.reg_groups = col2.checkbox('Calculate separate regressions by color?', key=str(key)+'reg_groups')
+    sel.xscale = col3.radio('X-Axis type:', ['linear', 'log', 'sqrt'], index=0, key=str(key)+'xscale')
+    sel.yscale = col3.radio('Y-Axis type:', ['linear', 'log', 'sqrt'], index=0, key=str(key)+'yscale')
+    sel.equal_axes = col3.checkbox('Equal axes?', key=str(key)+'equal_axes')
+    sel.identity = col3.checkbox('Show identity line (dashed)?', key=str(key)+'identity')
+    sel.linref = col3.checkbox('Show linear reference line (dotted)?', key=str(key)+'linref')
     if sel.linref is True:
-        sel.linref_slope = col3.number_input('Line slope:', value=1.0, min_value=0.0, max_value=2.0, step=0.1, key='linref_slope'+str(key))
-        sel.linref_intercept = col3.number_input('Line offset:', value=0.0, min_value=-100.0, max_value=100.0, step=10.0, key='linref_intercept'+str(key))
-    sel.mix_lines = col3.checkbox('Show conservative mixing lines?', key='mix_lines'+str(key))
-    sel.labels = col3.selectbox('Labels:', [None, *optionlist], index=0, key='labels'+str(key))
+        sel.linref_slope = col3.number_input('Line slope:', value=1.0, min_value=0.0, max_value=2.0, step=0.1, key=str(key)+'linref_slope')
+        sel.linref_intercept = col3.number_input('Line offset:', value=0.0, min_value=-100.0, max_value=100.0, step=10.0, key=str(key)+'linref_intercept')
+    sel.mix_lines = col3.checkbox('Show conservative mixing lines?', key=str(key)+'mix_lines')
+    sel.labels = col3.selectbox('Labels:', [None, *optionlist], index=0, key=str(key)+'labels')
     cols = (col1, col2, col3)
     return sel.__dict__, cols
 
@@ -191,14 +219,15 @@ def main():
     st.title('Microplastics and sediment analysis')
     new_chap()
     
+    raw_data_checkbox, vertical_merge = general_settings()  # loads sidebar widgets to control data calculations and app behaviour
+    Config.vertical_merge = vertical_merge
     mp_pdd = data_load_and_prep()  # load data
-
-    raw_data_checkbox = st.sidebar.checkbox('Show raw data')
+    
     if raw_data_checkbox:
         df_expander(mp_pdd, "Original MP particle domain data")            
 
-    mp_pdd, regionfilter = filters(mp_pdd)  # provide side bar menus and filter data
-    sdd_iow = pdd2sdd(mp_pdd, regionfilter)
+    mp_pdd = pdd_filters(mp_pdd)  # provide side bar menus and filter data
+    sdd_iow = pdd2sdd(mp_pdd)
 
     sed_scor, grainsize_iow, boundaries_dict = load_grainsize_data()
     KDE_medians, mp_sed_melt = get_size_kde(mp_pdd, boundaries_dict, grainsize_iow)
@@ -207,7 +236,7 @@ def main():
     if raw_data_checkbox:
         df_expander(mp_pdd, "Filtered MP particle domain data")
         with st.expander("Plot particle properties"):
-            particle_chart_selections, cols = get_selections(mp_pdd.columns.tolist(), ('size_geom_mean', 'Size_3_µm', 'Shape'), key='_raw')
+            particle_chart_selections, cols = get_selections(mp_pdd.columns.tolist(), ('size_geom_mean', 'Size_3_µm', 'Shape'), key='pddPlot_')
             particle_scatters, particle_reg_params = scatter_chart(
             mp_pdd, **particle_chart_selections,
             title='', width=800, height=600)
@@ -216,7 +245,7 @@ def main():
             cols[2].text("")  # empty line to make some distance
             cols[2].write('Regression parameters:')
             cols[2].write(particle_reg_params)
-        df_expander(df, "MP Sample domain data", height=1000)
+        df_expander(df, "MP sample domain data", height=1000)
 
     if raw_data_checkbox:
         df_expander(grainsize_iow, f"Sediment grainsize data (IOW), loaded from: {sediment_data_filepaths[f'IOW_{Config.sediment_grainsize_basis}']}", row_sums=True)
@@ -281,7 +310,7 @@ def main():
 
 #%%
     new_chap('Single predictor correlation and colinearity check')
-    sample_chart_selections, cols = get_selections(featurelist, ('perc_MUD', 'Concentration', 'regio_sep'), key='_sdd')
+    sample_chart_selections, cols = get_selections(featurelist, ('perc_MUD', 'Concentration', 'regio_sep'), key='sddPlot_')
 
     scatters, reg_params = scatter_chart(df, **sample_chart_selections, title='', width=800, height=600)
 
@@ -306,14 +335,16 @@ def main():
         family = col1.radio('Select distribution family:', families, index=families.index('NegativeBinomial'))
         # for neg.binom use CT-alpha-estimator from here: https://web.archive.org/web/20210303054417/https://dius.com.au/2017/08/03/using-statsmodels-glms-to-model-beverage-consumption/
         Config.glm_family = family
-        tweedie_power = col1.number_input('Tweedie power (only applied if family "Tweedie" is chosen):', value=2.0, min_value=0.0, max_value=3.0, step=0.1)
-        Config.glm_tweedie_power = tweedie_power
+        if family == 'Tweedie':
+            tweedie_power = col1.number_input('Tweedie power:', value=2.0, min_value=0.0, max_value=3.0, step=0.1)
+            Config.glm_tweedie_power = tweedie_power
 
         links = [None, 'Power', 'identity', 'inverse_power', 'inverse_squared', 'sqrt', 'log']
         link = col2.selectbox('Select link function (use None for default link of family):', links, index=1)
         Config.glm_link = link
-        power_power = col2.number_input('Power exponent (only applied if link "Power" is chosen):', value=-1.55, min_value=-10.0, max_value=10.0, step=0.1)
-        Config.glm_power_power = power_power
+        if link == 'Power':
+            power_power = col2.number_input('Exponent of power link function:', value=-1.55, min_value=-10.0, max_value=10.0, step=0.1)
+            Config.glm_power_power = power_power
 
         Config.glm_formula = st.text_input('GLM formula:', 'Concentration ~ Dist_WWTP + PC1')
         target_name = Config.glm_formula.split('~')[0].strip()
@@ -364,3 +395,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+    
+    # st.session_state  # activate to show stored widget variables in a dict

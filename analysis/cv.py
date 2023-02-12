@@ -45,11 +45,11 @@ def loocv(df):
 
     metrics = pd.DataFrame(columns=['Metric', 'Value', 'Info'])
     metrics.loc[0] = ['Max Error', maxe, f"Where: {pred.loc[np.abs(target - pred.pred ).idxmax(), 'Sample']}"]
-    metrics.loc[1] = ['Median Absolute Error', medae, 'In units of taget variable']
-    metrics.loc[2] = ['Median Absolute Percentage Error', medape, 'Relative error: 0 (no error), 1 (100% misestimated)']
-    metrics.loc[3] = ['Mean Absolute Error', mae, 'In units of taget variable']
-    metrics.loc[4] = ['Mean Absolute Percentage Error', mape, 'Relative error: 0 (no error), 1 (100% misestimated)']
-    metrics.loc[5] = ['Root Mean Square Error', rmse, 'In units of taget variable']
+    metrics.loc[1] = ['Median Absolute Error', medae, 'In units of target variable']
+    metrics.loc[2] = ['Median Absolute Percentage Error', medape, 'Relative error: 0 (no error), 1 (100% misestimated), >1 (arbitrarily wrong)']
+    metrics.loc[3] = ['Mean Absolute Error', mae, 'In units of target variable']
+    metrics.loc[4] = ['Mean Absolute Percentage Error', mape, 'Relative error: 0 (no error), 1 (100% misestimated), >1 (arbitrarily wrong)']
+    metrics.loc[5] = ['Root Mean Square Error', rmse, 'In units of target variable']
     metrics.loc[6] = ['R²', r2, 'From 1 (perfect prediction) and 0 (just as good as predicting the mean) to neg. infinity (arbitrarily wrong)']
     metrics.loc[7] = ['Adjusted R²', adj_r2, 'Like R² but takes into account sample and feature number. An additional feature is justified if it increases this metric.']
 
