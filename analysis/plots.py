@@ -21,6 +21,8 @@ from sklearn.metrics import r2_score
 from settings import Config
 import prepare_data
 
+df_0 = pd.DataFrame({'x': [0], 'y': [0]})
+
 
 def conserv_mixin_lines(df, predx, predy, color):
     """
@@ -40,7 +42,7 @@ def conserv_mixin_lines(df, predx, predy, color):
 
     if color:
         lst = []
-        for groupname, group in df.groupby([color]):
+        for groupname, group in df.groupby(color):
             lsmin = {
                 color: groupname,
                 predx: group[predx].min(),
@@ -94,7 +96,9 @@ def scatter_chart(
     reg=None, reg_groups=False,
     equal_axes=False,
     identity=False,
-    identity_factor=1,
+    linref=False,
+    linref_slope=1,
+    linref_intercept=0,
     mix_lines=False,
     xtransform=False, ytransform=False, xscale='linear', yscale='linear',
     title='', width=400, height=300):
@@ -110,6 +114,9 @@ def scatter_chart(
     :param reg_groups: True for regression line for each colored group (default: False)
     :param equal_axes: True for x and y axes ranging from 0 to their higher maximum (useful for predicted vs. observed plots) (default=False)
     :param identity: True for showing identity line (default=False)
+    :param linref: True for showing a linear reference line (default=False)
+    :param linref_slope: Slope of the linear reference line (default=1)
+    :param linref_intercept: Intercept of the linear reference line (default=0)
     :param mix_lines: True for showing conservative mixing lines (default=False)
     :param xtransform: when True take np.log10 of x-values before plotting, be carful when also using non-linear axis scales (default=False)
     :param ytransform: when True take np.log10 of y-values before plotting, be carful when also using non-linear axis scales (default=False)
@@ -212,32 +219,57 @@ def scatter_chart(
     else:
         chart = alt.layer(scatter)
         params= None
-
+    
     if identity:
         identityLine = base.mark_line(
             color= 'black',
-            strokeDash=[3,8],
+            strokeDash=[10,20],
+            strokeWidth=0.6,
+            clip=True
+        ).encode(
+            x=alt.X(x, scale=alt.Scale(domain=[minX, maxX])),
+            y=alt.Y(x, scale=alt.Scale(domain=[minY, maxY]))
+        )
+
+        identityR2 = r2_score(df[x], df[y])
+        
+        identityR2Text = alt.Chart(df_0).mark_text(
+            fontSize=12,
+            align="left", baseline="top"
+        ).encode(
+            x=alt.value(width / 1.8),  # pixels from left
+            y=alt.value(height / 100),  # pixels from top
+            text=alt.value(f'R² to identity = {identityR2:.2f}')
+        )
+        
+        chart = alt.layer(chart, identityLine, identityR2Text)
+
+
+    if linref:
+        linrefLine = base.mark_line(
+            color= 'black',
+            strokeDash=[3,3],
             strokeWidth=0.6,
             clip=True
         ).encode(
             x=alt.X(x, scale=alt.Scale(domain=[minX, maxX])),
             y=alt.Y('xx:Q', scale=alt.Scale(domain=[minY, maxY]))
         ).transform_calculate(
-            xx=f'{identity_factor} * datum.{x}'
+            xx=f'{linref_slope} * datum.{x} + {linref_intercept}'
         )
 
-        identityR2 = r2_score(df[x], df[y]*identity_factor)
+        linrefR2 = r2_score(linref_slope * df[x] + linref_intercept, df[y])
         
-        identityR2Text = alt.Chart(df).mark_text(  # TODO: could use empty dataset "{'values':[{}]}" instead of "df" to print text only once?
+        linrefR2Text = alt.Chart(df_0).mark_text(
             fontSize=12,
             align="left", baseline="top"
         ).encode(
             x=alt.value(width / 1.8),  # pixels from left
-            y=alt.value(height / 100),  # pixels from top
-            text=alt.value(f'identity_R² = {identityR2:.2f}')
+            y=alt.value(height / 100 * 5),  # pixels from top
+            text=alt.value(f'R² to linear reference = {linrefR2:.2f}')
         )
         
-        chart = alt.layer(chart, identityLine, identityR2Text)
+        chart = alt.layer(chart, linrefLine, linrefR2Text)
 
     if mix_lines:
         chart = alt.layer(chart, conserv_mixin_lines(df, x, y, color)).resolve_scale(
@@ -278,7 +310,7 @@ def poly_comp_chart(poly_comp, color='polymer_type'):
 
     chart_rel = chart_abs.encode(y=alt.Y('Concentration', stack='normalize'))
 
-    chart_tot = chart_rel.mark_bar().encode(
+    chart_tot = chart_rel.mark_bar(size=160).encode(
         x=alt.value(10),
         y=alt.Y('total_share:Q', stack='normalize', axis=alt.Axis(format='.0%')),
         tooltip=alt.Tooltip([color, 'total_share:Q'],),# format='.0%'),  # TODO: how to make a tooltip with several entries of different formats, i.e. polymer type as string and total_share as '.0%'?
@@ -292,7 +324,7 @@ def poly_comp_chart(poly_comp, color='polymer_type'):
     ).transform_aggregate(
         total_share='mean(share)',
         groupby=[color]
-    )
+    ).properties(width=80)
 
     chart = alt.hconcat(chart_abs.interactive(), chart_rel, chart_tot.interactive()).resolve_scale('independent')
     chart.save('../data/exports/plots/poly_comp_chart.html')  # activate save chart to html file
@@ -360,7 +392,7 @@ def station_map(data):
     st.write(r)
 
 
-def histograms(df):
+def histograms(df, title=''):
     brush = alt.selection_interval(encodings=['x'])
     base = alt.Chart(df).properties(width=1000, height=200)
 
@@ -370,8 +402,20 @@ def histograms(df):
         tooltip='count():Q'
     )
 
+    cum_size = base.mark_line(interpolate='step-after', color='black').encode(
+        x=Config.size_dim,
+        y='cumulative_count:Q',
+        tooltip=[Config.size_dim, 'cumulative_count:Q']
+    ).transform_window(
+        cum="count()",
+        sort=[{"field": Config.size_dim}]
+    ).transform_calculate(
+        cumulative_count=f'datum.cum / {len(df)}'
+    )
+
     rule = base.mark_rule(color='red').encode(
         x=f'median({Config.size_dim}):Q',
+        tooltip=alt.Tooltip([f'median({Config.size_dim}):Q'], format=".2f"),
         size=alt.value(3)
     )
 
@@ -380,14 +424,15 @@ def histograms(df):
         #                  bin=alt.Bin(maxbins=50, extent=brush),
         #                  scale=alt.Scale(domain=brush)
         #                  ),
-        bar.add_selection(brush) + rule
+        alt.layer(bar.add_selection(brush), cum_size, rule
+    ).resolve_axis(y='independent').resolve_scale(y='independent')
     )
 
-    return chart
+    return chart.properties(title=title).configure_title(fontSize=20, offset=5, orient='top', anchor='middle')
 
 
 def biplot(scor, load, expl, discr, x, y, sc, ntf=5, normalise=None,
-           figsize=(800, 600)):  # TODO: normalisation not yet implemented
+           figsize=(800, 600)):
     """
     Create the Biplot based on the PCoA or PCA scores and loadings.
 
@@ -452,10 +497,10 @@ def biplot(scor, load, expl, discr, x, y, sc, ntf=5, normalise=None,
         tooltip='Sample'
     )
 
-    info = alt.Chart(dfs).mark_text(  # TODO: could use empty dataset "{'values':[{}]}" instead of "dfs" to print text only once?
+    info = alt.Chart(df_0).mark_text(
         fontSize=12
     ).encode(
-        text=alt.value([f'Explained: {expl.sum():.1%}', f'Values scaled: {normalise}']),
+        text=alt.value([f'Explained: {expl.loc[[x,y]].sum():.1%}', f'Values scaled: {normalise}']),
         x=alt.value(figsize[0] / 5),  # pixels from left
         y=alt.value(figsize[1] / 20),  # pixels from top
     )
@@ -610,7 +655,7 @@ def plotly_contour_plot(df, x, y, color, nbins=100, ncontours=10, figsize=(800, 
     return fig
 
 
-def size_kde_combined_samples_dist_plot(mp_sed_melt):
+def size_kde_combined_samples_dist_plot(mp_sed_melt, title=''):
     """
     KDE plots of MP and Sediment for all stations combined
     (i.e. KDE calculated on separate samples,
@@ -644,5 +689,11 @@ def size_kde_combined_samples_dist_plot(mp_sed_melt):
         color=alt.Color('particle_type')
     )
 
-    return alt.layer(dists, cumsum).resolve_scale(y='independent').properties(width=800, height=400)
+    # medians = cumsum.mark_rule(strokeWidth=3).encode(
+    #     y='median(value):Q',
+    #     # y=alt.value(0),
+    #     # y2=''
+    # )
+
+    return alt.layer(dists, cumsum).resolve_scale(y='independent').properties(width=800, height=400, title=title)#.configure_title(fontSize=20, offset=5, orient='top', anchor='middle')
     

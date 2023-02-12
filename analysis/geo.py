@@ -189,7 +189,7 @@ def tracer_sedimentation_points(tracks, dem=None, dist=Config.sed_contact_dist, 
 
     tracks['contact_id'] = (tracks.sediment_contact != tracks.sediment_contact.shift(1)).cumsum()  # create an intermediate column with a new unique id for each time the state of sediment_contact changes from False to True or vice versa
     
-    contact_dur = tracks.loc[tracks.sediment_contact].groupby(['contact_id']).sediment_contact.count().rename('contact_dur')  # create a series with the duration of each contact
+    contact_dur = tracks.loc[tracks.sediment_contact].groupby('contact_id').sediment_contact.count().rename('contact_dur')  # create a series with the duration of each contact
     contact_dur[contact_dur < dur] = np.nan  # exclude all contacts which are shorter than 'dur'
     tracks = tracks.join(contact_dur, on=['contact_id'])  # join the series of the duration of each contact to the gdf
     tracks = pd.concat(Parallel(n_jobs=cpu_count())(delayed(arrest_tracks)(group, group_name) for group_name, group in tracks.groupby(['simPartID', 'season', 'tracer_ESD'])))

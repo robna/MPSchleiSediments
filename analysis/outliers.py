@@ -14,7 +14,10 @@ def low_freq_out(df):
     # remove samples with less than a threshold number of particles
     df = df[df.Sample.isin(genuine_particle_numbers[genuine_particle_numbers >= Config.min_part_count].index)]
 
-    print(f'Removed {len(genuine_particle_numbers) - len(df.Sample.unique())} samples with less than {Config.min_part_count} particles.')
-    print(genuine_particle_numbers[genuine_particle_numbers < Config.min_part_count])
+    removed = genuine_particle_numbers[genuine_particle_numbers < Config.min_part_count]
+    
+    if len(removed) > 0:
+        print(f'Low frequency sample detection removed {len(removed)} samples with less than {Config.min_part_count} particles:')
+        print(removed)
 
     return df, genuine_particle_numbers
