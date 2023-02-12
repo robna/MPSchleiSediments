@@ -1,20 +1,34 @@
 import pandas as pd
 import numpy as np
-from math import floor, ceil
 from statsmodels.graphics.gofplots import qqplot
 from sklearn.metrics import r2_score
 
 import prepare_data
-import KDE_utils
 import glm
 import cv
 from components import pca, PCOA
 from plots import scatter_chart, poly_comp_chart, poly_comp_pie, histograms, biplot, station_map, size_kde_combined_samples_dist_plot
-from settings import Config, shortnames, regio_sep, featurelist, sediment_data_filepaths
+from settings import Config, featurelist, sediment_data_filepaths
+
+from app_loaders import (
+    data_load_and_prep,
+    load_grainsize_data,
+    pdd2sdd,
+    get_size_kde
+)
+from app_helpers import (
+    general_settings,
+    pdd_filters,
+    sdd_filters,
+    df_expander,
+    new_chap,
+    get_selections
+)
 
 import streamlit as st
 st.set_page_config(layout="wide")
 
+#%% Define variables to use
 endogs = ['Concentration', 'MassConcentration', 'MP_D50', 'MP_size_median_from_KDE',]  # endogs
 endog_derivatives = [
     'ConcentrationA500', 'ConcentrationB500', 'ConcentrationA500_div_B500',  # endog derivatives
@@ -24,198 +38,10 @@ endog_derivatives = [
 additional_exogs = [
     'LON', 'LAT', 'X', 'Y', 'Depth', 'Dist_Land', 'Dist_Marina', 'Dist_WWTP', 'Dist_WWTP2', 'regio_sep', 'OM_D50', 'Split', 'TOC', 'SED_MODE1'
 ]
-
 featurelist = endogs + endog_derivatives + [f for f in additional_exogs if f not in featurelist] + featurelist + ['Sample']
 
-def use_shortnames(df):
-    return df.replace({'Sample': shortnames}).sort_values(by='Sample')
-
-
-@st.cache()
-def data_load_and_prep():
-    mp_pdd = prepare_data.get_pdd()
-    #mp_pdd = use_shortnames(mp_pdd)
-    return mp_pdd
-
-
-def load_grainsize_data():
-    # Import sediment data (sediment frequencies per size bin from master sizer export)
-    grainsize_iow, grainsize_cau, boundaries_dict = prepare_data.get_grainsizes(sediment_data_filepaths[f'IOW_{Config.sediment_grainsize_basis}'])
-    #grainsize_iow = use_shortnames(grainsize_iow.reset_index().rename(columns={'index': 'Sample'})).set_index('Sample')
-    sed_scor, sed_load, sed_expl = PCOA(grainsize_iow, 2)
-    return sed_scor, grainsize_iow, boundaries_dict
-
-
-@st.cache(suppress_st_warning=True)
-def pdd2sdd(mp_pdd):
-    # ...some data wrangling to prepare particle domain data and sample domain data for MP and combine with certain sediment aggregates.
-    mp_sdd = prepare_data.aggregate_SDD(mp_pdd)
-
-    sdd_iow = prepare_data.additional_sdd_merging(mp_sdd)
-    #sdd_iow = use_shortnames(sdd_iow)
-    sdd_iow = sdd_filters(sdd_iow)  # additional filters in siedbar can be used to limit which samples are included
-
-#     sdd_iow['pred_Ord_Poly_ConcentrationA500'] = np.exp(
-#          0.505 + 0.0452 * sdd_iow['perc_MUD'] + 0.0249 * 2.22 * sdd_iow['TOC'])  # TODO: temporarily added to compare to the prediction from Kristinas Warnow paper
-#         #-0.2425 + 0.0683 * sdd_iow['perc_MUD'] - 0.0001 * sdd_iow['Dist_WWTP']+ 0.0205 * 2.22 * sdd_iow['TOC']
-       
-    
-#     sdd_iow['pred_Paint_ConcentrationA500'] = np.exp(
-#         2.352 + 0.032 * sdd_iow['perc_MUD'] - 0.003 * sdd_iow['Dist_Marina'])  
-        
-#  #TODO: temporarily added to compare to the prediction from Kristinas Warnow paper
-
-#     sdd_iow['pred_TMP_ConcentrationA500'] = np.exp(
-#         -0.4207 + 0.0826 * sdd_iow['perc_MUD'] + 0.056 * 8.33 * sdd_iow['TIC'] - 0.0002 * sdd_iow['Dist_WWTP'])  
-#         #2.4491 + 0.0379 * sdd_iow['perc_MUD'])
-    return sdd_iow
-
-
-@st.cache()
-def get_size_kde(mp_pdd, boundaries_dict, grainsize_iow):
-    boundaries = boundaries_dict['center']
-    mp_size_pdfs = KDE_utils.per_sample_kde(mp_pdd, boundaries, size_dim = Config.size_dim, weight_col=Config.kde_weights, bw=Config.fixed_bw, optimise=Config.optimise_bw)  # calculate mp size probability density functions
-    mp_size_pmf = KDE_utils.probDens2prob(mp_size_pdfs)  # calculate mp size probability mass functions, i.e. probability of finding a MP particle in a specific size bin
-    mp_size_pmf.columns = grainsize_iow.columns[:-1]  # when using "centers" of size bin boundaries for KDE, we need to adjust the column names to match with the sediment df again!
-    _, _, mp_sed_melt = prepare_data.equalise_mp_and_sed(mp_size_pmf, grainsize_iow)  # if needed: returns truncated copies of mp_size_pmf and grainsize_iow as element [0] and [1].
-    mp_size_cpmf = mp_size_pmf.cumsum(axis=1) # cumulative sum of the probability mass functions
-    size_bin_number_containing_median = (mp_size_cpmf.T.reset_index(drop=True).T - 0.5).abs().idxmin(axis=1)  # Find the size bins which enclose the 50% of the probability mass. OBS: if choosing a different colsing value than 1, the subtractionnn of 0.5 needs to be adjusted!!
-    KDE_medians = pd.DataFrame(boundaries_dict).center[size_bin_number_containing_median]
-    KDE_medians.name = 'MP_size_median_from_KDE'
-    KDE_medians.index = size_bin_number_containing_median.index
-    return KDE_medians, mp_sed_melt
-
-
-def general_settings():
-    st.sidebar.write('**General controls**')
-    raw_data_checkbox = st.sidebar.checkbox('Show raw data?')
-    vertical_merge = st.sidebar.checkbox('Merge sediment corer samples (10 - 15 cm layer) ' \
-                                                'with their respective sediment surface samples ' \
-                                                '(0 - 5 cm layer) into single samples per station?',
-                                                value=True, key='vertical_merge')
-    
-    st.sidebar.write('**Settings for particle size calculations (KDE, etc.)**')
-    Config.sediment_grainsize_basis = st.sidebar.radio('Select basis for sediment grain size distributions', ['Volume_logscale', 'Volume_linscale', 'Counts_logscale'], index=0)
-    Config.kde_weights = st.sidebar.radio('Select basis for MP size distributions ' \
-                                          '(selecting "None" means distributions are particle count-based, ' \
-                                          '"particle_volume_share" means volume distributions, ' \
-                                          '"particle_mass_share" means mass distributions)',
-                                          [None, 'particle_volume_share', 'particle_mass_share'])
-    Config.fixed_bw = st.sidebar.number_input('Fixed bandwidth for MP size distribution KDEs (no optimisation)', value=20.0, min_value=0.0, max_value=200.0, step=10.0)
-    Config.optimise_bw = st.sidebar.checkbox('Optimise KDE bandwidth for each sample? (very slow, check console output...)')
-    Config.size_dim = st.sidebar.radio('Select size dimension', ['size_geom_mean', 'Size_1_µm', 'Size_2_µm', 'Size_3_µm',
-                                                                 'vESD', 'particle_volume_µm3', 'particle_mass_µg'], index=4)
-    return raw_data_checkbox, vertical_merge
-
-
-def pdd_filters(mp_pdd):
-    st.sidebar.write('**Filters for particle domain data**')
-    size_lims = floor(mp_pdd[Config.size_dim].min() / 10) * 10, ceil(mp_pdd[Config.size_dim].max() / 10) * 10
-    Config.lower_size_limit = st.sidebar.number_input('Lower size limit (with respect to selected size dimension)',
-                                                      value=size_lims[0],
-                                                      min_value=size_lims[0],
-                                                      max_value=size_lims[1],
-                                                      step=100)
-    Config.upper_size_limit = st.sidebar.number_input('Upper size limit (with respect to selected size dimension)',
-                                                      value=size_lims[1],
-                                                      min_value=size_lims[0],
-                                                      max_value=size_lims[1],
-                                                      step=100)
-
-    density_lims = mp_pdd.density.min().astype(int).item(), mp_pdd.density.max().astype(int).item()
-    Config.lower_density_limit = st.sidebar.number_input('Lower density limit',
-                                                         value=density_lims[0],
-                                                         min_value=density_lims[0],
-                                                         max_value=density_lims[1],
-                                                         step=100)
-    Config.upper_density_limit = st.sidebar.number_input('Upper density limit',
-                                                         value=density_lims[1],
-                                                         min_value=density_lims[0],
-                                                         max_value=density_lims[1],
-                                                         step=100)
-
-    samplefilter = st.sidebar.multiselect('Select samples:', mp_pdd.Sample.unique(), default=mp_pdd.Sample.unique())
-    shapefilter = st.sidebar.multiselect('Select shapes:', ['irregular', 'fibre'], default=['irregular', 'fibre'])
-    polymerfilter = st.sidebar.multiselect('Select polymers:', mp_pdd.polymer_type.unique(),
-                                           default=mp_pdd.polymer_type.unique())
-    mp_pdd = mp_pdd.loc[mp_pdd.Shape.isin(shapefilter)
-                        & mp_pdd.polymer_type.isin(polymerfilter)
-                        & mp_pdd.Sample.isin(samplefilter)
-                        & (mp_pdd[Config.size_dim] >= Config.lower_size_limit)
-                        & (mp_pdd[Config.size_dim] <= Config.upper_size_limit)
-                        & (mp_pdd.density >= Config.lower_density_limit)
-                        & (mp_pdd.density <= Config.upper_density_limit)
-                        ]  # filter mp_pdd based on selected values
-    return mp_pdd
-
-
-def sdd_filters(sdd):
-    st.sidebar.write('**Filters for samples domain data**')
-    regionfilter = st.sidebar.multiselect('Select regions (works on sample domain data):', set(regio_sep.values()),
-                                          default=set(regio_sep.values()))
-    prop_filter = st.sidebar.selectbox('Select property for custom filtering:', sdd.select_dtypes('number').columns)
-    prop_range = st.sidebar.slider(f'Select lower and upper limit for {prop_filter}:',
-                                   float(sdd[prop_filter].min()), float(sdd[prop_filter].max()),
-                                  [float(sdd[prop_filter].min()), float(sdd[prop_filter].max())]
-                                  )
-    sdd = sdd.loc[sdd.regio_sep.isin(regionfilter)
-                  & (sdd[prop_filter] >= prop_range[0])
-                  & (sdd[prop_filter] <= prop_range[1])
-                 ]
-    return sdd
-
-
-def df_expander(df, title, height=300, row_sums=False):
-    with st.expander(title):
-        if row_sums:
-            st.write('**Sum of row is shown in front of first column**')
-        st.dataframe(df.set_index(df.sum(axis=1), append=True).rename_axis([df.index.name, 'Sum of row']) if row_sums else df, height=height)
-        st.write('Shape: ', df.shape)
-        col1, col2 = st.columns([1,3])
-        col1.write(df.dtypes)
-        col2.write(df.describe())
-
-
-def new_chap(title = None):
-    st.markdown('___', unsafe_allow_html=True)
-    st.text("")  # empty line to make some distance
-    if title:
-        st.subheader(title)
-
-    
-def get_selections(optionlist, defaults, key=0):
-    """
-    Provide the necessary selection for scatter_chart from plots.py
-    :param optionlist: list of options to select from
-    :param defaults: tuple of column names: (x, y, color) used as their respective default selections
-    :param key: a unique value for each call of this function to allow multiple instances of the selection widgets
-    """
-    col1, col2, col3 = st.columns((2,1,1))
-    class sel_dict(object): pass  # create dummy class to get access to __dict__
-    sel = sel_dict()
-    sel.y = col1.selectbox('y-Values:', optionlist, index=optionlist.index(defaults[1]), key=str(key)+'y')
-    sel.x = col1.selectbox('x-Values:', optionlist, index=optionlist.index(defaults[0]), key=str(key)+'x')
-    sel.color = col1.selectbox('Color:', [None, *optionlist], index=optionlist.index(defaults[2])+1, key=str(key)+'color')
-    sel.xtransform = col2. checkbox('Log transform x-data', key=str(key)+'xtransform')
-    sel.ytransform = col2. checkbox('Log transform y-data', key=str(key)+'ytransform')
-    sel.reg = col2.radio('Regression type:', [None, 'linear', 'log', 'exp', 'pow'], index=0, key=str(key)+'reg')
-    sel.reg_groups = col2.checkbox('Calculate separate regressions by color?', key=str(key)+'reg_groups')
-    sel.xscale = col3.radio('X-Axis type:', ['linear', 'log', 'sqrt'], index=0, key=str(key)+'xscale')
-    sel.yscale = col3.radio('Y-Axis type:', ['linear', 'log', 'sqrt'], index=0, key=str(key)+'yscale')
-    sel.equal_axes = col3.checkbox('Equal axes?', key=str(key)+'equal_axes')
-    sel.identity = col3.checkbox('Show identity line (dashed)?', key=str(key)+'identity')
-    sel.linref = col3.checkbox('Show linear reference line (dotted)?', key=str(key)+'linref')
-    if sel.linref is True:
-        sel.linref_slope = col3.number_input('Line slope:', value=1.0, min_value=0.0, max_value=2.0, step=0.1, key=str(key)+'linref_slope')
-        sel.linref_intercept = col3.number_input('Line offset:', value=0.0, min_value=-100.0, max_value=100.0, step=10.0, key=str(key)+'linref_intercept')
-    sel.mix_lines = col3.checkbox('Show conservative mixing lines?', key=str(key)+'mix_lines')
-    sel.labels = col3.selectbox('Labels:', [None, *optionlist], index=0, key=str(key)+'labels')
-    cols = (col1, col2, col3)
-    return sel.__dict__, cols
-
-
-def main():
 #%%
+def main():
     st.title('Microplastics and sediment analysis')
     new_chap()
     
@@ -228,6 +54,7 @@ def main():
 
     mp_pdd = pdd_filters(mp_pdd)  # provide side bar menus and filter data
     sdd_iow = pdd2sdd(mp_pdd)
+    sdd_iow = sdd_filters(sdd_iow)  # additional filters in siedbar can be used to limit which samples are included
 
     sed_scor, grainsize_iow, boundaries_dict = load_grainsize_data()
     KDE_medians, mp_sed_melt = get_size_kde(mp_pdd, boundaries_dict, grainsize_iow)
@@ -292,7 +119,6 @@ def main():
             ntf=7,
             normalise='standard'
             ))
-
 
 #%%
     new_chap('Feature analysis')  # TODO: we have 2 x PC1 / PC2 (from sediment PCOA and from here), this is confusing...
@@ -396,5 +222,4 @@ def main():
 if __name__ == "__main__":
     main()
 
-    
     # st.session_state  # activate to show stored widget variables in a dict
