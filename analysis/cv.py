@@ -17,18 +17,21 @@ from cv_helpers import iqm
 from settings import Config, featurelist
 
 
-def make_setup_dict(repeats=(10,1), folds=(5,5), n_jobs=(1,-1), verbosity=(0,1)):  # TODO: could be read automatically from **KWARGS
-    setup = {  # dict of lists of NCV parameter settings: first element for outer, second for inner CV
-        'repeats': (repeats[0], max(int(repeats[1]), 1)),
-        'folds': (folds, folds) if isinstance(folds, int) else folds,
-        'n_jobs': n_jobs,
-        'verbosity': verbosity,
-    }
+def make_setup_dict(**kwargs):
+    setup = kwargs  # dict of lists of NCV parameter settings: first element for outer, second for inner CV    
+    if 'repeats' in setup.keys():
+        if isinstance(setup['repeats'], int):
+            setup['repeats'] = (setup['repeats'], setup['repeats'])
+        else:
+            setup['repeats'] = (setup['repeats'][0], max(int(setup['repeats'][1]), 1))
+            
+    if 'folds' in setup.keys():
+        if isinstance(setup['folds'], int):
+            setup['folds'] = (setup['folds'], setup['folds'])
     
     setup['cv_scheme'] = [
         KFold(  # using single KFold in outer which will be repeated manually in loop to extract the test set indices at each iteration
             n_splits = setup['folds'][1],
-            shuffle=True,
         ),
         RepeatedKFold(  # using RepeatedKFold for inner
             n_splits = setup['folds'][0],
@@ -65,6 +68,8 @@ def ncv(pipe, params, model_X, model_y, scorers, setup):
                 with the verbosity level for outer and inner cross-validation, respectively.
             - 'n_jobs': list-like of two integers,
                 with the number of parallel jobs to be run for outer and inner cross-validation, respectively.
+            - 'repeats': list-like of two integers,
+                with the number of repetitions for outer and inner cross-validation, respectively.
 
     Returns:
     --------
@@ -82,7 +87,7 @@ def ncv(pipe, params, model_X, model_y, scorers, setup):
         n_jobs=setup['n_jobs'][1]
         )
 # with parallel_backend(setup['parallel_backend'][0], n_jobs=setup['n_jobs'][0]):
-    outerCV = cross_validate(
+    NCV = cross_validate(
         innerCV,
         model_X,
         model_y,
@@ -93,7 +98,7 @@ def ncv(pipe, params, model_X, model_y, scorers, setup):
         verbose=setup['verbosity'][0],
         n_jobs=setup['n_jobs'][0]
         )
-    return outerCV
+    return NCV
 
 
 def rep_ncv(pipe, params, model_X, model_y, scorers, setup):
@@ -115,6 +120,7 @@ def rep_ncv(pipe, params, model_X, model_y, scorers, setup):
             repstart = datetime.now()
             print(f'>>>>>>>>>>   Starting NCV repetition {i+1} at {repstart.strftime("%Y-%m-%d %H:%M:%S")}   <<<<<<<<<<')
 
+            setup['cv_scheme'][0].shuffle = True  # activate shuffling to yiels varying outer fold train / test splits
             setup['cv_scheme'][0].random_state = setup['cv_scheme'][1].random_state = i  # set different random states for each repetition
 
             outerCV = ncv(pipe, params, model_X, model_y, scorers, setup)
