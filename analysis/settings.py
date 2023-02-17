@@ -1,6 +1,8 @@
 import numpy as np
 import statsmodels.formula.api as smf
 import statsmodels.api as sm
+from sklearn.metrics import r2_score, mean_absolute_percentage_error, median_absolute_error, make_scorer
+from cv_helpers import median_absolute_percentage_error
 
 target = 'Concentration'
 featurelist = [
@@ -88,17 +90,20 @@ class Config:
         ['perc_MUD', 'PC1'],
         ['perc_MUD', 'TOC'],
         ['PC1', 'TOC'],
-        ['Dist_Land', 'Depth']
+        # ['Dist_Land', 'Depth']
         ]
     exclusive_keywords: list = ['WWTP']  # only feature_candidates sets with max 1 feature containing each keyword will be considered
-    scoring: dict = {  # dictionary of scores to be used by gridsearch
-                        'R2': 'r2',
-                        'MAPE': 'neg_mean_absolute_percentage_error',
-                        'MedAE': 'neg_median_absolute_error',
-                        # 'MSLE': 'neg_mean_squared_log_error',
+    scorers: dict = {  # dictionary of scores to be used by gridsearch: values are lists of corresponding [scorer, gridsearch refit scorer string or callable]
+                        'R2': [r2_score, 'r2'],
+                        'MAPE': [mean_absolute_percentage_error, 'neg_mean_absolute_percentage_error'],
+                        'MedAE': [median_absolute_error, 'neg_median_absolute_error'],
+                        'MedAPE': [median_absolute_percentage_error, make_scorer(median_absolute_percentage_error, greater_is_better=False)],
+                        # 'MSE': [mean_squared_error, 'neg_mean_squared_error'],
+                        # 'MSLE': [mean_squared_log_error, 'neg_mean_squared_log_error'],
                     }
     refit_scorer: str = 'R2'  # one of the keys in scoring dict above: will be used to refit at set best estimator of the gridsearch object
     select_best: str = 'median'  # type of average to be used to identify the best model of a gridsearch: can be 'median', 'mean' or 'iqm'
+    ncv_mode: str = 'ensemble'  # 'ensemble' for running all activated model param sets against each other, 'comparative' for running separate repNCVs for each model param set
     
 
 Config.bandwidths: np.array = 10 ** np.linspace(0, 3,

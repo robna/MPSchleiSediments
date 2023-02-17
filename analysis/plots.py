@@ -697,3 +697,73 @@ def size_kde_combined_samples_dist_plot(mp_sed_melt, title=''):
 
     return alt.layer(dists, cumsum).resolve_scale(y='independent').properties(width=800, height=400, title=title)#.configure_title(fontSize=20, offset=5, orient='top', anchor='middle')
     
+
+def repNCV_score_plots(scored_multi, return_df=False, ncv_mode=Config.ncv_mode):
+    '''
+    Takes score df of multi-repetition simulations,
+    re-arranges it to suitable long-form and plots
+    a chart of score evoloution against number of
+    repetitions, facetted for scorer type
+    '''
+    if ncv_mode == 'comparative':
+        df = scored_multi.unstack().reset_index().melt(id_vars=['NCV_repetitions', 'run_with'], var_name=['Scorer', 'Aggregation']).dropna()
+    elif ncv_mode == 'ensemble':
+        df = scored_multi.unstack().reset_index().melt(id_vars='NCV_repetitions', var_name=['Scorer', 'Aggregation']).dropna()
+    df. Aggregation = df.Aggregation.str.split('_\d', expand=True)[0].str.strip('_of')
+    df['Mean_of_repetitions'] = ~df.Aggregation.str.contains('_of_all')
+    df. Aggregation = df.Aggregation.str.replace('_of_all', '')
+    df. Aggregation = df.Aggregation.str.replace('Mean_of_', '')
+    df. Aggregation = df.Aggregation.str.rstrip('s').str.lower()
+
+    dfs = df.loc[df.Aggregation.str.contains('stdev')].rename(columns={'value': 'Score_stdev'})
+    dfs.Aggregation = dfs.Aggregation.str.replace('stdev_of_', '')
+
+    df = df.loc[~df.Aggregation.str.contains('stdev')]
+    if ncv_mode == 'comparative':
+        df.sort_values(['run_with', 'NCV_repetitions', 'Aggregation', 'Scorer', 'Mean_of_repetitions'], ascending=[True,True,False,False,False], inplace=True)
+        df = df[['run_with', 'NCV_repetitions', 'Aggregation', 'Scorer', 'Mean_of_repetitions', 'value']].rename(columns={'value': 'Score_value'})
+    if ncv_mode == 'ensemble':
+        df.sort_values(['NCV_repetitions', 'Aggregation', 'Scorer', 'Mean_of_repetitions'], ascending=[True,False,False,False], inplace=True)
+        df = df[['NCV_repetitions', 'Aggregation', 'Scorer', 'Mean_of_repetitions', 'value']].rename(columns={'value': 'Score_value'})
+    df = df.merge(dfs, how='left')
+    
+    base = alt.Chart(df).encode(
+        x='NCV_repetitions',
+        color = alt.Color('Aggregation', sort=['median', 'iqm', 'mean']),
+        tooltip = ['NCV_repetitions', 'Score_value', 'Score_stdev'],
+    ).properties(width=400, height=300,
+    )
+    score = base.mark_line().encode(
+        y = alt.Y('Score_value', title=None),
+        strokeDash = alt.StrokeDash('Mean_of_repetitions', sort=None),
+        opacity = alt.condition(alt.FieldEqualPredicate(field='Mean_of_repetitions', equal='true'), alt.value(1.0), alt.value(0.3)),
+    )
+    stdev = base.mark_area(opacity=0.2).encode(
+        y = 'lower:Q',
+        y2 = 'upper:Q',
+    ).transform_calculate(
+        lower = 'datum.Score_value - 0.5 * datum.Score_stdev',
+        upper = 'datum.Score_value + 0.5 * datum.Score_stdev',
+    ).transform_filter(
+        alt.FieldEqualPredicate(field='Mean_of_repetitions', equal='true'),
+    )
+    cols = (stdev + score).facet(
+        column = alt.Column(
+            'Scorer',
+            sort=['R2', 'MedAPE', 'MAPE', 'MedAE'],
+            title=['Evolution of scores with increasing number of shuffle-repeated NCV runs' \
+                 '   ---   ' \
+                 'Best model candidates in grid search CV was determined by the best ' \
+                 f'{Config.select_best} {Config.refit_scorer} scores among inner test folds']
+            )
+    ).resolve_scale(
+        y='independent'
+    ).interactive(
+    )
+    if ncv_mode == 'comparative':
+        chart = alt.hconcat()
+        for model_class in df.run_with.unique():
+            chart &= cols.transform_filter(alt.FieldEqualPredicate(field='run_with', equal=model_class))
+    else:
+        chart = cols
+    return (chart, df) if return_df else chart

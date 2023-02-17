@@ -1,0 +1,119 @@
+import numpy as np
+import pandas as pd
+import json
+from hashlib import md5
+import pickle
+from pathlib import Path
+from itertools import combinations
+from joblib import Parallel, delayed, cpu_count
+
+
+
+def SelectFeatures(model_X, feature_set, feature_sets):
+    return model_X.loc[:, feature_sets[feature_set]]
+
+
+def generate_feature_sets(featurelist, mutual_exclusive, exclusive_keywords, num_feat='all', n_jobs=1, save=False):
+    """
+    Generate all possible feature combinations of a given size.
+    :param featurelist: list of all available features
+    :param mutual_exclusive: list of lists of features that are mutually exclusive
+    :param exclusive_keywords: list of keywords, for each of which maximum one feature containing it may be present in any given combination
+    :param num_feat: number of features in each set, can be an integer, or a tuple (min, max) or 'all' (default)
+    :return: list of feature sets
+    """
+
+    if isinstance(featurelist, pd.DataFrame):
+        featurelist = featurelist.columns.to_list()
+
+    if num_feat == 'all':
+        min_num , max_num = (1, len(featurelist))
+    elif isinstance(num_feat, int):
+        min_num = max_num = num_feat
+    elif isinstance(num_feat, (list, tuple)):
+        if len(num_feat) == 2:
+            min_num, max_num = num_feat
+        elif len(num_feat) == 1:
+            min_num = num_feat[0]
+            max_num = len(featurelist)
+        else:
+            raise ValueError(f'num_feat as list or tuple may only have two elements (min_num, max_num) OR one element (min_num,) where max_num = len(featurelist). You supplied {type(num_feat)} of length {len(num_feat)}.')
+    else:
+        raise ValueError('num_feat must be an integer, a tuple or "all".')
+        
+    md5_tail = md5(json.dumps(featurelist, sort_keys=True).encode('utf-8')).hexdigest()[-5:]  # get the hash of featurelist
+    flp = Path(f'../data/exports/cache/feature_candidates_list_min{min_num}_max{max_num}_HASH{md5_tail}.pkl')  # feature list path
+    if flp.exists():
+        with open(flp, 'rb') as f:
+            fl =  pickle.load(f)
+            print(f'Loaded feature candidates list from file: {f.name}')
+            print(f'Number of feature sets: {len(fl)}')
+            return fl
+
+    if n_jobs == 1:
+        nfl = [list(combinations(featurelist, l)) for l in range(min_num, max_num+1)]
+        # flatten the list of lists and remove combinations containing mutual exclusive features
+        fl = [
+            list(item)
+                for sublist in nfl
+                for item in sublist
+            if not any(all(pd.Series(ex_feats).isin(item))
+                for ex_feats in mutual_exclusive)
+            and sum(keyword in feat 
+                for keyword in exclusive_keywords
+                for feat in item)
+            <= len(exclusive_keywords)
+            ]
+
+    else:      
+        nfl = Parallel(n_jobs=n_jobs, verbose=1)(delayed(lambda x: list(combinations(featurelist, x)))(x) for x in range(min_num, max_num+1))
+        # flatten and return, using joblib Parallel:
+        fl = Parallel(n_jobs=n_jobs, verbose=1)(delayed(list)(item)
+                for sublist in nfl
+                for item in sublist
+            if not any(all(pd.Series(ex_feats).isin(item))
+                for ex_feats in mutual_exclusive)
+            and sum(keyword in feat
+                for keyword in exclusive_keywords
+                for feat in item)
+            <= len(exclusive_keywords))
+    
+    print(f'Combination generation finished: {len(fl)} combinations generated.')
+    
+    if save:
+        with open(flp, 'wb') as f:
+            pickle.dump(fl, f)
+    return fl
+
+
+def iqm(n):
+    """
+    Returns the interquartile mean input array n
+    Found here: https://codegolf.stackexchange.com/a/86469
+    """
+    return sum(sorted(list(n)*4)[len(n):-len(n)])/len(n)/2
+
+
+def median_absolute_percentage_error(y_true, y_pred, epsilon=np.finfo(np.float64).eps):
+    """
+    Median Absolute Percentage Error
+    :param y_true: true values
+    :param y_pred: predicted values
+    :param epsilon: a small positive value to avoid division by zero
+    :return: Median Absolute Percentage Error
+    """
+    return np.median(np.abs(y_true - y_pred) / np.maximum(epsilon, np.abs(y_true)))
+
+
+def inter_rank(NCV, refit_scorer):
+    if 'Inter-Rep-rank' not in NCV.index.names:
+        ## Make ranking among all folds (across reps)
+        NCV['Inter-Rep_rank'] = NCV[f'test_{refit_scorer}'].rank(ascending=False).astype(int)
+        NCV.set_index('Inter-Rep_rank', append=True, inplace=True)
+    return NCV
+
+
+def unnegate(NCV, negated):
+    ## Convert negated scores back to normal
+    NCV[NCV.filter(regex='|'.join(negated)).columns] *= -1
+    return NCV
