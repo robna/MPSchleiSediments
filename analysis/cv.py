@@ -39,7 +39,6 @@ def make_setup_dict(**kwargs):
         ),
     ]
     return setup
-    
 
 
 def ncv(pipe, params, model_X, model_y, scorers, setup):
@@ -369,16 +368,13 @@ def process_results(NCV, feature_candidates_list, model_X, model_y, params=None,
     
 
 def aggregation(results_summary, setup, ncv_mode=Config.ncv_mode):
-    if ncv_mode == 'ensemble':
-        return aggregate_scores(results_summary, setup)
-    elif ncv_mode == 'comparative':
-        scored_comp = pd.DataFrame()
-        for model_type, group in results_summary.groupby('run_with'):
-            scored = aggregate_scores(group, setup)
-            scored = scored.assign(run_with = model_type)
-            scored.set_index(['run_with', scored.index], inplace=True)
-            scored_comp = pd.concat([scored_comp, scored])
-        return scored_comp
+    scored_comp = pd.DataFrame()
+    for model_type, group in results_summary.groupby('run_with'):
+        scored = aggregate_scores(group, setup)
+        scored = scored.assign(run_with = model_type)
+        scored.set_index(['run_with', scored.index], inplace=True)
+        scored_comp = pd.concat([scored_comp, scored])
+    return scored_comp
     
     
 def aggregate_scores(results_summary, setup):
@@ -435,7 +431,7 @@ def make_header(results_summary, setup, starttime, time_needed, droplist, model_
     Restricted combinations (mutal exclusive features, exclusive keywords):;{Config.mutual_exclusive};{Config.exclusive_keywords}
 
     Scaler:;{scaler}
-    Regressors:;{regressor_params}
+    Regressors:;{[[g['regressor'][0].__class__.__name__, [{k: v} for k, v in g.items() if k.startswith('regressor__')]] for g in regressor_params]}
     Winning candidate of gridsearch (inner CV loop) determined by best;{Config.select_best} {Config.refit_scorer} score; Note: results within each repetition are sorted by this!
 
     CV schemes:

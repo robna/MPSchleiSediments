@@ -698,17 +698,14 @@ def size_kde_combined_samples_dist_plot(mp_sed_melt, title=''):
     return alt.layer(dists, cumsum).resolve_scale(y='independent').properties(width=800, height=400, title=title)#.configure_title(fontSize=20, offset=5, orient='top', anchor='middle')
     
 
-def repNCV_score_plots(scored_multi, return_df=False, ncv_mode=Config.ncv_mode):
+def repNCV_score_plots(scored_multi, return_df=False, ncv_mode=Config.ncv_mode, width=400, height=300):
     '''
     Takes score df of multi-repetition simulations,
     re-arranges it to suitable long-form and plots
     a chart of score evoloution against number of
     repetitions, facetted for scorer type
     '''
-    if ncv_mode == 'comparative':
-        df = scored_multi.unstack().reset_index().melt(id_vars=['NCV_repetitions', 'run_with'], var_name=['Scorer', 'Aggregation']).dropna()
-    elif ncv_mode == 'ensemble':
-        df = scored_multi.unstack().reset_index().melt(id_vars='NCV_repetitions', var_name=['Scorer', 'Aggregation']).dropna()
+    df = scored_multi.unstack().reset_index().melt(id_vars=['NCV_repetitions', 'run_with'], var_name=['Scorer', 'Aggregation']).dropna()
     df. Aggregation = df.Aggregation.str.split('_\d', expand=True)[0].str.strip('_of')
     df['Mean_of_repetitions'] = ~df.Aggregation.str.contains('_of_all')
     df. Aggregation = df.Aggregation.str.replace('_of_all', '')
@@ -719,19 +716,15 @@ def repNCV_score_plots(scored_multi, return_df=False, ncv_mode=Config.ncv_mode):
     dfs.Aggregation = dfs.Aggregation.str.replace('stdev_of_', '')
 
     df = df.loc[~df.Aggregation.str.contains('stdev')]
-    if ncv_mode == 'comparative':
-        df.sort_values(['run_with', 'NCV_repetitions', 'Aggregation', 'Scorer', 'Mean_of_repetitions'], ascending=[True,True,False,False,False], inplace=True)
-        df = df[['run_with', 'NCV_repetitions', 'Aggregation', 'Scorer', 'Mean_of_repetitions', 'value']].rename(columns={'value': 'Score_value'})
-    if ncv_mode == 'ensemble':
-        df.sort_values(['NCV_repetitions', 'Aggregation', 'Scorer', 'Mean_of_repetitions'], ascending=[True,False,False,False], inplace=True)
-        df = df[['NCV_repetitions', 'Aggregation', 'Scorer', 'Mean_of_repetitions', 'value']].rename(columns={'value': 'Score_value'})
+    df.sort_values(['run_with', 'NCV_repetitions', 'Aggregation', 'Scorer', 'Mean_of_repetitions'], ascending=[True,True,False,False,False], inplace=True)
+    df = df[['run_with', 'NCV_repetitions', 'Aggregation', 'Scorer', 'Mean_of_repetitions', 'value']].rename(columns={'value': 'Score_value'})
     df = df.merge(dfs, how='left')
     
     base = alt.Chart(df).encode(
         x='NCV_repetitions',
         color = alt.Color('Aggregation', sort=['median', 'iqm', 'mean']),
         tooltip = ['NCV_repetitions', 'Score_value', 'Score_stdev'],
-    ).properties(width=400, height=300,
+    ).properties(width=width, height=height,
     )
     score = base.mark_line().encode(
         y = alt.Y('Score_value', title=None),
@@ -751,19 +744,27 @@ def repNCV_score_plots(scored_multi, return_df=False, ncv_mode=Config.ncv_mode):
         column = alt.Column(
             'Scorer',
             sort=['R2', 'MedAPE', 'MAPE', 'MedAE'],
-            title=['Evolution of scores with increasing number of shuffle-repeated NCV runs' \
-                 '   ---   ' \
-                 'Best model candidates in grid search CV was determined by the best ' \
-                 f'{Config.select_best} {Config.refit_scorer} scores among inner test folds']
+            title=["Evolution of scores with increasing number of shuffle-repeated NCV runs" \
+                 "   ---   " \
+                 "Best model candidates in grid search CV were determined by the best " \
+                 f"{Config.select_best} {Config.refit_scorer} scores on inner folds' test sets"]
             )
     ).resolve_scale(
         y='independent'
     ).interactive(
-    )
-    if ncv_mode == 'comparative':
-        chart = alt.hconcat()
-        for model_class in df.run_with.unique():
-            chart &= cols.transform_filter(alt.FieldEqualPredicate(field='run_with', equal=model_class))
-    else:
-        chart = cols
+    )    
+    chart = alt.hconcat()
+    for model_class in df.run_with.unique():
+        text = alt.Chart(df_0).mark_text(
+                angle=270,
+                lineBreak=', ',
+                fontSize=16,
+                align="center", baseline="middle"
+            ).encode(
+                x=alt.value(0),  # pixels from left
+                y=alt.value(height / 2),  # pixels from top
+                text=alt.value(model_class)
+            )
+        chart &= (text | cols.transform_filter(alt.FieldEqualPredicate(field='run_with', equal=model_class)))
+    chart = chart.configure_view(strokeWidth=0)
     return (chart, df) if return_df else chart
