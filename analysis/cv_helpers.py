@@ -8,9 +8,22 @@ from itertools import combinations
 from joblib import Parallel, delayed, cpu_count
 
 
-
 def SelectFeatures(model_X, feature_set, feature_sets):
     return model_X.loc[:, feature_sets[feature_set]]
+    ### Maybe better alternative instead of using custom function with FunctionTransformer, use a class... something like:
+    # from sklearn.base import BaseEstimator, TransformerMixin
+    # class FeatureSubsetSelector(BaseEstimator, TransformerMixin):
+    #     def __init__(self, feature_subsets):
+    #         self.feature_subsets = feature_subsets
+            
+    #     def fit(self, X, y=None):
+    #         return self
+        
+    #     def transform(self, X):
+    #         selected_features = []
+    #         for subset in self.feature_subsets:
+    #             selected_features.extend(subset)
+    #         return X[selected_features]
 
 
 def generate_feature_sets(featurelist, mutual_exclusive, exclusive_keywords, num_feat='all', n_jobs=1, save=False):
@@ -41,7 +54,7 @@ def generate_feature_sets(featurelist, mutual_exclusive, exclusive_keywords, num
     else:
         raise ValueError('num_feat must be an integer, a tuple or "all".')
         
-    md5_tail = md5(json.dumps(featurelist, sort_keys=True).encode('utf-8')).hexdigest()[-5:]  # get the hash of featurelist
+    md5_tail = md5(json.dumps([featurelist, mutual_exclusive, exclusive_keywords], sort_keys=True).encode('utf-8')).hexdigest()[-5:]  # get the hash of featurelist, mutual_exclusive and exclusive_keywords
     flp = Path(f'../data/exports/cache/feature_candidates_list_min{min_num}_max{max_num}_HASH{md5_tail}.pkl')  # feature list path
     if flp.exists():
         with open(flp, 'rb') as f:

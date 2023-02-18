@@ -4,6 +4,7 @@ from zipfile import ZipFile
 import geopandas as gpd
 import pandas as pd
 import numpy as np
+from scipy.interpolate import griddata
 import rasterio
 from shapely.geometry import Point, LineString
 from joblib import Parallel, delayed, cpu_count
@@ -258,6 +259,43 @@ def tracer_points_to_lines(tracks):
     Convert the points of the tracer particles to lines
     """
     return tracks.groupby(['season', 'tracer_ESD', 'simPartID'])['geometry'].apply(lambda x: LineString(x.unique().tolist()*2 if len(x.unique().tolist())==1 else x.unique().tolist()))
+
+
+def geospatial_interpolation(gdf, polygon, nonan=True):
+    '''
+    
+    '''
+    xres = yres = Config.interpolation_resolution
+    xmin, ymin, xmax, ymax = polygon.bounds
+    xgrid, ygrid = np.meshgrid(np.arange(xmin, xmax + xres, xres), 
+                               np.arange(ymin, ymax + yres, yres),
+                              )
+    
+    points = np.vstack((gdf.geometry.x, gdf.geometry.y)).T
+    values = griddata(
+        points, gdf['value'],
+        (xgrid, ygrid),
+        method=Config.interpolation_method,  # 'linear' and 'cubic' will result in nan outside of the convex hull of data points
+    )
+
+    if nonan:
+        nan_mask = np.isnan(values)  # if there are any nan points re-interpolate them using method 'nearest'
+        if np.any(nan_mask):
+            values[nan_mask] = griddata(
+                points, gdf['value'],
+                (xgrid, ygrid), method='nearest',
+            )
+
+    clipped = gpd.GeoDataFrame({'value': values.ravel()}, 
+                               geometry=gpd.points_from_xy(xgrid.ravel(),
+                               ygrid.ravel())
+                              )
+    clipped = gpd.overlay(clipped, polygon, how='intersection')
+    clipped = clipped.loc[clipped.intersects(polygon.geometry[0])]
+
+    cell_areas = xres * yres
+    total = (clipped['value'] * cell_areas).sum()
+    return clipped, total
 
 
 ##TODO: the following two functions are not complete yet

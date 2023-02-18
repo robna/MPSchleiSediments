@@ -32,7 +32,7 @@ sediment_data_filepaths = {
 class Config:
     # General data preparation settings
     sediment_grainsize_basis: str = 'Volume_logscale'  # 'Volume' for volume based grainsize distribution, 'Count' for count based
-    min_part_count: float = 0  # how many MP particles are required to be considered as a valid sample 
+    min_part_count: int = 0  # how many MP particles are required to be considered as a valid sample 
     rebinning: bool = False  # whether or not to aggregate sizes to coarser bins
     closing: int = 1  # make comp data closed to int value: 0 for no closure, 1 for fraction, 100 for percentages
     rebin_by_n: int = 5  # make sediment size bins coarser: sum up every n bins into one new
@@ -41,9 +41,11 @@ class Config:
     
     # Geospacial settings
     baw_epsg: int = 25832  # epsg code of the baw data
-    restrict_tracers_to_depth: float = 30  # for BAW tracer particles depth values larger than this, will be replaced by an interpolation from their neighbours, set to 0 for no depth correction
-    station_buffers: int = 444  # buffer radius in meters around each sample station , in which tracer ocurrences from the BAW simulation are counted
-    dem_resolution: float = 5  # resolution of the digital elevation model in meters
+    restrict_tracers_to_depth: float = 30.0  # for BAW tracer particles depth values larger than this, will be replaced by an interpolation from their neighbours, set to 0 for no depth correction
+    station_buffers: float = 444.0  # buffer radius in meters around each sample station , in which tracer ocurrences from the BAW simulation are counted
+    dem_resolution: float = 5.0  # resolution of the digital elevation model in meters
+    interpolation_resolution: float = 10.0  # spatial resolution for geospatial interpolation in metres
+    interpolation_method: str = 'linear'  # {‘linear’, ‘nearest’, ‘cubic’} method for scipy.interpolate.griddata
     use_seasons: list = ['spring']  # which seasons to use for the tracer-based WWTP influence estimation, 'summer','autumn',
     sed_contact_dist: float = 0.01  # distance in meters to the sediment contact, below which a tracer is considered to have sedimented
     sed_contact_dur: int = 2  # number of timesteps a tracer has to be closer to the sediment than sed_contact_dist to be considered as sedimented
@@ -52,23 +54,23 @@ class Config:
 
     # Settings for streamlit app filters (the actual values of these are controlled by the app filters)
     size_dim: str = 'vESD'  # which size dimension to use for the analysis
-    lower_size_limit: float = 0  # the smallest particle size in µm included in the kde computation
-    upper_size_limit: float = 5000  # the largest particle size in µm included in the kde computation
-    lower_density_limit: float = 900  # the smallest particle density in kg/m3 included in the analysis
-    upper_density_limit: float = 2000  # the largest particle density in kg/m3 included in the analysis
+    lower_size_limit: float = 0.0  # the smallest particle size in µm included in the kde computation
+    upper_size_limit: float = 5000.0  # the largest particle size in µm included in the kde computation
+    lower_density_limit: float = 900.0  # the smallest particle density in kg/m3 included in the analysis
+    upper_density_limit: float = 2000.0  # the largest particle density in kg/m3 included in the analysis
 
     # KDE settings
     optimise_bw: bool = False  # if True: compute an individual bandwidth for each sample before computing the KDE
     bws_to_test: int = 100  # if optimise_bw = True: how many bandwidth values should be tried out?
-    fixed_bw: int = 75  # if optimise_bw = False: fixed bandwidth value to use for all kde's
+    fixed_bw: float = 20.0  # if optimise_bw = False: fixed bandwidth value to use for all kde's
     kernel: str = 'gaussian'  # type of kernel to be used
     kde_weights: str = 'particle_volume_share'  # None for count-based distributions, 'particle_volume_share' for volume-based distributions or 'particle_mass_share' for mass-based distributions
     bin_conc: bool = False  # True: calculate MP conc. (#/kg) for individual size bins; False: calculate percentages
 
     # Settings for shape-constrained rpy2 KDE for particle heights
-    height_low: float = 0  # lowest height value which should be selected for height update from KDE
-    height_high: float = 20  # highest height value which should be selected for height update from KDE
-    exceed_high_by: float = 50  # sampled heights from KDE may be up to this much bigger (in %) than height_high
+    height_low: float = 0.0  # lowest height value which should be selected for height update from KDE
+    height_high: float = 20.0  # highest height value which should be selected for height update from KDE
+    exceed_high_by: float = 50.0  # sampled heights from KDE may be up to this much bigger (in %) than height_high
 
     # Settings for the statsmodels GLM
     glm_family: str = 'Poisson'  # type of family to be used for the GLM
