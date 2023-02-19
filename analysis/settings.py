@@ -105,7 +105,7 @@ class Config:
                     }
     refit_scorer: str = 'R2'  # one of the keys in scoring dict above: will be used to refit at set best estimator of the gridsearch object
     select_best: str = 'median'  # type of average to be used to identify the best model of a gridsearch: can be 'median', 'mean' or 'iqm'
-    ncv_mode: str = 'ensemble'  # 'ensemble' for running all activated model param sets against each other, 'comparative' for running separate repNCVs for each model param set
+    ncv_mode: str = 'competitive'  # 'competitive' for running all activated model param sets against each other, 'comparative' for running separate repNCVs for each model param set
     
 
 Config.bandwidths: np.array = 10 ** np.linspace(0, 3,

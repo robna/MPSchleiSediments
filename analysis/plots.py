@@ -723,13 +723,13 @@ def repNCV_score_plots(scored_multi, return_df=False, ncv_mode=Config.ncv_mode, 
     base = alt.Chart(df).encode(
         x='NCV_repetitions',
         color = alt.Color('Aggregation', sort=['median', 'iqm', 'mean']),
-        tooltip = ['NCV_repetitions', 'Score_value', 'Score_stdev'],
     ).properties(width=width, height=height,
     )
-    score = base.mark_line().encode(
+    score = base.mark_line(point=True).encode(
         y = alt.Y('Score_value', title=None),
         strokeDash = alt.StrokeDash('Mean_of_repetitions', sort=None),
         opacity = alt.condition(alt.FieldEqualPredicate(field='Mean_of_repetitions', equal='true'), alt.value(1.0), alt.value(0.3)),
+        tooltip = ['NCV_repetitions', 'Score_value', 'Score_stdev'],
     )
     stdev = base.mark_area(opacity=0.2).encode(
         y = 'lower:Q',

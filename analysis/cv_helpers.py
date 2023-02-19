@@ -130,3 +130,49 @@ def unnegate(NCV, negated):
     ## Convert negated scores back to normal
     NCV[NCV.filter(regex='|'.join(negated)).columns] *= -1
     return NCV
+
+
+def fix_feature_combis(params, feature_candidates_list, lin_combis=[2,3], tree_combis=[5]):
+    '''
+    Small helper function to use different model classes,
+    i.e. linear (TweedieRegressor and XGB with linear booster)
+         and tree-based (XGB with tree booster and RF)
+    with different lengths of allowed feature combinations.
+    In default it will prepare the gridsearch param-grid such
+    that the linear models will run on all possible combinations
+    of 2 or 3 features, while tree models will run on all
+    combinations of 5 features.
+    '''
+    lin_fsets = [fset for fset in feature_candidates_list if len(fset) in lin_combis]
+    lin_flst = [{'feature_set': i} for i in range(len(lin_fsets))]
+    [d.update({'feature_sets': lin_fsets}) for d in lin_flst]
+
+    tree_fsets = [fset for fset in feature_candidates_list if len(fset) in tree_combis]
+    tree_flst = [{'feature_set': i} for i in range(len(tree_fsets))]
+    [d.update({'feature_sets': tree_fsets}) for d in tree_flst]
+
+    for i, pg in enumerate(params):
+        rn = pg['regressor'][0].__class__.__name__
+        if rn == 'TweedieRegressor':
+            l = len(params[i]['preprocessor__selector__kw_args'])
+            params[i]['preprocessor__selector__kw_args'] = lin_flst
+            l2 = len(params[i]['preprocessor__selector__kw_args'])
+            print(f'{rn}: Number of feature sets changed from {l} to {l2}')
+        elif rn == 'XGBRegressor':
+            if pg['regressor__booster'][0] == 'gblinear':
+                l = len(params[i]['preprocessor__selector__kw_args'])
+                params[i]['preprocessor__selector__kw_args'] = lin_flst
+                l2 = len(params[i]['preprocessor__selector__kw_args'])
+                print(f'{rn} {pg["regressor__booster"][0]}: Number of feature sets changed from {l} to {l2}')
+            else:
+                l = len(params[i]['preprocessor__selector__kw_args'])
+                params[i]['preprocessor__selector__kw_args'] = tree_flst
+                l2 = len(params[i]['preprocessor__selector__kw_args'])
+                print(f'{rn} {pg["regressor__booster"][0]}: Number of feature sets changed from {l} to {l2}')
+        else:
+            l = len(params[i]['preprocessor__selector__kw_args'])
+            params[i]['preprocessor__selector__kw_args'] = tree_flst
+            l2 = len(params[i]['preprocessor__selector__kw_args'])
+            print(f'{rn}: Number of feature sets changed from {l} to {l2}')
+    return params
+    

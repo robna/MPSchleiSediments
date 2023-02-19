@@ -13,7 +13,7 @@ from sklearn import clone
 from sklearn.utils import parallel_backend
 
 import glm
-from cv_helpers import iqm
+from cv_helpers import iqm, median_absolute_percentage_error
 from settings import Config, featurelist
 
 
@@ -92,7 +92,7 @@ def ncv(pipe, params, model_X, model_y, scorers, setup):
         model_y,
         scoring=scorers,
         cv=setup['cv_scheme'][0],
-        return_train_score=True,
+        return_train_score=False,
         return_estimator=True,
         verbose=setup['verbosity'][0],
         n_jobs=setup['n_jobs'][0]
@@ -145,6 +145,8 @@ def rep_ncv(pipe, params, model_X, model_y, scorers, setup):
         setup['repeats'] = (i, setup['repeats'][1])
         print_end(setup['repeats'][0], time_needed, msg=f'Stopped early after {setup["repeats"][0]} of {repetitions} repetitions.')
         return NCV, starttime, time_needed, setup
+
+    get_inner_test_scores(NCV)
 
     print_end(repetitions, time_needed)
     return NCV, starttime, time_needed, setup
@@ -201,7 +203,7 @@ def best_scored(cv_results):
     """
     Find the best median / mean / interquartile mean score from a cross-validation result dictionary.
     :param cv_results: dictionary of cross-validation results
-    :return: index of best median score
+    :return: index of best scoring candidate accoring to the chosen refit scorer and aggregation method
     """
 
     inner_test_scores = np.array([
@@ -218,7 +220,7 @@ def best_scored(cv_results):
     elif Config.select_best == 'iqm':
         avg_inner_test_scores = np.array([iqm(s) for s in inner_test_scores.T])
     else:
-        raise ValueError(f'Can only select for best mean, median or iqm score. You supplied {Config.select_best}')
+        raise ValueError(f'Can only select for best mean, median or iqm score. You supplied "{Config.select_best}".')
     return avg_inner_test_scores.argmax()
     
 
@@ -264,7 +266,14 @@ def get_iqm_cv_scores(outerCV):
 
             res[f'iqm_test_{k}'] = res_df[f'iqm_test_{k}'].to_numpy()
             res[f'rank_by_iqm_test_{k}'] = res_df[f'rank_by_iqm_test_{k}'].to_numpy()
-            
+
+
+def get_inner_test_scores(NCV):
+    for idx in NCV.index:
+        b = NCV.loc[idx].estimator.cv_results_[f'rank_by_{Config.select_best}_test_{Config.refit_scorer}'].argmin()  # get index of candidate which won this round
+        for s in Config.scorers.keys():
+            NCV.loc[idx, f'inner_test_{s}'] = NCV.loc[idx].estimator.cv_results_[f'{Config.select_best}_test_{s}'][b]
+
 
 def get_test_sets(splitter, model_X):
     """
@@ -408,18 +417,35 @@ def aggregate_scores(results_summary, setup):
     return scored
 
 
+def rensembling(results_summary):
+    '''
+    For repNCV results from running in comparative mode,
+    the corresponding results that would have come out
+    of an equivalent run in competitive mode, can be generated
+    and get appended below the results_summary DF.
+    '''
+    if Config.ncv_mode == 'comparative':
+        rensembled = results_summary.rename(  # Turning index level for model class into combined string of all classes like in competitive mode
+        index={
+            r: '# Competitive mode: , ' + ', '.join(list(results_summary.index.levels[0]))
+            for r in results_summary.index.get_level_values(0)
+        })
+        ensemble_idx = rensembled.groupby(['NCV_repetition', 'OuterCV_fold'])[f'inner_test_{Config.refit_scorer}'].agg(pd.Series.idxmax).to_list()
+        results_summary = pd.concat([results_summary, rensembled.loc[ensemble_idx]])
+    return results_summary
+
+
 def make_header(results_summary, setup, starttime, time_needed, droplist, model_X, num_feat, feature_candidates_list, scaler, regressor_params):
     ## Create a dataframe of aggregated scores and standard deviations
     scored = aggregate_scores(results_summary, setup)    
-    scored = scored.round(4).to_csv(sep=';') if Config.ncv_mode=='ensemble' else 'COMPARATIVE RUN: no common scores available. Look at the individual scores of each model class!'
+    scored = scored.round(4).to_csv(sep=';') if Config.ncv_mode=='competitive' else 'COMPARATIVE RUN: no common scores available. Look at the individual scores of each model class!'
     ## Prepare meta-data header of NCV run for export to file
-    savestamp = starttime.strftime("%Y%m%d_%H%M%S")
     header = f'''
 
     ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    Model started:;{savestamp}
+    Model started:;{starttime}
     Duration:;{time_needed} on {joblib.cpu_count()} cpu cores
     Outliers excluded {len(droplist)}:;{droplist}
     Samples:;{model_X.index.to_list()}
