@@ -26,7 +26,10 @@ sediment_data_filepaths = {
     'IOW_Volume_logscale': 'data/sediment_grainsize_IOW_vol_log-cau_not-closed.csv',
     'IOW_Volume_linscale': 'data/sediment_grainsize_IOW_vol_linear_not-closed.csv',
     'IOW_Counts_logscale': 'data/sediment_grainsize_IOW_count_log-cau_not-closed.csv',
-    'CAU_Volume_logscale': 'data/sediment_grainsize_CAU_vol_log-cau_closed.csv'
+    'CAU_Volume_logscale': 'data/sediment_grainsize_CAU_vol_log-cau_closed.csv',
+    'IOW_GRADISTAT_Volume_logscale': 'data/GRADISTAT_IOW_vol_log-cau_not-closed.csv',
+    'IOW_GRADISTAT_Counts_logscale': 'data/GRADISTAT_IOW_count_log-cau_not-closed.csv',
+    'CAU_GRADISTAT_Volume_logscale': 'data/GRADISTAT_CAU_vol_log-cau_closed.csv',
 }
 
 class Config:
@@ -58,6 +61,7 @@ class Config:
     upper_size_limit: float = 5000.0  # the largest particle size in µm included in the kde computation
     lower_density_limit: float = 900.0  # the smallest particle density in kg/m3 included in the analysis
     upper_density_limit: float = 2000.0  # the largest particle density in kg/m3 included in the analysis
+    size_filter_on_sed_grainsizes: bool = False  # whether to also filter grainsize df using the lower and upper_size_limit
 
     # KDE settings
     optimise_bw: bool = False  # if True: compute an individual bandwidth for each sample before computing the KDE

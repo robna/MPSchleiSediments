@@ -22,8 +22,8 @@ def general_settings():
                                           '(selecting "None" means distributions are particle count-based, ' \
                                           '"particle_volume_share" means volume distributions, ' \
                                           '"particle_mass_share" means mass distributions)',
-                                          [None, 'particle_volume_share', 'particle_mass_share'])
-    Config.fixed_bw = st.sidebar.number_input('Fixed bandwidth for MP size distribution KDEs (no optimisation)', value=20.0, min_value=0.0, max_value=200.0, step=10.0)
+                                          [None, 'particle_volume_share', 'particle_mass_share'], index=1)
+    Config.fixed_bw = st.sidebar.number_input('Fixed bandwidth for MP size distribution KDEs (no optimisation)', value=18.0, min_value=0.0, max_value=200.0, step=10.0)
     Config.optimise_bw = st.sidebar.checkbox('Optimise KDE bandwidth for each sample? (very slow, check console output...)')
     Config.size_dim = st.sidebar.radio('Select size dimension', ['size_geom_mean', 'Size_1_µm', 'Size_2_µm', 'Size_3_µm',
                                                                  'vESD', 'particle_volume_µm3', 'particle_mass_µg'], index=4)
@@ -32,16 +32,17 @@ def general_settings():
 
 def pdd_filters(mp_pdd):
     st.sidebar.write('**Filters for particle domain data**')
+    Config.size_filter_on_sed_grainsizes = st.sidebar.checkbox('Apply set size limits also to sediment grain size data?')
     size_lims = floor(mp_pdd[Config.size_dim].min() / 10) * 10, ceil(mp_pdd[Config.size_dim].max() / 10) * 10
     Config.lower_size_limit = st.sidebar.number_input('Lower size limit (with respect to selected size dimension)',
                                                       value=size_lims[0],
-                                                      min_value=size_lims[0],
+                                                      min_value=0,
                                                       max_value=size_lims[1],
                                                       step=100)
     Config.upper_size_limit = st.sidebar.number_input('Upper size limit (with respect to selected size dimension)',
                                                       value=size_lims[1],
                                                       min_value=size_lims[0],
-                                                      max_value=size_lims[1],
+                                                      max_value=200_000_000,  # needs to be this large for particle_volume_µm3
                                                       step=100)
     density_lims = mp_pdd.density.min().astype(int).item(), mp_pdd.density.max().astype(int).item()
     Config.lower_density_limit = st.sidebar.number_input('Lower density limit',

@@ -74,6 +74,22 @@ def get_grainsizes(
     return grainsize_iow, grainsize_cau, boundaries
 
 
+def get_medians_from_size_dist(size_pmf, boundaries_dict, medians_name):
+    size_cpmf = size_pmf.cumsum(axis=1) # cumulative sum of the probability mass functions
+    size_bin_number_containing_median = (size_cpmf.T.reset_index(drop=True).T - 0.5).abs().idxmin(axis=1)  # Find the size bins which enclose the 50% of the probability mass. OBS: if choosing a different colsing value than 1, the subtractionnn of 0.5 needs to be adjusted!!
+    medians = pd.DataFrame(boundaries_dict).center[size_bin_number_containing_median]
+    medians.name = medians_name
+    medians.index = size_bin_number_containing_median.index
+    return medians
+
+
+def get_mode1s_from_size_dist(size_pmf, boundaries_dict, mode1s_name):
+    size_bin_number_containing_mode1 = size_pmf.T.reset_index(drop=True).T.idxmax(axis=1)  # Find the size bins with the maximum probability (i.e. the mode of the distribution)
+    mode1s = pd.DataFrame(boundaries_dict).center[size_bin_number_containing_mode1]
+    mode1s.name = mode1s_name
+    mode1s.index = size_bin_number_containing_mode1.index
+    return mode1s
+
 def height_vol_dens_mass(df):
     """Adds height, volume, density and mass to each MP particle"""
 
@@ -197,7 +213,8 @@ def additional_sdd_merging(mp_sdd, how='left'):
     # sed_d50 = pd.read_csv('../csv/Schlei_Sed_D50_<63.csv', index_col=0)
 
     # import gradistat results
-    sed_gradistat = pd.read_csv('../data/GRADISTAT_IOW_vol_log-cau_not-closed.csv', index_col=0)
+    IOW_sed_gradistat_path=sediment_data_filepaths[f'IOW_GRADISTAT_{Config.sediment_grainsize_basis}']
+    sed_gradistat = pd.read_csv(f'../{IOW_sed_gradistat_path}', index_col=0)
     if Config.vertical_merge:
         sed_gradistat = merge_vertical(sed_gradistat, avg=True)
     sed_gradistat = fix_gradistat_names(sed_gradistat)
@@ -347,8 +364,14 @@ def sediment_preps(sed_df):
 
     sed_df = sed_df.groupby('Sample').mean(numeric_only=True)  # average all repeated Master Sizer measurements on individual samples
     # sed_df.rename(columns={'0.01': '0'}, inplace=True)  # renaming lowest size bin to 0
-    sed_df = sed_df.loc[:,
-             pd.to_numeric(sed_df.columns, errors='coerce') > 0]  # only keep columns that hold size bin data
+    size_cols = pd.to_numeric(sed_df.columns, errors='coerce')  # only columns that hold size bin data
+    if Config.size_filter_on_sed_grainsizes:
+        sed_df = sed_df.loc[:,  # keep only size bin columns which are between set size limits
+            (size_cols > Config.lower_size_limit) &
+            (size_cols <= Config.upper_size_limit) 
+        ]
+    else:
+        sed_df = sed_df.loc[:, size_cols > 0]  # keep only size bin columns
     sed_df.columns = sed_df.columns.astype(float)
 
     if Config.rebinning:
@@ -370,7 +393,7 @@ def close_compositional_data(df, full=Config.closing):
     """
     Closes compositional data according to `full` value. In the closed df the sum of all rows will equal to `full`.
     """
-
+    print(df)
     df[:] = closure(df.to_numpy()) * full
     return df
 

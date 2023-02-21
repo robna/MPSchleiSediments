@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from functools import reduce
 from statsmodels.graphics.gofplots import qqplot
 from sklearn.metrics import r2_score
 
@@ -29,14 +30,14 @@ import streamlit as st
 st.set_page_config(layout="wide")
 
 #%% Define variables to use
-endogs = ['Concentration', 'MassConcentration', 'MP_D50', 'MP_size_median_from_KDE',]  # endogs
+endogs = ['Concentration', 'MassConcentration', 'MP_D50', 'MP_size_median_from_KDE', 'MP_size_mode1_from_KDE']  # endogs
 endog_derivatives = [
     'ConcentrationA500', 'ConcentrationB500', 'ConcentrationA500_div_B500',  # endog derivatives
     # 'pred_Ord_Poly_ConcentrationA500', 'pred_TMP_ConcentrationA500','pred_Paint_ConcentrationA500',  # more endog derivatives
     # 'Concentration_paint', 'Concentration_PS_Beads', 'Concentration_ord_poly', 'Concentration_irregular',  # even more endog derivatives
 ]
 additional_exogs = [
-    'LON', 'LAT', 'X', 'Y', 'Depth', 'Dist_Land', 'Dist_Marina', 'Dist_WWTP', 'Dist_WWTP2', 'regio_sep', 'OM_D50', 'Split', 'TOC', 'SED_MODE1'
+    'LON', 'LAT', 'X', 'Y', 'Depth', 'Dist_Land', 'Dist_Marina', 'Dist_WWTP', 'Dist_WWTP2', 'regio_sep', 'OM_D50', 'Split', 'TOC', 'SED_MODE1', 'SED_medians_from_grainsizes', 'SED_mode1s_from_grainsizes'
 ]
 featurelist = endogs + endog_derivatives + [f for f in additional_exogs if f not in featurelist] + featurelist + ['Sample']
 
@@ -57,8 +58,21 @@ def main():
     sdd_iow = sdd_filters(sdd_iow)  # additional filters in siedbar can be used to limit which samples are included
 
     sed_scor, grainsize_iow, boundaries_dict = load_grainsize_data()
-    KDE_medians, mp_sed_melt = get_size_kde(mp_pdd, boundaries_dict, grainsize_iow)
-    df = sdd_iow.merge(sed_scor, right_index=True, left_on='Sample', how='left').join(KDE_medians, on='Sample')
+    KDE_medians, KDE_mode1, mp_sed_melt, grainsize_iow = get_size_kde(mp_pdd, boundaries_dict, grainsize_iow)
+    sed_medians_from_grainsizes = prepare_data.get_medians_from_size_dist(grainsize_iow, boundaries_dict, 'SED_medians_from_grainsizes')
+    sed_mode1s_from_grainsizes = prepare_data.get_mode1s_from_size_dist(grainsize_iow, boundaries_dict, 'SED_mode1s_from_grainsizes')
+    dfs_to_merge = [
+        sed_scor.rename_axis(index='Sample').reset_index(),
+        KDE_medians,
+        KDE_mode1,
+        sed_medians_from_grainsizes,
+        sed_mode1s_from_grainsizes,
+        ]
+    df = reduce(lambda  left,right: pd.merge(
+        left,right,on=['Sample'], how='left'),
+        dfs_to_merge,
+        sdd_iow,
+        )
     
     if raw_data_checkbox:
         df_expander(mp_pdd, "Filtered MP particle domain data")
@@ -72,11 +86,9 @@ def main():
             cols[2].text("")  # empty line to make some distance
             cols[2].write('Regression parameters:')
             cols[2].write(particle_reg_params)
-        df_expander(df, "MP sample domain data", height=1000)
-
-    if raw_data_checkbox:
+        df_expander(df, "MP sample domain data", height=1000)       
         df_expander(grainsize_iow, f"Sediment grainsize data (IOW), loaded from: {sediment_data_filepaths[f'IOW_{Config.sediment_grainsize_basis}']}", row_sums=True)
-        
+
 #%%
     # new_cap('Map')
     # if st.checkbox('Plot map'):

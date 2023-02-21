@@ -8,14 +8,14 @@ from settings import Config, sediment_data_filepaths
 import streamlit as st
 
 
-@st.cache()
+# @st.cache()
 def data_load_and_prep():
     mp_pdd = prepare_data.get_pdd()
     #mp_pdd = use_shortnames(mp_pdd)
     return mp_pdd
 
 
-@st.cache()
+# @st.cache()
 def load_grainsize_data():
     # Import sediment data (sediment frequencies per size bin from master sizer export)
     grainsize_iow, grainsize_cau, boundaries_dict = prepare_data.get_grainsizes(sediment_data_filepaths[f'IOW_{Config.sediment_grainsize_basis}'])
@@ -24,7 +24,7 @@ def load_grainsize_data():
     return sed_scor, grainsize_iow, boundaries_dict
 
 
-@st.cache()
+# @st.cache()
 def pdd2sdd(mp_pdd):
     # ...some data wrangling to prepare particle domain data and sample domain data for MP and combine with certain sediment aggregates.
     mp_sdd = prepare_data.aggregate_SDD(mp_pdd)
@@ -47,17 +47,16 @@ def pdd2sdd(mp_pdd):
     return sdd_iow
 
 
-@st.cache()
+# @st.cache()
 def get_size_kde(mp_pdd, boundaries_dict, grainsize_iow):
     boundaries = boundaries_dict['center']
     mp_size_pdfs = KDE_utils.per_sample_kde(mp_pdd, boundaries, size_dim = Config.size_dim, weight_col=Config.kde_weights, bw=Config.fixed_bw, optimise=Config.optimise_bw)  # calculate mp size probability density functions
     mp_size_pmf = KDE_utils.probDens2prob(mp_size_pdfs)  # calculate mp size probability mass functions, i.e. probability of finding a MP particle in a specific size bin
     mp_size_pmf.columns = grainsize_iow.columns[:-1]  # when using "centers" of size bin boundaries for KDE, we need to adjust the column names to match with the sediment df again!
-    _, _, mp_sed_melt = prepare_data.equalise_mp_and_sed(mp_size_pmf, grainsize_iow)  # if needed: returns truncated copies of mp_size_pmf and grainsize_iow as element [0] and [1].
-    mp_size_cpmf = mp_size_pmf.cumsum(axis=1) # cumulative sum of the probability mass functions
-    size_bin_number_containing_median = (mp_size_cpmf.T.reset_index(drop=True).T - 0.5).abs().idxmin(axis=1)  # Find the size bins which enclose the 50% of the probability mass. OBS: if choosing a different colsing value than 1, the subtractionnn of 0.5 needs to be adjusted!!
-    KDE_medians = pd.DataFrame(boundaries_dict).center[size_bin_number_containing_median]
-    KDE_medians.name = 'MP_size_median_from_KDE'
-    KDE_medians.index = size_bin_number_containing_median.index
-    return KDE_medians, mp_sed_melt
+    
+    _, grainsize_iow, mp_sed_melt = prepare_data.equalise_mp_and_sed(mp_size_pmf, grainsize_iow)  # if needed: returns truncated copies of mp_size_pmf and grainsize_iow as element [0] and [1].
+    
+    KDE_medians = prepare_data.get_medians_from_size_dist(mp_size_pmf, boundaries_dict, 'MP_size_median_from_KDE')
+    KDE_mode1 = prepare_data.get_mode1s_from_size_dist(mp_size_pmf, boundaries_dict, 'MP_size_mode1_from_KDE')
 
+    return KDE_medians, KDE_mode1, mp_sed_melt, grainsize_iow
