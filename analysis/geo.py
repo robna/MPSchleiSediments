@@ -80,8 +80,8 @@ def get_BAW_traces(file, polygon=None, save_tracks=True):
     
     tracklines = tracer_points_to_lines(tracks)
     if save_tracks:
-        tracks.to_file('../data/exports/BAW_tracer_points.geojson', driver='GeoJSON')
-        tracklines.to_file('../data/exports/BAW_tracer_lines.geojson', driver='GeoJSON')
+        tracks.to_file('../data/exports/geo/BAW_tracer_points.geojson', driver='GeoJSON')
+        tracklines.to_file('../data/exports/geo/BAW_tracer_lines.geojson', driver='GeoJSON')
     return tracks, tracklines
 
 

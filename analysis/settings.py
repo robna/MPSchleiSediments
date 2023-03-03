@@ -290,7 +290,7 @@ def getLogger(log_path=Config.log_path, log_file=Config.log_file):
     # set level
     logger.setLevel(logging.INFO)
     # set logging format
-    logFormatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    logFormatter = logging.Formatter('%(message)s')  # ('%(asctime)s - %(levelname)s - %(message)s')
     # add file handler
     fileHandler = logging.FileHandler(str(log_path) + '/' + log_file, encoding='utf-8')
     fileHandler.setLevel(logging.INFO)
@@ -301,4 +301,5 @@ def getLogger(log_path=Config.log_path, log_file=Config.log_file):
     # consoleHandler.setLevel(logging.INFO)
     # consoleHandler.setFormatter(logFormatter)
     # logger.addHandler(consoleHandler)
+    logger.handlers[0].setFormatter(logFormatter)  # also format the root handler
     return logger

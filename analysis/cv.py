@@ -21,6 +21,47 @@ from settings import Config, featurelist, getLogger
 logger = getLogger()
 
 
+def loocv(df):
+    """
+    Perform LOOCV on a dataframe.
+    :param df: dataframe containing target and predictors
+    :return pred: dataframes with predictions and metrics
+    """
+    pred = pd.DataFrame(columns=['Sample', 'pred'])  # create empty dataframe for predictions
+    n = df.shape[0]  # number of samples
+    p = Config.glm_formula.count('+') + Config.glm_formula.count('*') + 1  # number of predictors
+    for train_index, test_index in LeaveOneOut(df.shape[0]):
+        train = df.loc[train_index, :]
+        test = df.loc[test_index, :]
+        glm_res = glm.glm(train)
+        predi = pd.concat([test.Sample, glm_res.predict(test).rename('pred')], axis=1)
+        pred = pd.concat([pred, predi])
+
+    target = df.loc[:, Config.glm_formula.split(' ~')[0]]  # isolate target variable (observed values)
+    target_name = Config.glm_formula.split(' ~')[0]
+    pred.loc[:, target_name] = target
+
+    maxe = max_error(target, pred.pred)
+    medae = median_absolute_error(target, pred.pred)
+    medape = median_absolute_percentage_error(target, pred.pred)
+    mae = mean_absolute_error(target, pred.pred)
+    mape = mean_absolute_percentage_error(target, pred.pred)
+    rmse = np.sqrt(mean_squared_error(target, pred.pred))
+    r2 = r2_score(target, pred.pred)
+    adj_r2 = 1 - (1 - r2) * (n - 1) / (n - p)
+
+    metrics = pd.DataFrame(columns=['Metric', 'Value', 'Info'])
+    metrics.loc[0] = ['Max Error', maxe, f"Where: {pred.loc[np.abs(target - pred.pred ).idxmax(), 'Sample']}"]
+    metrics.loc[1] = ['Median Absolute Error', medae, 'In units of target variable']
+    metrics.loc[2] = ['Median Absolute Percentage Error', medape, 'Relative error: 0 (no error), 1 (100% misestimated), >1 (arbitrarily wrong)']
+    metrics.loc[3] = ['Mean Absolute Error', mae, 'In units of target variable']
+    metrics.loc[4] = ['Mean Absolute Percentage Error', mape, 'Relative error: 0 (no error), 1 (100% misestimated), >1 (arbitrarily wrong)']
+    metrics.loc[5] = ['Root Mean Square Error', rmse, 'In units of target variable']
+    metrics.loc[6] = ['R²', r2, 'From 1 (perfect prediction) and 0 (just as good as predicting the mean) to neg. infinity (arbitrarily wrong)']
+    metrics.loc[7] = ['Adjusted R²', adj_r2, 'Like R² but takes into account sample and feature number. An additional feature is justified if it increases this metric.']
+    return pred, metrics
+
+
 def make_setup_dict(**kwargs):
     setup = kwargs  # dict of lists of NCV parameter settings: first element for outer, second for inner CV    
     if 'repeats' in setup.keys():
@@ -156,6 +197,10 @@ def rep_ncv(pipe, params, model_X, model_y, scorers, setup):
     return NCV, setup
 
 
+def print_start(starttime):
+    logger.info(f'\n\n\n\nStarted new {Config.ncv_mode} model run with savestamp: {starttime.strftime("%Y%m%d_%H%M%S")}')
+
+    
 def print_end(r, t, msg=None):
     if msg:
         logger.info(msg)
@@ -164,7 +209,7 @@ def print_end(r, t, msg=None):
 
 def compete_rep_ncv(pipe, params, model_X, model_y, scorers, setup):
     starttime = datetime.now()
-    logger.info(f'\n\n\n\nStarted new model run with savestamp: {starttime.strftime("%Y%m%d_%H%M%S")}')
+    print_start(starttime)
     name_reg = [pg['regressor'][0].__class__.__name__ for pg in params]
     NCV, setup = rep_ncv(pipe, params, model_X, model_y, scorers, setup)
     NCV = NCV.assign(run_with = ', '.join(name_reg))
@@ -175,7 +220,7 @@ def compete_rep_ncv(pipe, params, model_X, model_y, scorers, setup):
 
 def compara_rep_ncv(pipe, params, model_X, model_y, scorers, setup):
     starttime = datetime.now()
-    logger.info(f'\n\n\n\nStarted new model run with savestamp: {starttime.strftime("%Y%m%d_%H%M%S")}')
+    print_start(starttime)
     NCV = pd.DataFrame()
     for param_set in params:
         name_reg = param_set['regressor'][0].__class__.__name__
@@ -189,47 +234,6 @@ def compara_rep_ncv(pipe, params, model_X, model_y, scorers, setup):
     time_needed = datetime.now() - starttime
     logger.info(f'\n\n    Finished all {len(params)} comparative model runs in {time_needed}\n\n')
     return NCV, setup, starttime, time_needed
-
-
-def loocv(df):
-    """
-    Perform LOOCV on a dataframe.
-    :param df: dataframe containing target and predictors
-    :return pred: dataframes with predictions and metrics
-    """
-    pred = pd.DataFrame(columns=['Sample', 'pred'])  # create empty dataframe for predictions
-    n = df.shape[0]  # number of samples
-    p = Config.glm_formula.count('+') + Config.glm_formula.count('*') + 1  # number of predictors
-    for train_index, test_index in LeaveOneOut(df.shape[0]):
-        train = df.loc[train_index, :]
-        test = df.loc[test_index, :]
-        glm_res = glm.glm(train)
-        predi = pd.concat([test.Sample, glm_res.predict(test).rename('pred')], axis=1)
-        pred = pd.concat([pred, predi])
-
-    target = df.loc[:, Config.glm_formula.split(' ~')[0]]  # isolate target variable (observed values)
-    target_name = Config.glm_formula.split(' ~')[0]
-    pred.loc[:, target_name] = target
-
-    maxe = max_error(target, pred.pred)
-    medae = median_absolute_error(target, pred.pred)
-    medape = median_absolute_percentage_error(target, pred.pred)
-    mae = mean_absolute_error(target, pred.pred)
-    mape = mean_absolute_percentage_error(target, pred.pred)
-    rmse = np.sqrt(mean_squared_error(target, pred.pred))
-    r2 = r2_score(target, pred.pred)
-    adj_r2 = 1 - (1 - r2) * (n - 1) / (n - p)
-
-    metrics = pd.DataFrame(columns=['Metric', 'Value', 'Info'])
-    metrics.loc[0] = ['Max Error', maxe, f"Where: {pred.loc[np.abs(target - pred.pred ).idxmax(), 'Sample']}"]
-    metrics.loc[1] = ['Median Absolute Error', medae, 'In units of target variable']
-    metrics.loc[2] = ['Median Absolute Percentage Error', medape, 'Relative error: 0 (no error), 1 (100% misestimated), >1 (arbitrarily wrong)']
-    metrics.loc[3] = ['Mean Absolute Error', mae, 'In units of target variable']
-    metrics.loc[4] = ['Mean Absolute Percentage Error', mape, 'Relative error: 0 (no error), 1 (100% misestimated), >1 (arbitrarily wrong)']
-    metrics.loc[5] = ['Root Mean Square Error', rmse, 'In units of target variable']
-    metrics.loc[6] = ['R²', r2, 'From 1 (perfect prediction) and 0 (just as good as predicting the mean) to neg. infinity (arbitrarily wrong)']
-    metrics.loc[7] = ['Adjusted R²', adj_r2, 'Like R² but takes into account sample and feature number. An additional feature is justified if it increases this metric.']
-    return pred, metrics
 
 
 def best_scored(cv_results):
@@ -365,7 +369,7 @@ def get_best_params(NCV, params=None):
         return param_choices
 
 
-def process_results(NCV, feature_candidates_list, model_X, model_y, params=None, allSamples_Scores=False, refitOnAll=False):
+def process_results(NCV, model_X, model_y, params=None, allSamples_Scores=False, refitOnAll=False):
     
     best_params_df = get_best_params(NCV, params)
     NCV = pd.concat([NCV.reset_index(drop=True), best_params_df], axis=1).set_index(NCV.index)
@@ -375,7 +379,7 @@ def process_results(NCV, feature_candidates_list, model_X, model_y, params=None,
     ## Get names of features used by the models
     if 'preprocessor__selector__kw_args' in NCV.columns:
         NCV.rename(columns={'preprocessor__selector__kw_args': 'features'}, inplace=True)
-        s = NCV.features.apply(lambda x: [x['feature_set'], feature_candidates_list[x['feature_set']]])
+        s = NCV.features.apply(lambda x: [x['feature_set'], x['feature_sets'][x['feature_set']]])
         d = pd.DataFrame.from_dict(dict(zip(s.index, s.values))).T
         NCV.insert(NCV.columns.get_loc('features'), 'feature_combi_ID', d[0])
         NCV.features = d[1]

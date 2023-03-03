@@ -1,11 +1,12 @@
 # exported data
 /data/exports/geo
-/data/exports/models/*.pkl
+/data/exports/models/serialised
 /data/exports/cache
 /data/exports/plots
 
 # Ignore hidden files
 .*
+!/.gitignore
 
 # PDM
 .pdm.toml
