@@ -1,3 +1,5 @@
+import logging
+from pathlib import Path
 import numpy as np
 import statsmodels.formula.api as smf
 import statsmodels.api as sm
@@ -110,7 +112,8 @@ class Config:
     refit_scorer: str = 'R2'  # one of the keys in scoring dict above: will be used to refit at set best estimator of the gridsearch object
     select_best: str = 'median'  # type of average to be used to identify the best model of a gridsearch: can be 'median', 'mean' or 'iqm'
     ncv_mode: str = 'competitive'  # 'competitive' for running all activated model param sets against each other, 'comparative' for running separate repNCVs for each model param set
-    
+    log_path: str = '../data/exports/models/logs'  # default path to logfile
+    log_file: str = 'model.log'  # default name for log file
 
 Config.bandwidths: np.array = 10 ** np.linspace(0, 3,
                                                 Config.bws_to_test)  # creates the range of bandwidths to be tested
@@ -269,3 +272,27 @@ baw_tracer_reduction_factors = {  # Amounts of BAW tracers of each simulated siz
     100:0,#1,
     300:0#0.115
 }
+
+
+def getLogger(log_path=Config.log_path, log_file=Config.log_file):
+    # make path a Path object
+    log_path = Path(log_path)
+    # ensure existence of log dir
+    log_path.mkdir(parents=True, exist_ok=True)
+    # create logger
+    logger = logging.getLogger()
+    # set level
+    logger.setLevel(logging.INFO)
+    # set logging format
+    logFormatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    # add file handler
+    fileHandler = logging.FileHandler(str(log_path) + '/' + log_file, encoding='utf-8')
+    fileHandler.setLevel(logging.INFO)
+    fileHandler.setFormatter(logFormatter)
+    logger.addHandler(fileHandler)
+    # # add console handler
+    # consoleHandler = logging.StreamHandler()
+    # consoleHandler.setLevel(logging.INFO)
+    # consoleHandler.setFormatter(logFormatter)
+    # logger.addHandler(consoleHandler)
+    return logger

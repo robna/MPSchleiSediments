@@ -725,7 +725,9 @@ def repNCV_score_plots(scored_multi, return_df=False, ncv_mode=Config.ncv_mode, 
         color = alt.Color('Aggregation', sort=['median', 'iqm', 'mean']),
     ).properties(width=width, height=height,
     )
-    score = base.mark_line(point=True).encode(
+    score = base.mark_line(
+        # point=True
+    ).encode(
         y = alt.Y('Score_value', title=None),
         strokeDash = alt.StrokeDash('Mean_of_repetitions', sort=None),
         opacity = alt.condition(alt.FieldEqualPredicate(field='Mean_of_repetitions', equal='true'), alt.value(1.0), alt.value(0.3)),
