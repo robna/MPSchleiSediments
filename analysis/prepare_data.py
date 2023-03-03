@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import geopandas as gpd
+from patsy import dmatrix
 from skbio.stats.composition import closure
 from settings import densities, regio_sep, shortnames, sediment_data_filepaths, Config
 from KDE_utils import unbound_kde
@@ -72,6 +72,31 @@ def get_grainsizes(
     grainsize_cau, _ = sediment_preps(grainsize_cau)
 
     return grainsize_iow, grainsize_cau, boundaries
+
+
+def impute_cau(sdd_cau):
+    '''
+    Calculates missing values in sediment grainsize data of CAU stations. 
+    In settings > Config.cau_impute there is a dict with regression equations
+    for each sediment grainsize parameter where it is necessary to impute missing
+    values.
+    '''
+    droplist = [
+        '20170425_G47',
+        '20170426_G68',
+        '20170426_G75',
+        '20170426_G77',
+        '20170426_G78',
+        '20170427_G85',
+    ]
+    sdd_cau = sdd_cau[~sdd_cau.Sample.isin(droplist)]
+
+    for k, v in Config.cau_impute.items():
+        missing = sdd_cau[k].isna()
+        imputes = dmatrix(f'I({v}) - 1', sdd_cau.loc[missing], return_type='dataframe').squeeze()  # dmatrix with "-1" in formula returns results as df without intercept column. Using squeeze, turns it into a series.
+        sdd_cau.loc[missing, k] = imputes
+        # print(f'imputed {k}\n', sdd_cau.loc[missing, k], f'\nLength: {len(sdd_cau.loc[missing, k])}\n\n\n')
+    return sdd_cau
 
 
 def get_medians_from_size_dist(size_pmf, boundaries_dict, medians_name):
@@ -393,7 +418,6 @@ def close_compositional_data(df, full=Config.closing):
     """
     Closes compositional data according to `full` value. In the closed df the sum of all rows will equal to `full`.
     """
-    print(df)
     df[:] = closure(df.to_numpy()) * full
     return df
 

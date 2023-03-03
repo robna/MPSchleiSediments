@@ -43,6 +43,12 @@ class Config:
     rebin_by_n: int = 5  # make sediment size bins coarser: sum up every n bins into one new
     vertical_merge: bool = True  # whether or not to merge the vertical dimension of the data (i.e. combine data at stations where surface and core data exists)
     warnow: bool = False  # if True: load available Warnow data and concatenate with SDD df for comparisons Warnow / Schlei
+    cau_impute: dict = {  # regression formulas to estimate missing sediment grain size data points from a regression between available their values and TOC (which is avaliable at all CAU stations)
+        'SED_D50': '-99.342*np.log(TOC)+235.451',  # R2=0.75
+        'perc_MUD': '27.147*np.log(TOC)+22.62',  # R2=0.83
+        'PC1': '-0.274*np.log(TOC)+0.337',  # R2= 0.82
+        'PC2': '-0.01*TOC+0.051',  # R2= 0.05
+    }
     
     # Geospacial settings
     baw_epsg: int = 25832  # epsg code of the baw data
@@ -51,7 +57,7 @@ class Config:
     dem_resolution: float = 5.0  # resolution of the digital elevation model in meters
     interpolation_resolution: float = 10.0  # spatial resolution for geospatial interpolation in metres
     interpolation_method: str = 'linear'  # {‘linear’, ‘nearest’, ‘cubic’} method for scipy.interpolate.griddata
-    use_seasons: list = ['spring']  # which seasons to use for the tracer-based WWTP influence estimation, 'summer','autumn',
+    use_seasons: list = ['spring']  # which seasons to use for the tracer-based WWTP influence estimation: must be a list of one or more of 'spring', 'summer','autumn'
     sed_contact_dist: float = 0.01  # distance in meters to the sediment contact, below which a tracer is considered to have sedimented
     sed_contact_dur: int = 2  # number of timesteps a tracer has to be closer to the sediment than sed_contact_dist to be considered as sedimented
     arrest_on_nth_sedimentation: int = 0  # set to 0 for no arrest, otherwise any positive integer will truncate at the respective sedimentation event: e.g. set to 1 to only include traces before first sediment contact
