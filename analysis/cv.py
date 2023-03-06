@@ -15,7 +15,7 @@ from sklearn.utils import parallel_backend
 
 import glm
 from cv_helpers import iqm, median_absolute_percentage_error
-from settings import Config, featurelist, getLogger
+from settings import Config, featurelist, getLogger, target
 
 
 logger = getLogger()
@@ -76,11 +76,11 @@ def make_setup_dict(**kwargs):
     
     setup['cv_scheme'] = [
         KFold(  # using single KFold in outer which will be repeated manually in loop to extract the test set indices at each iteration
-            n_splits = setup['folds'][1],
+            n_splits = setup['folds'][0],
         ),
         RepeatedKFold(  # using RepeatedKFold for inner
-            n_splits = setup['folds'][0],
-            n_repeats = setup['repeats'][0],
+            n_splits = setup['folds'][1],
+            n_repeats = setup['repeats'][1],
         ),
     ]
     return setup
@@ -177,6 +177,13 @@ def rep_ncv(pipe, params, model_X, model_y, scorers, setup):
             testsets = get_test_sets(setup['cv_scheme'][0], model_X)
             outerCV = {**rep, **testsets, **outerCV}
 
+            ## Print details of outerCV dict (uncomment for diagnostic reasons)
+            # print([(
+            #     k,
+            #     type(outerCV[k]),
+            #     outerCV[k].shape if isinstance(outerCV[k], np.ndarray) else len(outerCV[k])
+            # )for k in outerCV.keys()])
+            
             outerCV_df = pd.DataFrame(outerCV).rename_axis('OuterCV_fold')
             outerCV_df['Intra-Rep_rank'] = outerCV_df[f'test_{Config.refit_scorer}'].rank(ascending=False).astype(int)
             outerCV_df.set_index(['NCV_repetition', outerCV_df.index, 'Intra-Rep_rank'], inplace=True)
@@ -317,8 +324,8 @@ def get_test_sets(splitter, model_X):
     Get the names and indices of samples in test sets.
     """
     return {
-        'test_set_indices': np.asarray([test_index for train_index, test_index in splitter.split(model_X)]),
-        'test_set_samples': np.asarray([model_X.index.values[test_index] for train_index, test_index in splitter.split(model_X)]),
+        'test_set_indices': [test_index for train_index, test_index in splitter.split(model_X)],
+        'test_set_samples': [model_X.index.values[test_index] for train_index, test_index in splitter.split(model_X)],
     }
 
 
@@ -482,6 +489,7 @@ def make_header(NCV, setup, starttime, time_needed, droplist, model_X, num_feat,
 
     Model started:;{starttime}
     Duration:;{time_needed} on {joblib.cpu_count()} cpu cores
+    Response (target variable):;{target}
     Outliers excluded {len(droplist)}:;{droplist}
     Samples:;{model_X.index.to_list()}
     Vertical merge:;{Config.vertical_merge}
