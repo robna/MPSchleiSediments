@@ -30,7 +30,7 @@ import streamlit as st
 st.set_page_config(layout="wide")
 
 #%% Define variables to use
-endogs = ['Concentration', 'MassConcentration', 'MP_D50', 'MP_size_median_from_KDE', 'MP_size_mode1_from_KDE']  # endogs
+endogs = ['Concentration', 'MassConcentration','VolumeConcentration', 'MP_D50', 'MP_size_median_from_KDE', 'MP_size_mode1_from_KDE']  # endogs
 endog_derivatives = [
     'ConcentrationA500', 'ConcentrationB500', 'ConcentrationA500_div_B500',  # endog derivatives
     # 'pred_Ord_Poly_ConcentrationA500', 'pred_TMP_ConcentrationA500','pred_Paint_ConcentrationA500',  # more endog derivatives

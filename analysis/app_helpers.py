@@ -128,7 +128,7 @@ def get_selections(optionlist, defaults, key=0):
     sel.identity = col3.checkbox('Show identity line (dashed)?', key=str(key)+'identity')
     sel.linref = col3.checkbox('Show linear reference line (dotted)?', key=str(key)+'linref')
     if sel.linref is True:
-        sel.linref_slope = col3.number_input('Line slope:', value=1.0, min_value=0.0, max_value=2.0, step=0.1, key=str(key)+'linref_slope')
+        sel.linref_slope = col3.number_input('Line slope:', value=1.0, min_value=0.0, max_value=6.0, step=0.1, key=str(key)+'linref_slope')
         sel.linref_intercept = col3.number_input('Line offset:', value=0.0, min_value=-100.0, max_value=100.0, step=10.0, key=str(key)+'linref_intercept')
     sel.mix_lines = col3.checkbox('Show conservative mixing lines?', key=str(key)+'mix_lines')
     sel.labels = col3.selectbox('Labels:', [None, *optionlist], index=0, key=str(key)+'labels')

@@ -129,9 +129,14 @@ def height_vol_dens_mass(df):
          #,'Size_3_[µm]'] = (1.919764*np.log(df['Size_2_[µm]'])**0.660945)  # regression from particle with existing Gepard height data
     
     df.loc[(df['Shape'] == 'irregular') & (df['Size_3_[µm]'] > df['Size_1_[µm]']), 'Size_3_[µm]'] = df['Size_2_[µm]']  # when irreg higher than long, use Size_1 as height
-    df.loc[df['Shape'] ==     'fibre', 'Size_3_[µm]'] = df['Size_2_[µm]']  # Heights for fibres (alternative 1): use Size_2 as height for all fibres
+   
+    df.loc[(df['Shape'] == 'fibre') & (df['Size_3_[µm]'] > df['Size_2_[µm]']), 'Size_3_[µm]'] = df['Size_2_[µm]'] 
+    df.loc[(df['Shape'] == 'fibre') & (df['Size_3_[µm]'] < 5), 'Size_3_[µm]'] = df['Size_2_[µm]'] 
+   
+    #df.loc[df['Shape'] == 'fibre', 'Size_3_[µm]'] = df['Size_2_[µm]']  # Heights for fibres (alternative 1): use Size_2 as height for all fibres
+  
     # df.loc[(df['Shape'] == 'fibre') & (  # Heights for fibres (alternative 2): when fibre without height OR higher than wide OR < 5: use Size_2 as height
-    #         (df['Size_3_[µm]'] > df['Size_2_[µm]']) | (df['Size_3_[µm]'] < 5) | (df['Size_3_[µm]'].isna())
+    #         (ds (df['Size_3_[µm]'].isna())
     #         ), 'Size_3_[µm]']= df['Size_2_[µm]']
 
     # where particle Gepard height is low, get height from shape-constrained height distribution of manually measured particles
@@ -212,14 +217,12 @@ def aggregate_SDD(mp_pdd):
         Frequency=('Sample', 'count'),
         FrequencyA500=('Size_1_µm', lambda x: (x >= 500).sum()),
         FrequencyB500=('Size_1_µm', lambda x: (x < 500).sum()),
+        MPvolume=('particle_volume_µm3', 'sum'),
         MPmass=('particle_mass_µg', 'sum'),
         Mass=('Sampling_weight_kg', lambda x: round(x.unique().sum(), 3)),
-        # using "mean" here is actually weird as all entries are the same. Is there something like "first"?
-        # LON=('GPS_LON', np.mean),  # TODO: switched to geodata from sampling log
-        # LAT=('GPS_LAT', np.mean),  # TODO: switched to geodata from sampling log
         Split=('Fraction_analysed', lambda x: x.unique().mean()),
         MP_D50=(Config.size_dim, np.median)
-        ##MP_D50_A500 = ('size_geom_mean' >= 500.median()),
+        # MP_D50_A500 = ('size_geom_mean' >= 500.median()),
         # MP_D50_B500 = ('size_geom_mean', lambda x: (x<500).median())
     ).reset_index()
 
@@ -227,6 +230,7 @@ def aggregate_SDD(mp_pdd):
     mp_sdd['ConcentrationA500'] = round(mp_sdd['FrequencyA500'] / mp_sdd['Mass'])
     mp_sdd['ConcentrationB500'] = round(mp_sdd['FrequencyB500'] / mp_sdd['Mass'])
     mp_sdd['ConcentrationA500_div_B500'] = mp_sdd['ConcentrationA500'] / mp_sdd['ConcentrationB500']
+    mp_sdd['VolumeConcentration'] = round(mp_sdd['MPvolume'] / mp_sdd['Mass'])
     mp_sdd['MassConcentration'] = round(mp_sdd['MPmass'] / mp_sdd['Mass'])
     return mp_sdd
 
