@@ -3,10 +3,10 @@ from pathlib import Path
 import numpy as np
 import statsmodels.formula.api as smf
 import statsmodels.api as sm
-from sklearn.metrics import r2_score, mean_absolute_percentage_error, median_absolute_error, make_scorer
+from sklearn.metrics import r2_score, mean_absolute_error, mean_absolute_percentage_error, median_absolute_error, make_scorer
 from cv_helpers import median_absolute_percentage_error
 
-target = 'Concentration'
+target = 'MassConcentration'
 featurelist = [
     'Depth',
     'Dist_Land',
@@ -109,6 +109,7 @@ class Config:
     exclusive_keywords: list = ['WWTP']  # only feature_candidates sets with max 1 feature containing each keyword will be considered
     scorers: dict = {  # dictionary of scores to be used by gridsearch: values are lists of corresponding [scorer, gridsearch refit scorer string or callable]
                         'R2': [r2_score, 'r2'],
+                        'MAE': [mean_absolute_error, 'neg_mean_absolute_error'],
                         'MAPE': [mean_absolute_percentage_error, 'neg_mean_absolute_percentage_error'],
                         'MedAE': [median_absolute_error, 'neg_median_absolute_error'],
                         'MedAPE': [median_absolute_percentage_error, make_scorer(median_absolute_percentage_error, greater_is_better=False)],

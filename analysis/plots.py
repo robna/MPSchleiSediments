@@ -18,7 +18,7 @@ import pydeck as pdk
 import streamlit as st
 from sklearn.metrics import r2_score
 
-from settings import Config
+from settings import Config, target
 import prepare_data
 
 df_0 = pd.DataFrame({'x': [0], 'y': [0]})
@@ -746,7 +746,9 @@ def repNCV_score_plots(scored_multi, return_df=False, ncv_mode=Config.ncv_mode, 
         column = alt.Column(
             'Scorer',
             sort=['R2', 'MedAPE', 'MAPE', 'MedAE'],
-            title=["Evolution of scores with increasing number of shuffle-repeated NCV runs" \
+            title=[f"Modelled response variable: {target}" \
+                 "   ---   " \
+                 "Evolution of scores with increasing number of shuffle-repeated NCV runs" \
                  "   ---   " \
                  "Best model candidates in grid search CV were determined by the best " \
                  f"{Config.select_best} {Config.refit_scorer} scores on inner folds' test sets"]

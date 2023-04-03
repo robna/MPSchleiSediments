@@ -375,14 +375,16 @@ def get_best_params(NCV, params=None):
                     param_choices.loc[i, f'{name_reg}__{param}'] = value
         return param_choices
 
+    
+# def refit_on_all(NCV, model_X, model_y, est, i):
+#     return clone(est.best_estimator_.named_steps['regressor']).fit(model_X[NCV.features.loc[i]], model_y)
+    
 
 def process_results(NCV, model_X, model_y, params=None, allSamples_Scores=False, refitOnAll=False):
     
     best_params_df = get_best_params(NCV, params)
     NCV = pd.concat([NCV.reset_index(drop=True), best_params_df], axis=1).set_index(NCV.index)
     
-    # NCV = results.copy().drop(['estimator', 'fit_time', 'score_time'], axis=1)
-        
     ## Get names of features used by the models
     if 'preprocessor__selector__kw_args' in NCV.columns:
         NCV.rename(columns={'preprocessor__selector__kw_args': 'features'}, inplace=True)
@@ -401,6 +403,9 @@ def process_results(NCV, model_X, model_y, params=None, allSamples_Scores=False,
             ]
     if refitOnAll:
         ## Now refit all models in outerCV on all data
+        # tried with Parallel but didn't work due to "could not pickle" error
+        # NCV['estimator_refit_on_all'] = joblib.Parallel(n_jobs=-1)(joblib.delayed(refit_on_all)(NCV, model_X, model_y, est, i)
+        #     for i, est in NCV['estimator'].items())
         NCV['estimator_refit_on_all'] = [
             clone(est.best_estimator_.named_steps['regressor']).fit(
             model_X[NCV.features.loc[i]], model_y)
@@ -418,19 +423,20 @@ def process_results(NCV, model_X, model_y, params=None, allSamples_Scores=False,
     return NCV
     
 
-def aggregation(NCV, setup):
+def aggregation(NCV, setup, r=None):
     scored_comp = pd.DataFrame()
     for model_type, group in NCV.groupby('run_with'):
-        scored = aggregate_scores(group, setup)
+        scored = aggregate_scores(group, setup, r=r)
         scored = scored.assign(run_with = model_type)
         scored.set_index(['run_with', scored.index], inplace=True)
         scored_comp = pd.concat([scored_comp, scored])
     return scored_comp
     
     
-def aggregate_scores(NCV, setup):
+def aggregate_scores(NCV, setup, r=None):
     ## Calculate score aggregations and their variance
-    r = setup['repeats'][0]
+    if r is None:
+        r = setup['repeats'][0]
     f = setup['folds'][0]
     rep_groups = NCV.groupby('NCV_repetition')
     scored = pd.DataFrame({
