@@ -36,6 +36,7 @@ sediment_data_filepaths = {
 
 class Config:
     # General data preparation settings
+    sediment_layer_depth: float = 0.05  # thickness of the sampled sediment layer in m
     sediment_grainsize_basis: str = 'Volume_logscale'  # 'Volume' for volume based grainsize distribution, 'Count' for count based
     min_part_count: int = 0  # how many MP particles are required to be considered as a valid sample 
     rebinning: bool = False  # whether or not to aggregate sizes to coarser bins
@@ -43,7 +44,16 @@ class Config:
     rebin_by_n: int = 5  # make sediment size bins coarser: sum up every n bins into one new
     vertical_merge: bool = True  # whether or not to merge the vertical dimension of the data (i.e. combine data at stations where surface and core data exists)
     warnow: bool = False  # if True: load available Warnow data and concatenate with SDD df for comparisons Warnow / Schlei
-    cau_impute: dict = {  # regression formulas to estimate missing sediment grain size data points from a regression between available their values and TOC (which is avaliable at all CAU stations)
+    cau_droplist: list = [  # CAU samples containing no data
+        '20170425_G47',
+        '20170426_G68',
+        '20170426_G75',
+        '20170426_G77',
+        '20170426_G78',
+        '20170427_G85',
+    ]
+    cau_impute: dict = {  # regression formulas to estimate missing sediment grain size data points from a regression between of available values
+        'TOC': '0.477*np.exp(0.039*perc_MUD)',  # R2=0.77
         'SED_D50': '-99.342*np.log(TOC)+235.451',  # R2=0.75
         'perc_MUD': '27.147*np.log(TOC)+22.62',  # R2=0.83
         'PC1': '-0.274*np.log(TOC)+0.337',  # R2= 0.82

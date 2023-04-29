@@ -74,6 +74,17 @@ def get_grainsizes(
     return grainsize_iow, grainsize_cau, boundaries
 
 
+def sed_bulk_density(smpls):
+    smpls['SedDryBulkDensity_JiaEtAl'] = -8.86 * smpls.perc_MUD + 1518.91  # DOI: 10.1016/S0272-7714(02)00406-7
+    # smpls['SedDryBulkDensity_BirdEtAl'] = np.exp(0.31686604 + (-0.0032) * smpls.perc_MUD * np.log(np.maximum(smpls.perc_MUD, 0.0000001)) + (-0.0665) * smpls.TOC ** 0.5 * np.log(np.maximum(smpls.TOC, 0.0000001))) * 1000  # DOI:10.1017/S0033822200039734
+    smpls['SedDryBulkDensity_vanRijnEtAl'] = (1 - smpls.TOC*2.22/ 100) * (400 * (smpls.perc_CLAY / 100) + 800 * ((smpls.perc_MUD - smpls.perc_CLAY) / 100) + 1600 * (smpls.perc_SAND / 100))  # DOI: 10.1061/(ASCE)WW.1943-5460.0000483
+    ## Some stations have NaN in perc_Clay and perc_SAND (but not in perc_MUD) and therefore get NaN in SedDryBulkDensity_vanRijnEtAl
+
+    smpls['SedDryBulkDensity'] = smpls[['SedDryBulkDensity_JiaEtAl', 'SedDryBulkDensity_vanRijnEtAl']].apply(lambda x: x.mean(), axis=1)  # using average of van Rjin and Jia only, because Bird is from Mangroves
+
+    return smpls
+
+
 def impute_cau(sdd_cau):
     '''
     Calculates missing values in sediment grainsize data of CAU stations. 
@@ -81,21 +92,16 @@ def impute_cau(sdd_cau):
     for each sediment grainsize parameter where it is necessary to impute missing
     values.
     '''
-    droplist = [
-        '20170425_G47',
-        '20170426_G68',
-        '20170426_G75',
-        '20170426_G77',
-        '20170426_G78',
-        '20170427_G85',
-    ]
-    sdd_cau = sdd_cau[~sdd_cau.Sample.isin(droplist)]
+
+    sdd_cau = sdd_cau[~sdd_cau.Sample.isin(Config.cau_droplist)]  # remove samples lacking data
 
     for k, v in Config.cau_impute.items():
         missing = sdd_cau[k].isna()
         imputes = dmatrix(f'I({v}) - 1', sdd_cau.loc[missing], return_type='dataframe').squeeze()  # dmatrix with "-1" in formula returns results as df without intercept column. Using squeeze, turns it into a series.
         sdd_cau.loc[missing, k] = imputes
         # print(f'imputed {k}\n', sdd_cau.loc[missing, k], f'\nLength: {len(sdd_cau.loc[missing, k])}\n\n\n')
+
+    sdd_cau = sed_bulk_density(sdd_cau)
     return sdd_cau
 
 
@@ -283,6 +289,9 @@ def additional_sdd_merging(mp_sdd, how='left'):
     
     # optionally: uncomment to export the final data
     # sdd_iow.to_csv('../csv/MP_Stats_SchleiSediments.csv')
+
+    mp_sdd_amended = sed_bulk_density(mp_sdd_amended)
+
     return mp_sdd_amended
 
 
