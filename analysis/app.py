@@ -200,7 +200,7 @@ def main():
         col2.write(scatter_chart(df, target_name, 'yhat',
                                  #color='regio_sep',
                                  identity=True, equal_axes=False,
-                                 width=400, height=300,
+                                 width=500, height=300,
                                  title='GLM --- yhat vs. y')[0])
         if col3.checkbox('log yhat?'):
             df.yhat = np.log(df.yhat)

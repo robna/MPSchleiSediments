@@ -85,6 +85,16 @@ def sed_bulk_density(smpls):
     return smpls
 
 
+def patsy_transform(formula, df):
+    '''
+    Calculate new columns for a df using patsy formulas.
+    dmatrix with "-1" in formula returns results as df without intercept column.
+    Using squeeze, turns it into a series.
+    More info: https://learn-scikit.oneoffcoder.com/patsy.html
+    '''
+    return dmatrix(f'I({formula}) - 1', df, return_type='dataframe').squeeze() 
+
+
 def impute_cau(sdd_cau):
     '''
     Calculates missing values in sediment grainsize data of CAU stations. 
@@ -97,7 +107,7 @@ def impute_cau(sdd_cau):
 
     for k, v in Config.cau_impute.items():
         missing = sdd_cau[k].isna()
-        imputes = dmatrix(f'I({v}) - 1', sdd_cau.loc[missing], return_type='dataframe').squeeze()  # dmatrix with "-1" in formula returns results as df without intercept column. Using squeeze, turns it into a series.
+        imputes = patsy_transform(v, sdd_cau.loc[missing])
         sdd_cau.loc[missing, k] = imputes
         # print(f'imputed {k}\n', sdd_cau.loc[missing, k], f'\nLength: {len(sdd_cau.loc[missing, k])}\n\n\n')
 

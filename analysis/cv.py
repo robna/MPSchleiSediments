@@ -40,26 +40,43 @@ def loocv(df):
     target = df.loc[:, Config.glm_formula.split(' ~')[0]]  # isolate target variable (observed values)
     target_name = Config.glm_formula.split(' ~')[0]
     pred.loc[:, target_name] = target
+    metrics = performance(
+        pred.set_index('Sample')[target_name],
+        pred.set_index('Sample')['pred'],
+        p)
+    return pred, metrics
 
-    maxe = max_error(target, pred.pred)
-    medae = median_absolute_error(target, pred.pred)
-    medape = median_absolute_percentage_error(target, pred.pred)
-    mae = mean_absolute_error(target, pred.pred)
-    mape = mean_absolute_percentage_error(target, pred.pred)
-    rmse = np.sqrt(mean_squared_error(target, pred.pred))
-    r2 = r2_score(target, pred.pred)
-    adj_r2 = 1 - (1 - r2) * (n - 1) / (n - p)
+
+def performance(observed, predicted, p=None):
+    """
+    Measure the performance of a prediction using a set of metrics.
+    Series of observed and predicted values must have the same index.
+    :param observed: pandas series of observed values with meaningful index, eg. sample names
+    :param predicted: pandas series of predicted values with meaningful index, eg. sample names
+    :param p: optional number of predictors used by the model which generated the prediction
+    :return metrics: a df listing the metrics' values + explanations.
+    """
+    maxe = max_error(observed, predicted)
+    medae = median_absolute_error(observed, predicted)
+    medape = median_absolute_percentage_error(observed, predicted)
+    mae = mean_absolute_error(observed, predicted)
+    mape = mean_absolute_percentage_error(observed, predicted)
+    rmse = np.sqrt(mean_squared_error(observed, predicted))
+    r2 = r2_score(observed, predicted)
+    if p is not None:
+        adj_r2 = 1 - (1 - r2) * (len(predicted) - 1) / (len(predicted) - p)
 
     metrics = pd.DataFrame(columns=['Metric', 'Value', 'Info'])
-    metrics.loc[0] = ['Max Error', maxe, f"Where: {pred.loc[np.abs(target - pred.pred ).idxmax(), 'Sample']}"]
-    metrics.loc[1] = ['Median Absolute Error', medae, 'In units of target variable']
+    metrics.loc[0] = ['Max Error', maxe, f"Where: {np.abs(observed - predicted).idxmax()}"]
+    metrics.loc[1] = ['Median Absolute Error', medae, 'In units of observed variable']
     metrics.loc[2] = ['Median Absolute Percentage Error', medape, 'Relative error: 0 (no error), 1 (100% misestimated), >1 (arbitrarily wrong)']
-    metrics.loc[3] = ['Mean Absolute Error', mae, 'In units of target variable']
+    metrics.loc[3] = ['Mean Absolute Error', mae, 'In units of observed variable']
     metrics.loc[4] = ['Mean Absolute Percentage Error', mape, 'Relative error: 0 (no error), 1 (100% misestimated), >1 (arbitrarily wrong)']
-    metrics.loc[5] = ['Root Mean Square Error', rmse, 'In units of target variable']
+    metrics.loc[5] = ['Root Mean Square Error', rmse, 'In units of observed variable']
     metrics.loc[6] = ['R²', r2, 'From 1 (perfect prediction) and 0 (just as good as predicting the mean) to neg. infinity (arbitrarily wrong)']
-    metrics.loc[7] = ['Adjusted R²', adj_r2, 'Like R² but takes into account sample and feature number. An additional feature is justified if it increases this metric.']
-    return pred, metrics
+    if p is not None:
+        metrics.loc[7] = [f'Adjusted R² (n={len(predicted)}, p={p})', adj_r2, 'Like R² but takes into account sample number "n" and feature number "p". An additional feature is justified if it increases this metric.']
+    return metrics
 
 
 def make_setup_dict(**kwargs):

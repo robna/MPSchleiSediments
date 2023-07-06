@@ -6,7 +6,7 @@ import statsmodels.api as sm
 from sklearn.metrics import r2_score, mean_absolute_error, mean_absolute_percentage_error, median_absolute_error, make_scorer
 from cv_helpers import median_absolute_percentage_error
 
-target = 'MassConcentration'
+target = 'Concentration'
 featurelist = [
     'Depth',
     'Dist_Land',
@@ -57,7 +57,11 @@ class Config:
         'SED_D50': '-99.342*np.log(TOC)+235.451',  # R2=0.75
         'perc_MUD': '27.147*np.log(TOC)+22.62',  # R2=0.83
         'PC1': '-0.274*np.log(TOC)+0.337',  # R2= 0.82
-        'PC2': '-0.01*TOC+0.051',  # R2= 0.05
+        'PC2': '-0.01*TOC+0.051',  # R2=0.05
+    }
+    massConc_from_numConc: dict = {  # Correlation of "MassConcentration" against "Concentration" of IOW samples without outliers: S05, S32 (like in model) 
+        # 'MassConcentration': '0.1452*Concentration**1.1898'  # R²=0.9102, based on power regression with MassConcentration as µg kg⁻¹
+        'MassConcentration': '0.9640*Concentration-425.9779'  # R²=0.9135, based on linear regression with MassConcentration as µg kg⁻¹
     }
     
     # Geospacial settings
@@ -65,7 +69,7 @@ class Config:
     restrict_tracers_to_depth: float = 30.0  # for BAW tracer particles depth values larger than this, will be replaced by an interpolation from their neighbours, set to 0 for no depth correction
     station_buffers: float = 444.0  # buffer radius in meters around each sample station , in which tracer ocurrences from the BAW simulation are counted
     dem_resolution: float = 5.0  # resolution of the digital elevation model in meters
-    interpolation_resolution: float = 10.0  # spatial resolution for geospatial interpolation in metres
+    interpolation_resolution: float = 5.0  # spatial resolution for geospatial interpolation in metres
     interpolation_method: str = 'linear'  # {‘linear’, ‘nearest’, ‘cubic’} method for scipy.interpolate.griddata
     use_seasons: list = ['spring']  # which seasons to use for the tracer-based WWTP influence estimation: must be a list of one or more of 'spring', 'summer','autumn'
     sed_contact_dist: float = 0.01  # distance in meters to the sediment contact, below which a tracer is considered to have sedimented
