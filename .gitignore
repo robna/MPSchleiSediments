@@ -1,6 +1,13 @@
+# old stuff
+/old_scripts_and_notebooks
+
 # exported data
 /data/exports/geo
 /data/exports/models/serialised
+/data/exports/models/predictions/coast
+/data/exports/models/predictions/interpolated
+/data/exports/models/predictions/shapefile
+/data/exports/models/predictions/*.tif*
 /data/exports/cache
 /data/exports/plots
 
