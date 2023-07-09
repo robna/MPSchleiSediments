@@ -52,7 +52,7 @@ class Config:
         '20170426_G78',
         '20170427_G85',
     ]
-    cau_impute: dict = {  # regression formulas to estimate missing sediment grain size data points from a regression between of available values
+    cau_impute: dict = {  # regression formulas to estimate missing sediment grain size data points from a regression of available values
         'TOC': '0.477*np.exp(0.039*perc_MUD)',  # R2=0.77
         'SED_D50': '-99.342*np.log(TOC)+235.451',  # R2=0.75
         'perc_MUD': '27.147*np.log(TOC)+22.62',  # R2=0.83
@@ -60,8 +60,8 @@ class Config:
         'PC2': '-0.01*TOC+0.051',  # R2=0.05
     }
     massConc_from_numConc: dict = {  # Correlation of "MassConcentration" against "Concentration" of IOW samples without outliers: S05, S32 (like in model) 
-        # 'MassConcentration': '0.1452*Concentration**1.1898'  # R²=0.9102, based on power regression with MassConcentration as µg kg⁻¹
-        'MassConcentration': '0.9640*Concentration-425.9779'  # R²=0.9135, based on linear regression with MassConcentration as µg kg⁻¹
+        'MassConcentration_predicted': '0.1452*Concentration_predicted**1.1898',  # R²=0.9102, based on power regression with MassConcentration as µg kg⁻¹
+        # 'MassConcentration_predicted': '0.9640*Concentration_predicted-425.9779',  # R²=0.9135, based on linear regression with MassConcentration as µg kg⁻¹, OBS: can yield negative values!
     }
     
     # Geospacial settings

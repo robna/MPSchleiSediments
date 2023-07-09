@@ -5,7 +5,7 @@ import geopandas as gpd
 import pandas as pd
 import numpy as np
 from scipy.interpolate import griddata
-import rasterio
+import rasterio as rio
 from shapely.geometry import Point, LineString
 from joblib import Parallel, delayed, cpu_count
 
@@ -28,8 +28,8 @@ def load_zipped_grid(path2zip, path2grid=None, epsg=Config.baw_epsg):
 
     if not isinstance(path2zip, Path):
         path2zip = Path(path2zip)
-    rasta = rasterio.open(f'zip://{path2zip}!{path2zip.stem.lstrip(".") + ".grd" if path2grid is None else path2grid}', 'r+')
-    rasta.crs = rasterio.crs.CRS.from_epsg(epsg)
+    rasta = rio.open(f'zip://{path2zip}!{path2zip.stem.lstrip(".") + ".grd" if path2grid is None else path2grid}', 'r+')
+    rasta.crs = rio.crs.CRS.from_epsg(epsg)
     return rasta
 
 
@@ -169,6 +169,13 @@ def get_wwtp_influence(sdd, trackpoints=None, tracks_file=None, buffer_radius=Co
         sdd.set_index('Sample').iloc[:, -4:].to_csv(f'../data/{col_prefix + file_postfix}.csv', index_label='Sample')
         return sdd
 
+def make_coord_tuples(gdf):
+    '''
+    Create a list of coordinate tuples from a geopandas df,
+    because rasterio.sample can't handle geopandas geometries
+    '''
+    return [(x,y) for x,y in zip(gdf['geometry'].x , gdf['geometry'].y)]
+
 
 def tracer_sedimentation_points(tracks, dem=None, dist=Config.sed_contact_dist, dur=Config.sed_contact_dur):
     """
@@ -183,7 +190,7 @@ def tracer_sedimentation_points(tracks, dem=None, dist=Config.sed_contact_dist, 
     """
     if dem is None:
         dem = load_zipped_grid('../data/.DGM_Schlei_1982_bis_2002_UTM32.zip')  # load grid from zip file
-    coord_list = [(x,y) for x,y in zip(tracks['geometry'].x , tracks['geometry'].y)]  # create list of coordinate tuples, because rasterio.sample can't handle geopandas geometries
+    coord_list = make_coord_tuples(tracks)
     tracks['water_depth'] = [-1 * x[0] for x in dem.sample(coord_list)]  # sample the grid at the locations of the tracer particles (multiply by -1 because the grid uses negative depth values)  
     tracks['sediment_contact'] = False  # intitialize sediment_contact column: False = no contact
     tracks.loc[tracks['tracer_depth'] > tracks['water_depth'] - dist, 'sediment_contact'] = True  # set sediment_contact to True where the particle comes closer than 'dist' to 'water_depth'
@@ -261,41 +268,107 @@ def tracer_points_to_lines(tracks):
     return tracks.groupby(['season', 'tracer_ESD', 'simPartID'])['geometry'].apply(lambda x: LineString(x.unique().tolist()*2 if len(x.unique().tolist())==1 else x.unique().tolist()))
 
 
-def geospatial_interpolation(gdf, polygon, nonan=True):
+def make_grid(poly, res, round_grid_coords=False):
     '''
-    
+    Generate two arrays, x-coordinates (H x W) and y-coordinates (H x W) from the total bounds of a polygon (single row geopandas df).
     '''
-    xres = yres = Config.interpolation_resolution
-    xmin, ymin, xmax, ymax = polygon.bounds
-    xgrid, ygrid = np.meshgrid(np.arange(xmin, xmax + xres, xres), 
-                               np.arange(ymin, ymax + yres, yres),
-                              )
-    
-    points = np.vstack((gdf.geometry.x, gdf.geometry.y)).T
+    poly_bounds = poly.total_bounds  # get the extent of the Schlei polygon
+    print('polygon bounds: ', [b for b in zip(['xmin', 'ymin', 'xmax', 'ymax'], poly_bounds)])
+    if round_grid_coords:
+        xmin, ymin, xmax, ymax = np.around(poly_bounds / (0.5*res)) * (0.5*res)  # rounding to next half res
+    else:
+        xmin, ymin, xmax, ymax = poly_bounds
+    xgrid, ygrid = np.meshgrid(np.arange(xmin - res, xmax, res),
+                            np.arange(ymax + res, ymin, -res),  # y is upside down so higher values end up at the top (north) of the grid
+                            )
+    return xgrid, ygrid, xmin, ymin, xmax, ymax
+
+
+def grid_interp(data, xgrid, ygrid, name):
+    '''
+    Interpolates point data from geopandas geoseries, using scipy.interpolat.griddata,
+    to a numpy 2D-array of regularly spaced grid points (ndarray).
+    Optional fillna: As some interpolation methods ('linear' and 'cubic') will result
+    in nan outside of the convex hull of data points, these can be filled be
+    re-interpolating them using 'nearest' method.
+    '''
+
+    points = np.vstack((data.geometry.x, data.geometry.y)).T
     values = griddata(
-        points, gdf['value'],
+        points, data[name],
         (xgrid, ygrid),
         method=Config.interpolation_method,  # 'linear' and 'cubic' will result in nan outside of the convex hull of data points
     )
+    nan_mask = np.isnan(values)  # if there are any nan points re-interpolate them using method 'nearest'
 
-    if nonan:
-        nan_mask = np.isnan(values)  # if there are any nan points re-interpolate them using method 'nearest'
-        if np.any(nan_mask):
-            values[nan_mask] = griddata(
-                points, gdf['value'],
-                (xgrid, ygrid), method='nearest',
-            )
+    if np.any(nan_mask):
+        values2 = griddata(
+            points, data[name],
+            (xgrid, ygrid), method='nearest',
+        )
+        values[nan_mask] = values2[nan_mask]
+    return values
 
-    clipped = gpd.GeoDataFrame({'value': values.ravel()}, 
-                               geometry=gpd.points_from_xy(xgrid.ravel(),
-                               ygrid.ravel())
-                              )
-    clipped = gpd.overlay(clipped, polygon, how='intersection')
-    clipped = clipped.loc[clipped.intersects(polygon.geometry[0])]
 
-    cell_areas = xres * yres
-    total = (clipped['value'] * cell_areas).sum()
-    return clipped, total
+def grid_clip(values, poly, xgrid, ygrid):
+    '''
+    Clips raster layers (ndarray) with a polygon, by converting into geodataframe and using its clip method.
+    The returned raster array has the original values in areas that are within the polygon and np.nan for areas outside.
+    '''
+    grid_gdf = gpd.GeoDataFrame({'vals': values.ravel()}, 
+                                geometry=gpd.points_from_xy(xgrid.ravel(), ygrid.ravel()),
+                                crs=Config.baw_epsg,
+                                )
+    clipper = grid_gdf.clip(poly)  # takes about 0.5 min
+    ## old method:
+    # clipper = gpd.overlay(grid_gdf, poly, how='intersection')  # takes about 15 min
+    # clipper = clipper.loc[grid_gdf.intersects(poly.geometry[0])]  # takes about 11 min
+    grid_gdf.loc[~grid_gdf.index.isin(clipper.index), 'vals'] = np.nan
+    return grid_gdf['vals'].values.reshape(values.shape)
+
+
+def grid_load(src_filename):
+    '''
+    Load a saved grid from a tiff file into ndarray.
+    '''
+    with rio.open(src_filename, "r") as src:
+        print('\n\nLoading raster with Tiff tags:')
+        for k,v in src.meta.items():
+            print(f'{k}: {v}')
+        print(src.bounds, '\n\n')
+        grid = src.read(1)
+    grid[grid==src.nodata] = np.nan
+    return grid
+
+
+def sample_array_raster(raster, xmin, ymax, res, points_gdf, **kwargs):
+    """
+    Sample a raster (ndarray) at points from a geopandas df.
+    Adapted from here: https://gis.stackexchange.com/a/387772
+    Args:
+        raster (numpy.ndarray): raster to be masked with dim: [H, W]
+        xmin, ymax, res: coordinates of upper left corner of raster array,
+                         and resolution in raster units.
+        points_gdf, **kwargs: passed to rasterio.mask.mask
+
+    Returns:
+        list of values sampled from raster at points
+    """
+    transform = rio.transform.from_origin(xmin, ymax, res, res)
+    coord_list = make_coord_tuples(points_gdf)
+    with rio.io.MemoryFile() as memfile:
+        with memfile.open(
+            driver='GTiff',
+            height=raster.shape[0],
+            width=raster.shape[1],
+            count=1,
+            dtype=raster.dtype,
+            transform=transform,
+        ) as dataset:
+            dataset.write(raster, 1)
+        with memfile.open() as dataset:
+            output = [val[0] for val in dataset.sample(coord_list, **kwargs)]
+    return output
 
 
 ##TODO: the following two functions are not complete yet

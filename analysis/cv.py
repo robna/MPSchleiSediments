@@ -538,3 +538,13 @@ def make_header(NCV, setup, starttime, time_needed, droplist, model_X, num_feat,
     ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     '''
     return header
+
+
+def augment_predictions(predi_series, samples_data_df, target=None, kind=''):
+    samples_data_df.rename(columns={target: f'{target}_observed'}, inplace=True)
+    cols = ['LON', 'LAT', 'SedDryBulkDensity'] + featurelist
+    if target:
+        cols = [f'{target}_observed'] + cols
+    df = predi_series.to_frame().join(samples_data_df[cols])
+    df['Type'] = kind
+    return df
