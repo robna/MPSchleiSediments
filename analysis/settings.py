@@ -16,10 +16,10 @@ featurelist = [
     'WWTP_influence_as_mean_time_travelled__nosed_18µm_allseasons_222',#pre-final GLM
     'WWTP_influence_as_cumulated_residence__nosed_0µm_allseasons_222_',#pre-final RF*
     'WWTP_influence_as_mean_time_travelled__nosed_0µm_allseasons_222_',#pre-final GLM*
-    'SED_D50', #pre-final RF
-    'perc_MUD', # pre-final GLM
-    'PC1', # pre-final GLM + RF*
-    'PC2'
+    # 'SED_D50', #pre-final RF
+    # 'perc_MUD', # pre-final GLM
+    # 'PC1', # pre-final GLM + RF*
+    # 'PC2'
 ]
 
 default_predictors = ['Dist_WWTP', 'TOC', 'Q("SED_D50")"', 'PC1', 'PC2']  # columns to be used as predictors
@@ -60,7 +60,7 @@ class Config:
         'PC2': '-0.01*TOC+0.051',  # R2=0.05
     }
     massConc_from_numConc: dict = {  # Correlation of "MassConcentration" against "Concentration" of IOW samples without outliers: S05, S32 (like in model) 
-        'MassConcentration_predicted': '0.1452*Concentration_predicted**1.1898',  # R²=0.9102, based on power regression with MassConcentration as µg kg⁻¹
+        'MassConcentration_predicted': '0.1452*Concentration_predicted**1.1898',  # R²=0.9102, based on power regression with MassConcentration as µg kg⁻¹, OBS: there is theoretical justifiaction to use power reg here: samples with high number conc are more likely to include very rare very large MP (which disproportionally increase MassConc)
         # 'MassConcentration_predicted': '0.9640*Concentration_predicted-425.9779',  # R²=0.9135, based on linear regression with MassConcentration as µg kg⁻¹, OBS: can yield negative values!
     }
     
@@ -68,6 +68,7 @@ class Config:
     baw_epsg: int = 25832  # epsg code of the baw data
     restrict_tracers_to_depth: float = 30.0  # for BAW tracer particles depth values larger than this, will be replaced by an interpolation from their neighbours, set to 0 for no depth correction
     station_buffers: float = 444.0  # buffer radius in meters around each sample station , in which tracer ocurrences from the BAW simulation are counted
+    dem_path: str = '../data/.DGM_Schlei_1982_bis_2002_UTM32.zip'  # path to the DEM of water depths
     dem_resolution: float = 5.0  # resolution of the digital elevation model in meters
     interpolation_resolution: float = 5.0  # spatial resolution for geospatial interpolation in metres
     interpolation_method: str = 'linear'  # {‘linear’, ‘nearest’, ‘cubic’} method for scipy.interpolate.griddata

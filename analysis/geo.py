@@ -177,6 +177,19 @@ def make_coord_tuples(gdf):
     return [(x,y) for x,y in zip(gdf['geometry'].x , gdf['geometry'].y)]
 
 
+def get_depth(gdf, dem=None, label='water_depth'):
+    '''
+    Calculates water depth at points of gdf.
+    `label` is used as column name for sampled
+    depths and same df (with new column) is returned
+    '''
+    if dem is None:
+        dem = load_zipped_grid(Config.dem_path)  # load grid from zip file
+    coord_list = make_coord_tuples(gdf)
+    gdf[label] = [-1 * x[0] for x in dem.sample(coord_list)]  # sample the grid at the locations of the tracer particles (multiply by -1 because the grid uses negative depth values) 
+    return gdf
+
+
 def tracer_sedimentation_points(tracks, dem=None, dist=Config.sed_contact_dist, dur=Config.sed_contact_dur):
     """
     Calculates the sedimentation points of the tracer particles.
@@ -188,10 +201,7 @@ def tracer_sedimentation_points(tracks, dem=None, dist=Config.sed_contact_dist, 
              a new column called 'sediment_contact' being True where a particle comes closer than 'dist' to 'water_depth',
              and another column called 'contact_count'starting at 0 for each particle and increasing by 1 for each contact to sediment which is at least 'dur' timesteps long
     """
-    if dem is None:
-        dem = load_zipped_grid('../data/.DGM_Schlei_1982_bis_2002_UTM32.zip')  # load grid from zip file
-    coord_list = make_coord_tuples(tracks)
-    tracks['water_depth'] = [-1 * x[0] for x in dem.sample(coord_list)]  # sample the grid at the locations of the tracer particles (multiply by -1 because the grid uses negative depth values)  
+    tracks = get_depth(tracks)
     tracks['sediment_contact'] = False  # intitialize sediment_contact column: False = no contact
     tracks.loc[tracks['tracer_depth'] > tracks['water_depth'] - dist, 'sediment_contact'] = True  # set sediment_contact to True where the particle comes closer than 'dist' to 'water_depth'
 

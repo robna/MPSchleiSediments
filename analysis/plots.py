@@ -101,7 +101,8 @@ def scatter_chart(
     linref_intercept=0,
     mix_lines=False,
     xtransform=False, ytransform=False, xscale='linear', yscale='linear',
-    title='', width=400, height=300):
+    title='', width=400, height=300,
+    incl_params=True):
 
     """
     Create a scatter plot with optional regression line and equation.
@@ -126,7 +127,8 @@ def scatter_chart(
     :param title: plot title
     :param width: plot width
     :param height: plot height
-    :return: altair chart and df of regression parameter (None if reg=None)
+    :param incl_params: if True (default) return a tuple (chart, params_df), otherwise return chart only
+    :return: altair chart and df of regression parameter (None if reg=None), or chart only if incl_params=False
     """
     
     df = df.copy()  # avoid changing original dataframe
@@ -290,7 +292,8 @@ def scatter_chart(
     ).interactive()
 
     # chart.save('../data/exports/plots/scatter_chart.html')  # activate save chart to html file
-
+    if not incl_params:
+        return chart
     return chart, params
 
 
@@ -772,3 +775,22 @@ def repNCV_score_plots(scored_multi, return_df=False, ncv_mode=Config.ncv_mode, 
         chart &= (text | cols.transform_filter(alt.FieldEqualPredicate(field='run_with', equal=model_class)))
     chart = chart.configure_view(strokeWidth=0)
     return (chart, df) if return_df else chart
+
+
+def model_pred_bars(df, target='Concentration', domain=None):
+    r_df = df.copy()
+    r_df[f'{target}_predicted'] = (r_df[f'{target}_predicted'] - r_df[f'{target}_observed']) / r_df[f'{target}_observed']
+    r_df[f'{target}_interpolated'] = (r_df[f'{target}_interpolated'] - r_df[f'{target}_observed']) / r_df[f'{target}_observed']
+
+    return alt.Chart(r_df.loc[df.Type=='observed']).mark_bar(clip=True).encode(
+        x=alt.X('key:N', sort=None, title=None),
+        y=alt.Y('value:Q', scale=alt.Scale(domain=[-domain, domain] if domain else [-1, 5]), axis=alt.Axis(format='.0%'), title=None),
+        color=alt.Color('key:N', sort=None),
+        column='Sample',
+        tooltip=['value:Q'],
+    ).transform_fold(
+        [f'{target}_predicted', f'{target}_interpolated']
+    ).properties(title='Deviation of predicted and interpolated values from obsereved.'
+    # ).resolve_scale(y='independent'
+    ).interactive(
+    )
