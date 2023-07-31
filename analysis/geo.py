@@ -1,36 +1,15 @@
-from settings import Config, baw_tracer_reduction_factors
 from pathlib import Path
-from zipfile import ZipFile
 import geopandas as gpd
 import pandas as pd
 import numpy as np
-from scipy.interpolate import griddata
 import rasterio as rio
 from shapely.geometry import Point, LineString
 from joblib import Parallel, delayed, cpu_count
+from tqdm import tqdm
+from settings import Config, baw_tracer_reduction_factors
+import interpol, geo_io
+tqdm.pandas()
 
-def get_schlei(epsg=Config.baw_epsg):
-    """
-    Loads the Schlei polygon from a shapefile
-    :return: GeoDataFrame with the Schlei polygon
-    """
-    
-    return gpd.read_file('../data/SchleiCoastline_from_OSM.geojson').to_crs(f"EPSG:{epsg}")
-
-
-def load_zipped_grid(path2zip, path2grid=None, epsg=Config.baw_epsg):
-    """
-    Loads a grid from a .grd file inside a .zip file
-    :param path2zip: path to .zip file
-    :param path2grid: path to .grd file inside the .zip file (if None, it tries to load a .grd file with the same name as the .zip file)
-    :return: grid as a numpy array
-    """
-
-    if not isinstance(path2zip, Path):
-        path2zip = Path(path2zip)
-    rasta = rio.open(f'zip://{path2zip}!{path2zip.stem.lstrip(".") + ".grd" if path2grid is None else path2grid}', 'r+')
-    rasta.crs = rio.crs.CRS.from_epsg(epsg)
-    return rasta
 
 
 def get_distance_to_shore(LON, LAT, polygon=None, epsg=Config.baw_epsg):
@@ -40,14 +19,15 @@ def get_distance_to_shore(LON, LAT, polygon=None, epsg=Config.baw_epsg):
     :param LAT: latitude
     :param polygon: polygon to be used for the distance calculation
     :param epsg: epsg code of the polygon
+    :return: numpy array of shortest distance of each point to polygon boundary
     """
     
     if polygon is None:
-        polygon = get_schlei()
+        polygon = geo_io.get_schlei()
     gdf = gpd.GeoDataFrame(geometry=gpd.points_from_xy(LON, LAT))
     gdf.crs = 4326
     gdf.to_crs(f"EPSG:{epsg}", inplace=True)
-    return gdf.geometry.apply(lambda x: polygon.boundary.distance(x))
+    return gdf.geometry.apply(lambda x: polygon.boundary.distance(x)).to_numpy()
 
 
 def get_BAW_traces(file, polygon=None, save_tracks=True):
@@ -65,14 +45,14 @@ def get_BAW_traces(file, polygon=None, save_tracks=True):
     if file.suffix == '.geojson':
         return gpd.read_file(file)
     elif file.suffix == '.zip':
-        tracks = extract_zipped_traces(file)
+        tracks = geo_io.extract_zipped_traces(file)
     elif file.suffix == '.dat':
-        tracks = load_single_BAW_run(file)
+        tracks = geo_io.load_single_BAW_run(file)
     else:
         raise ValueError(f"File {file} has an unsupported file extension.")
 
     if polygon is None:
-        polygon = get_schlei()
+        polygon = geo_io.get_schlei()
     tracks = gpd.clip(tracks, polygon.buffer(10))  # keep only points in 'tracks' that are within the polygon (incl. a 10 m buffer to allow for minor deviations of the coastline between the polygon used here and the bouandaries of the tracer model)
     
     tracks.sort_index(inplace=True)
@@ -83,50 +63,6 @@ def get_BAW_traces(file, polygon=None, save_tracks=True):
         tracks.to_file('../data/exports/geo/BAW_tracer_points.geojson', driver='GeoJSON')
         tracklines.to_file('../data/exports/geo/BAW_tracer_lines.geojson', driver='GeoJSON')
     return tracks, tracklines
-
-
-def load_single_BAW_run(file, epsg=Config.baw_epsg):
-    """
-    Loads a single BAW tracer particle simulation run from a .dat file
-    :param file: path to .dat file
-    :param epsg: epsg code of the projection
-    :return: GeoDataFrame with the tracer particle simulation run
-    """
-
-    # read and wrangle file into pandas df
-    if isinstance(file, str):
-        file = Path(file)
-    df = pd.read_fwf(file, names=['X', 'Y', 'tracer_depth', 'simPartID'], widths=[15,15,15,6])
-    df['season'] = file.name.split('_')[0]
-    df['tracer_ESD'] = int(file.name.split('_')[1].strip('.dat'))
-    df = df.iloc[:(df.X=='EGRUPPE').argmax()]  # find the first row which has "EGRUPPE" in its index and drop it and all rows below
-    df.dropna(inplace=True)
-    df.reset_index(drop=True, inplace=True)
-    df['simPartID'] = df['simPartID'].astype(int)
-    
-    # add a new column to df called 'time_step' which starts from one for each simPartID and increases by one for each row
-    df['time_step'] = df.groupby('simPartID').cumcount() + 1
-    
-    # correct unrealistic tracer depths
-    if Config.restrict_tracers_to_depth:
-        df.loc[(df.tracer_depth > Config.restrict_tracers_to_depth) |  # find all rows where tracer_depth is larger than Config.restrict_tracers_to_depth
-            (df.tracer_depth < 0 ), 'tracer_depth'] = np.nan  # find all rows where tracer_depth is smaller than zero ...and set them to NaN
-        df.tracer_depth.interpolate(method='linear', inplace=True)  # interpolate the NaN values from their neighbours
-
-    # create a GeoDataFrame from df
-    return gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.X, df.Y), crs=f"EPSG:{epsg}").drop(columns=['X', 'Y'])
-
-
-def extract_zipped_traces(path2zip):
-    with ZipFile(path2zip) as zipObj:
-        # get a list of all .dat files in the zip
-        datfiles = [f for f in zipObj.namelist() if f.endswith('.dat')]
-        # only keep .dat files in the list which are from seasons named in Config.use_seasons
-        datfiles = [f for f in datfiles if f.split('_')[0] in Config.use_seasons]
-        # read the .dat files using geo.get_BAW_traces and concatenate them into one dataframe
-        gdfs = [load_single_BAW_run(zipObj.open(f)) for f in datfiles]  # normal way, using one cpu core
-        # gdfs = Parallel(n_jobs=cpu_count(), verbose=2, backend='multiprocessing')(delayed(load_single_BAW_run)(zipObj.open(f)) for f in datfiles)  # attempt to parallelize, but returns error: cannot pickle '_io.BufferedReader' object
-        return gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=True), crs=gdfs[0].crs)
 
 
 def get_wwtp_influence(sdd, trackpoints=None, tracks_file=None, buffer_radius=Config.station_buffers, col_prefix='WWTP_influence', file_postfix=''):
@@ -149,25 +85,34 @@ def get_wwtp_influence(sdd, trackpoints=None, tracks_file=None, buffer_radius=Co
             if tracks_file is None:
                 raise ValueError('Either tracks or tracks_file must be provided.')
             else:
+                print('Loading trackpoints...')
                 trackpoints, tracklines = get_BAW_traces(tracks_file)  # load from .dat file
         # turn sdd into a GeoDataFrame with conversion from Lat/Lon to to epsg of gdf
+        print('Building gdf')
         sdd_gdf = gpd.GeoDataFrame(sdd, geometry=gpd.points_from_xy(sdd.LON, sdd.LAT), crs=4326).to_crs(trackpoints.crs)
         # approach 1: mean distance based influence factor
-        sdd[col_prefix+'_as_tracer_mean_dist'] = sdd_gdf.geometry.apply(lambda x: trackpoints.distance(x).mean())  # mean straight-line distance of all drifters at all time steps to each sampling station
+        print('Starting tracer_mean_dist...')
+        sdd[col_prefix+'_as_tracer_mean_dist'] = sdd_gdf.geometry.progress_apply(lambda x: trackpoints.distance(x).mean())  # mean straight-line distance of all drifters at all time steps to each sampling station
         # approach 2: mean distance based influence factor, but only distances to each tracer end point
-        sdd[col_prefix+'_as_endpoints_mean_dist'] = sdd_gdf.geometry.apply(lambda x: tracklines.apply(lambda y: Point(y.coords[-1])).distance(x).mean())
+        print('Starting endpoints_mean_dist...')
+        sdd[col_prefix+'_as_endpoints_mean_dist'] = sdd_gdf.geometry.progress_apply(lambda x: tracklines.apply(lambda y: Point(y.coords[-1])).distance(x).mean())
         # approach 3 and 4: buffer based influence factor
+        print('Start making buffers...')
         sdd_gdf['geometry'] = sdd_gdf.buffer(buffer_radius)
         # spatially join the sample domain data with the particle tracks, where the buffer zone of a sample contains a particle location at any time step
+        print('Start joining points and buffers...')
         dfsjoin = gpd.sjoin(sdd_gdf, trackpoints, how='left', predicate='contains')
         # group sdd by Sample and sum the number of particles that were encountered in the buffer zone
+        print('Starting cumulated_residence...')
         sdd[col_prefix+'_as_cumulated_residence'] = dfsjoin.reset_index().groupby('index').time_step.count()  # summed occurrences of presence of all drifters at all time steps inside station buffer zones
+        print('Starting mean_time_travelled...')
         sdd[col_prefix+'_as_mean_time_travelled'] = dfsjoin.reset_index().groupby(['index', 'simPartID']).nth(0).groupby('index').time_step.mean()  # mean of time steps of all drifters at first entrance to station buffer zones
         sdd[col_prefix+'_as_mean_time_travelled'].fillna(Config.tracer_mean_time_fillna, inplace=True)
         sdd.drop(columns=['geometry'], inplace=True)
         # save calculated WWTP influence factors (the last 3 columns of sdd) to a csv file
         sdd.set_index('Sample').iloc[:, -4:].to_csv(f'../data/{col_prefix + file_postfix}.csv', index_label='Sample')
         return sdd
+
 
 def make_coord_tuples(gdf):
     '''
@@ -184,7 +129,7 @@ def get_depth(gdf, dem=None, label='water_depth'):
     depths and same df (with new column) is returned
     '''
     if dem is None:
-        dem = load_zipped_grid(Config.dem_path)  # load grid from zip file
+        dem = geo_io.load_zipped_grid(Config.dem_path, Config.dem_filename)  # load grid from zip file
     coord_list = make_coord_tuples(gdf)
     gdf[label] = [-1 * x[0] for x in dem.sample(coord_list)]  # sample the grid at the locations of the tracer particles (multiply by -1 because the grid uses negative depth values) 
     return gdf
@@ -242,35 +187,6 @@ def arrest_tracks(group, group_name):
         return group
 
 
-def sparse_xyz_to_grid(xyz, sep=' ', resolution=Config.dem_resolution, nodata=-9999):  # FIXME: not working yet, gives: TypeError: 'set' type is unordered, in line df_missing = ...
-    """
-    Converts a sparse regularly spaced xyz dataset into a dense grid. Adapted from https://www.gpxz.io/blog/fixing-sparse-xyz-files
-    :param xyz: path to .xyz file, no header, projected CRS
-    :param sep: separator between columns in xyz file
-    :param resolution: resolution of the grid in meters
-    :param nodata: value to use for cells not covered by the sparse dataset
-    :return: regular grid as a numpy array
-    """
-    
-    df = pd.read_csv(xyz, sep=sep, header=None, names=['x', 'y', 'z'])
-    # Figure out which x and y values are needed.
-    x_vals = set(np.arange(df.x.min(), df.x.max() + resolution, resolution))
-    y_vals = set(np.arange(df.y.min(), df.y.max() + resolution, resolution))
-    # For each x value, find any missing y values, and add a NODATA row.
-    dfs = [df]
-    for x in x_vals:
-        y_vals_missing = y_vals - set(df[df.x == x].y)
-        if y_vals_missing:
-            df_missing = pd.DataFrame({'x': x, 'y': y_vals_missing, 'z': nodata})
-            dfs.append(df_missing)
-    df = pd.concat(dfs, ignore_index=True)
-    df = df.sort_values(['y', 'x'])
-    # Check.
-    assert len(df) == len(x_vals) * len(y_vals)
-
-    return df.to_numpy()
-
-
 def tracer_points_to_lines(tracks):
     """
     Convert the points of the tracer particles to lines
@@ -285,39 +201,14 @@ def make_grid(poly, res, round_grid_coords=False):
     poly_bounds = poly.total_bounds  # get the extent of the Schlei polygon
     print('polygon bounds: ', [b for b in zip(['xmin', 'ymin', 'xmax', 'ymax'], poly_bounds)])
     if round_grid_coords:
-        xmin, ymin, xmax, ymax = np.around(poly_bounds / (0.5*res)) * (0.5*res)  # rounding to next half res
+        xmin, ymin = np.floor(poly_bounds[:2] / res) * res  # rounding down to next multiple of res        
+        xmax, ymax = np.ceil(poly_bounds[2:] / res) * res  # rounding up to next multiple of res
     else:
         xmin, ymin, xmax, ymax = poly_bounds
-    xgrid, ygrid = np.meshgrid(np.arange(xmin - res, xmax, res),
-                            np.arange(ymax + res, ymin, -res),  # y is upside down so higher values end up at the top (north) of the grid
+    xgrid, ygrid = np.meshgrid(np.arange(xmin, xmax, res),
+                            np.arange(ymax, ymin, -res),  # y is upside down so higher values end up at the top (north) of the grid
                             )
     return xgrid, ygrid, xmin, ymin, xmax, ymax
-
-
-def grid_interp(data, xgrid, ygrid, name):
-    '''
-    Interpolates point data from geopandas geoseries, using scipy.interpolat.griddata,
-    to a numpy 2D-array of regularly spaced grid points (ndarray).
-    Optional fillna: As some interpolation methods ('linear' and 'cubic') will result
-    in nan outside of the convex hull of data points, these can be filled be
-    re-interpolating them using 'nearest' method.
-    '''
-
-    points = np.vstack((data.geometry.x, data.geometry.y)).T
-    values = griddata(
-        points, data[name],
-        (xgrid, ygrid),
-        method=Config.interpolation_method,  # 'linear' and 'cubic' will result in nan outside of the convex hull of data points
-    )
-    nan_mask = np.isnan(values)  # if there are any nan points re-interpolate them using method 'nearest'
-
-    if np.any(nan_mask):
-        values2 = griddata(
-            points, data[name],
-            (xgrid, ygrid), method='nearest',
-        )
-        values[nan_mask] = values2[nan_mask]
-    return values
 
 
 def grid_clip(values, poly, xgrid, ygrid):
@@ -337,18 +228,24 @@ def grid_clip(values, poly, xgrid, ygrid):
     return grid_gdf['vals'].values.reshape(values.shape)
 
 
-def grid_load(src_filename):
+def interclip(data, name, xgrid, ygrid, poly, tool, clip=True, plot='nochange'):
     '''
-    Load a saved grid from a tiff file into ndarray.
+    Interpolate data from point geo-dataframe to a regular grid
+    and clip the grid to a shape given in a second geo-dataframe,
+    cotaining one polygon.
+    It is just a wrapper to run grid_interp and grid_clip in one go.
     '''
-    with rio.open(src_filename, "r") as src:
-        print('\n\nLoading raster with Tiff tags:')
-        for k,v in src.meta.items():
-            print(f'{k}: {v}')
-        print(src.bounds, '\n\n')
-        grid = src.read(1)
-    grid[grid==src.nodata] = np.nan
-    return grid
+    x = data.geometry.x
+    y = data.geometry.y
+    z = data[name]
+    Config.interpolation_methods[tool]['var_name'] = name
+    if plot != 'nochange':
+        Config.interpolation_methods[tool]['plot'] = plot
+    ipolator = getattr(interpol, tool)
+    values = ipolator(x, y, z, xgrid, ygrid, params=Config.interpolation_methods[tool])
+    if not clip:
+        return values
+    return grid_clip(values, poly, xgrid, ygrid)
 
 
 def sample_array_raster(raster, xmin, ymax, res, points_gdf, **kwargs):

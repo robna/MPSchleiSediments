@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import xarray as xr
 
 import altair as alt
 alt.data_transformers.disable_max_rows()
@@ -20,6 +21,7 @@ from sklearn.metrics import r2_score
 
 from settings import Config, target
 import prepare_data
+import geo_io
 
 df_0 = pd.DataFrame({'x': [0], 'y': [0]})
 
@@ -156,8 +158,8 @@ def scatter_chart(
 
     if equal_axes:
         base = base.encode(
-            x=alt.X(x, scale=alt.Scale(domain=[0, domain_max])),
-            y=alt.Y(y, scale=alt.Scale(domain=[0, domain_max])))
+            x=alt.X(x, scale=alt.Scale(domain=[0, domain_max]), axis= alt.Axis(title= f'log10 of {x}') if xtransform else alt.Axis(title = x)),
+            y=alt.Y(y, scale=alt.Scale(domain=[0, domain_max]), axis= alt.Axis(title= f'log10 of {y}') if ytransform else alt.Axis(title = y)))
 
     if color:
         scatter = base.encode(
@@ -466,7 +468,7 @@ def biplot(scor, load, expl, discr, x, y, sc, ntf=5, normalise=None,
         load = load.apply(lambda x: (x - x.mean()) / x.std())
         scor = scor.apply(lambda x: (x - x.mean()) / x.std())
 
-    dfl = load.head(ntf).append(load.head(ntf) - load.head(ntf)).reset_index()
+    dfl = pd.concat([load.head(ntf), load.head(ntf) - load.head(ntf)]).reset_index()
     # dfl = (dfl / dfl.max(numeric_only=True).max(numeric_only=True))  # normalise values to range [-1,1]
 
     dfl2 = load.head(ntf).reset_index()
@@ -794,3 +796,49 @@ def model_pred_bars(df, target='Concentration', domain=None):
     # ).resolve_scale(y='independent'
     ).interactive(
     )
+
+
+def gridplot(a, x, y, poly=None, rasterize=False, project=False, tiles=False):
+    '''
+    Plot grid data in a numpy 2D array as an hvplot.
+    :param a: numpy array with data values
+    :param x: Either array of same size as a, holding x coordinate values, or 1D array of length a.shape[1]
+    :param y: Either array of same size as a, holding y coordinate values, or 1D array of length a.shape[0]
+    :param poly: Plot a polygon outline ontop of the grid. Provided as a one-row geopandas df of polygon or multipolygon geometry. If not provided, default Schlei coastline will be loaded. Set to False for no outline.
+    :param rasterize: If True, use datashader for faster loading (default=False)
+    :param project: Whether to project the data before plotting (adds initial overhead but avoids projecting data when plot is dynamically updated) (default=False)
+    :param tiles: True to show OSM background for map, default False
+    :return: hvplot
+    '''
+    if poly is True or poly is None:
+        poly = geo_io.get_schlei()
+
+    if len(x.shape) == 2:  # if x is supplied as an xgrid
+        x= x[0,:]  # take first row as x-coodinates vector
+    if len(y.shape) == 2:  # if x is supplied as an xgrid
+        y= y[:,0]  # take first column as y-coodinates vector
+    
+    data_array = xr.DataArray(a, coords={'x': x, 'y': y}, dims=('y', 'x'))
+    grid_plot = data_array.hvplot(
+        x='x', y='y',
+        rasterize=rasterize,
+        cmap='viridis',
+        cnorm='eq_hist',
+        tiles=tiles,
+        project=project,
+        crs=Config.baw_epsg,
+        frame_width=700, frame_height=500,  # set width and height to 1/5th of the grid dimensions, but not smaller than 400x300
+        )
+    if poly is not False:
+        grid_plot = grid_plot * poly.hvplot(
+            fill_alpha=0,
+            line_color='red',
+            crs=Config.baw_epsg,
+            project=project,
+            )
+    return grid_plot
+
+
+def variogram_plot(cov_model, bin_center, gamma):
+    ax = cov_model.plot(x_max=max(bin_center))
+    ax.scatter(bin_center, gamma)

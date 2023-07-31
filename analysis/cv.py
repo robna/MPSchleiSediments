@@ -4,16 +4,19 @@ from itertools import compress
 import joblib
 from datetime import datetime
 import time
+from tqdm import tqdm
 import threading
 
-from statsmodels.sandbox.tools.cross_val import LeaveOneOut
+from sklearn.model_selection import LeaveOneOut as sk_loo
+from statsmodels.sandbox.tools.cross_val import LeaveOneOut as sm_loo
 from sklearn.model_selection import GridSearchCV, cross_validate, KFold, RepeatedKFold
 from sklearn.metrics import max_error, mean_squared_error, mean_absolute_error, r2_score, mean_absolute_percentage_error, median_absolute_error
 from sklearn import clone, set_config
 # set_config(transform_output='pandas')  # only works for sklearn >= 1.2
 from sklearn.utils import parallel_backend
 
-import glm
+import glm, geo
+from helpers import tqdm_joblib
 from cv_helpers import iqm, median_absolute_percentage_error
 from settings import Config, featurelist, getLogger, target
 
@@ -30,7 +33,7 @@ def loocv(df):
     pred = pd.DataFrame(columns=['Sample', 'pred'])  # create empty dataframe for predictions
     n = df.shape[0]  # number of samples
     p = Config.glm_formula.count('+') + Config.glm_formula.count('*') + 1  # number of predictors
-    for train_index, test_index in LeaveOneOut(df.shape[0]):
+    for train_index, test_index in sm_loo(df.shape[0]):
         train = df.loc[train_index, :]
         test = df.loc[test_index, :]
         glm_res = glm.glm(train)
@@ -46,6 +49,44 @@ def loocv(df):
         p)
     return pred, metrics
 
+
+def loocv_interp(station_data, target, xgrid, ygrid, res, poly, tool, n_jobs=1, verbose=False):
+    '''
+    Perform LOOCV for interpolation
+    '''
+    xmin, ymax = xgrid[0,0], ygrid[0,0]
+    loo = sk_loo()
+
+    def interpolate_leftout(train_index, test_index):
+        return [test_index[0],
+            geo.sample_array_raster(
+            geo.interclip(
+                            station_data.loc[train_index],
+                            target, xgrid, ygrid, poly, tool,
+                            clip=False, plot=False,
+                        ),
+                xmin, ymax, res, station_data.loc[test_index]
+                )[0]
+            ]
+    
+    if n_jobs == 1:
+        l = [
+             interpolate_leftout(train_index, test_index) for
+             train_index, test_index in 
+             tqdm(loo.split(station_data), desc=f'LOOCV of {tool}', total=station_data.shape[0])
+            ]
+    else:
+        with tqdm_joblib(tqdm(desc=f'Parallel LOOCV of {tool}', total=station_data.shape[0])) as progress:
+            l = joblib.Parallel(n_jobs=n_jobs, verbose=verbose)(
+                        joblib.delayed(interpolate_leftout)(train_index, test_index
+                        ) for
+                            train_index, test_index in 
+                            loo.split(station_data)
+                    )
+
+    time.sleep(1)  # wait a second, just to get print outputs in correct order
+    return pd.Series({i[0]: i[1] for i in l})
+    
 
 def performance(observed, predicted, p=None):
     """
@@ -79,6 +120,20 @@ def performance(observed, predicted, p=None):
     return metrics
 
 
+def get_performance(df, target, kind='predicted', with_outliers=False):
+    '''
+    Wrapper function to calculate yhat vs y perfomance scores of df columns.
+    y-column: indicated by name <target>_observed
+    yhat-column: named <target>_<kind>
+    '''
+    if 'Sample' in df.columns:
+        df = df.copy().set_index('Sample')
+    df_f = df.loc[(df.Type=='observed') & 1 if with_outliers else (df.outlier_excl==False), :]
+    print(f'Number of ŷ-vs-y pairs: {df_f.shape[0]}')
+    return performance(df_f.loc[:, f'{target}_observed'],
+                       df_f.loc[:, f'{target}_{kind}'])
+    
+    
 def make_setup_dict(**kwargs):
     setup = kwargs  # dict of lists of NCV parameter settings: first element for outer, second for inner CV    
     if 'repeats' in setup.keys():

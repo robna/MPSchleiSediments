@@ -8,7 +8,32 @@ from sklearn.utils.metaestimators import available_if
 from statsmodels.formula.api import glm as glm_sm
 
 from joblib import Parallel, delayed, cpu_count
+import joblib
+import contextlib
 from itertools import chain
+
+
+@contextlib.contextmanager
+def tqdm_joblib(tqdm_object):
+    """
+    Context manager to patch joblib to report into tqdm progress bar given as argument
+    Note: from https://stackoverflow.com/a/58936697
+    in a script running a joblib.Parallel loop, call in via context manager:
+        with tqdm_joblib(tqdm(desc="My calculation", total=10)) as progress_bar:
+            Parallel(n_jobs=16)(delayed(sqrt)(i**2) for i in range(10))  # OBS: be sure to change the total value to the actual number of iterations
+    """
+    class TqdmBatchCompletionCallback(joblib.parallel.BatchCompletionCallBack):
+        def __call__(self, *args, **kwargs):
+            tqdm_object.update(n=self.batch_size)
+            return super().__call__(*args, **kwargs)
+
+    old_batch_callback = joblib.parallel.BatchCompletionCallBack
+    joblib.parallel.BatchCompletionCallBack = TqdmBatchCompletionCallback
+    try:
+        yield tqdm_object
+    finally:
+        joblib.parallel.BatchCompletionCallBack = old_batch_callback
+        tqdm_object.close()
 
 
 class PipelineHelper(BaseEstimator, TransformerMixin, ClassifierMixin):

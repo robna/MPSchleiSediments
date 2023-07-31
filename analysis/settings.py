@@ -16,10 +16,10 @@ featurelist = [
     'WWTP_influence_as_mean_time_travelled__nosed_18µm_allseasons_222',#pre-final GLM
     'WWTP_influence_as_cumulated_residence__nosed_0µm_allseasons_222_',#pre-final RF*
     'WWTP_influence_as_mean_time_travelled__nosed_0µm_allseasons_222_',#pre-final GLM*
-    # 'SED_D50', #pre-final RF
-    # 'perc_MUD', # pre-final GLM
-    # 'PC1', # pre-final GLM + RF*
-    # 'PC2'
+    'SED_D50', #pre-final RF
+    'perc_MUD', # pre-final GLM
+    'PC1', # pre-final GLM + RF*
+    'PC2'
 ]
 
 default_predictors = ['Dist_WWTP', 'TOC', 'Q("SED_D50")"', 'PC1', 'PC2']  # columns to be used as predictors
@@ -64,14 +64,35 @@ class Config:
         # 'MassConcentration_predicted': '0.9640*Concentration_predicted-425.9779',  # R²=0.9135, based on linear regression with MassConcentration as µg kg⁻¹, OBS: can yield negative values!
     }
     
-    # Geospacial settings
+    # Geospatial settings
     baw_epsg: int = 25832  # epsg code of the baw data
     restrict_tracers_to_depth: float = 30.0  # for BAW tracer particles depth values larger than this, will be replaced by an interpolation from their neighbours, set to 0 for no depth correction
     station_buffers: float = 444.0  # buffer radius in meters around each sample station , in which tracer ocurrences from the BAW simulation are counted
-    dem_path: str = '../data/.DGM_Schlei_1982_bis_2002_UTM32.zip'  # path to the DEM of water depths
+    dem_path: str = '../data/.DGM_Schlei_1982_bis_2002_UTM32.zip'  # path to the zip file containing DEMs of water depths
+    dem_filename: str= 'DGM_Schlei_1982_bis_2002_UTM32_filled.grd'  # name of the DEM file to use (DGM_Schlei_1982_bis_2002_UTM32.grd is the original grid, DGM_Schlei_1982_bis_2002_UTM32_filled.tif is interpolated outwards to zero-depth at the actual Schlei coastline, the interpolation was done as described here: https://gis.stackexchange.com/a/457998/223215)
     dem_resolution: float = 5.0  # resolution of the digital elevation model in meters
-    interpolation_resolution: float = 5.0  # spatial resolution for geospatial interpolation in metres
-    interpolation_method: str = 'linear'  # {‘linear’, ‘nearest’, ‘cubic’} method for scipy.interpolate.griddata
+    interpolation_resolution: float = 20.0  # spatial resolution for geospatial interpolation in metres
+    interpolation_methods: dict = {  # dict of "tool: params"   OBS: do not use 'var_name' as key in params dicts, as this term will later inserted by geo.interclip
+                                     'numpy_simple_idw': {'power': 0.11},  # power to which the distances are raised before weighting 
+                                     'numpy_rbf_idw': {},  # no params 
+                                     'scipy_rbf_idw': {'function': 'linear'},  # Radial basis function of radius r: 
+                                                                                # 'multiquadric': sqrt((r/self.epsilon)**2 + 1),
+                                                                                # 'inverse': 1.0/sqrt((r/self.epsilon)**2 + 1),
+                                                                                # 'gaussian': exp(-(r/self.epsilon)**2)
+                                                                                # 'linear': r
+                                                                                # 'cubic': r**3
+                                                                                # 'quintic': r**5
+                                                                                # 'thin_plate': r**2 * log(r)
+                                     'scipy_griddata': {'method': 'cubic'},  # {‘linear’, ‘nearest’, ‘cubic’} method for scipy.interpolate.griddata
+                                     'pykrige_ordkrig': {'nlags': 6, 'weight': False, 'model': 'spherical',  # linear, power, gaussian, spherical, exponential and hole-effect
+                                                         'variogram_params': {'sill': 12000000, 'range': 3000, 'nugget': 500000},  # variogram_params terms depend on the model type
+                                                         'exact': True, 'plot': True, 'stats': True},
+                                     'skgstat_ordkrig': {'n_lags': 10, 'maxlag': 7000, 'model': 'spherical',
+                                                         'min_points': 20, 'max_points': 30, 'mode': 'exact',
+                                                         'normalize': False, 'use_nugget': True, 'plot': True},
+                                     'pygmt_xyz2grd': {},  # not yet working
+                                     'load_external_interpol': {'path': '/home/rob/ownCloud/microSCHLEI/Sediment_K/BAW/Smart-Map/', 'Concentration': '1_Krig_Conc_log_Grid_Map_5x5_10EXP_clipped.tiff', 'MassConcentration': '', 'SedDryBulkDensity': ''}  # load externally interpolated grids
+                                 }
     use_seasons: list = ['spring']  # which seasons to use for the tracer-based WWTP influence estimation: must be a list of one or more of 'spring', 'summer','autumn'
     sed_contact_dist: float = 0.01  # distance in meters to the sediment contact, below which a tracer is considered to have sedimented
     sed_contact_dur: int = 2  # number of timesteps a tracer has to be closer to the sediment than sed_contact_dist to be considered as sedimented
