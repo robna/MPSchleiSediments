@@ -24,7 +24,7 @@ holoviews = ">=1.16.2"
 hvplot = ">=0.8.1"
 geoviews = ">=1.10.1"
 datashader = ">=0.15.1"
-jupyter-bokeh = "3.0.7"
+jupyter-bokeh = ">=3.0.7"
 pydeck = "*"
 
 
