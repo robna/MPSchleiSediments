@@ -1,33 +1,54 @@
 [project]
-name = ""
-version = ""
-description = ""
+name = "MPSchleiSediments"
+version = "0.1"
+description = "Data analysis and modelling for microplastics in sediments of the Schlei fjord."
 authors = [
     {name = "Robin Lenz", email = "robin.lenz@io-warnemuende.de"},
 ]
 dependencies = [
-    "altair-transform @ git+https://github.com/altair-viz/altair-transform.git",
-    "altair-viewer",
+
+    # general stuff
+
     "mysql-connector-python",
-    "seaborn",
-    "statsmodels",
-    "vega-datasets",
-    "streamlit-vega-lite",
     "rpy2==3.5.1",
-    "plotly",
-    "pydeck",
-    "scikit-bio>=0.5.7",
-    "xgboost",
-    "scipy==1.8.1",
-    "pysal>=2.6.0",
     "ipykernel>=6.15.1",
+    "streamlit>=1.25.0",
+    "vegafusion[embed]",
+    "vegafusion-jupyter[embed]",
+    
+    
+    # plotting related
+
+    "altair-transform @ git+https://github.com/altair-viz/altair-transform.git",
+    "seaborn",
+    "plotly",
+    "holoviews>=1.16.2",
     "hvplot>=0.8.1",
-    #"scikit-learn>=1.1.2",
-    "scikit-learn @ https://pypi.anaconda.org/scipy-wheels-nightly/simple/scikit-learn/1.2.dev0/scikit_learn-1.2.dev0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
-    "folium>=0.13.0",
-    "mapclassify>=2.4.3",
+    "geoviews>=1.10.1",
+    "datashader>=0.15.1",
+    "jupyter-bokeh>=3.0.7",
+    "pydeck",
+    
+    
+    # statistics related
+
+    "statsmodels",
+    "scikit-bio>=0.5.8",
+    "scikit-gstat>=1.0.12",
+    "scikit-learn>=1.3.0",
+    "xgboost",
+    #"scipy==1.8.1",
+
+
+    # geospatial
+
+    "pysal>=2.6.0",
+    "pygmt>=0.9.0",
+    "pykrige>=1.7.0",
+    "gstools>=1.5.0",
+
 ]
-requires-python = ">=3.8,<3.10"
+requires-python = ">=3.8,<3.11,!=3.9.7"
 license = {text = "GPL-3.0-or-later"}
 
 [tool.pdm]
