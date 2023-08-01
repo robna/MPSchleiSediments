@@ -56,7 +56,7 @@ def pdd_filters(mp_pdd):
                                                          max_value=density_lims[1],
                                                          step=100)
     samplefilter = st.sidebar.multiselect('Select samples:', mp_pdd.Sample.unique(), default=mp_pdd.Sample.unique())
-    shapefilter = st.sidebar.multiselect('Select shapes:', ['irregular', 'fibre'], default=['irregular', 'fibre'])
+    shapefilter = st.sidebar.multiselect('Select shapes:', mp_pdd.Shape.unique(), default=mp_pdd.Shape.unique())
     polymerfilter = st.sidebar.multiselect('Select polymers:', mp_pdd.polymer_type.unique(),
                                            default=mp_pdd.polymer_type.unique())
     mp_pdd = mp_pdd.loc[mp_pdd.Shape.isin(shapefilter)

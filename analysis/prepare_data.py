@@ -143,21 +143,10 @@ def height_vol_dens_mass(df):
          #|(df['Size_3_[µm]'] == 0)  # due to insufficient z-resolution, small particles tend to cluster at 0 µm height
          #|(df['Size_3_[µm]'] == 20)
          #,'Size_3_[µm]'] = (1.919764*np.log(df['Size_2_[µm]'])**0.660945)  # regression from particle with existing Gepard height data
-    
-    df.loc[(df['Shape'] == 'irregular') & (df['Size_3_[µm]'] > df['Size_1_[µm]']), 'Size_3_[µm]'] = df['Size_2_[µm]']  # when irreg higher than long, use Size_1 as height
-   
-    df.loc[(df['Shape'] == 'fibre') & (df['Size_3_[µm]'] > df['Size_2_[µm]']), 'Size_3_[µm]'] = df['Size_2_[µm]'] 
-    df.loc[(df['Shape'] == 'fibre') & (df['Size_3_[µm]'] < 5), 'Size_3_[µm]'] = df['Size_2_[µm]'] 
-   
-    #df.loc[df['Shape'] == 'fibre', 'Size_3_[µm]'] = df['Size_2_[µm]']  # Heights for fibres (alternative 1): use Size_2 as height for all fibres
-  
-    # df.loc[(df['Shape'] == 'fibre') & (  # Heights for fibres (alternative 2): when fibre without height OR higher than wide OR < 5: use Size_2 as height
-    #         (ds (df['Size_3_[µm]'].isna())
-    #         ), 'Size_3_[µm]']= df['Size_2_[µm]']
 
     # where particle Gepard height is low, get height from shape-constrained height distribution of manually measured particles
     # this is to mitigate the effect of the low z-resolution of the Gepard, which produces wrong and clustered height data for small particles
-    hw = df.loc[(df['Shape'] == 'irregular') &  # generate weights for the scKDE-sampled height values
+    hw = df.loc[#(df['Shape'] == 'irregular') &  # generate weights for the scKDE-sampled height values
                 (df['Size_3_[µm]'] >= Config.height_low) &
                 (df['Size_3_[µm]'] <= Config.height_high)
                 , 'Size_3_[µm]'
@@ -173,12 +162,19 @@ def height_vol_dens_mass(df):
     # # blend the scKDE-sampled height values with the Gepard height values applying a linear weight decrease with heights increasing within the [low, high] range
     # df.loc[hw.index, 'Size_3_[µm]'] = hw * sampled_values + (1 - hw) * df.loc[hw.index, 'Size_3_[µm]']
 
-    sampled_values, kde = unbound_kde(hw.shape[0], Config.height_low, Config.height_high)
-    hw = hw.sample(frac=1, random_state=21)
-    hw.sort_values(inplace=True)
-    hw[:] = sampled_values
-    df.loc[hw.index, 'Size_3_[µm]'] = hw
-    
+    sampled_values, kde = unbound_kde(hw.shape[0], Config.height_low, Config.height_high)  # using unbound kde had several advantages and is easier to understand and communicate
+    hw = hw.sample(frac=1, random_state=21)  # First we shuffle the series of heights...
+    hw.sort_values(inplace=True)  # then we sort it again. Effect of first shuffle, then sort is, that within groups of equal heights, the sorting will not maintain the order in which samples appear in the original DF.
+    hw[:] = sampled_values  # assign the (already sorted) sampled values over the shuffle-sorted original heights
+    df.loc[hw.index, 'Size_3_[µm]'] = hw  # write the new heights back into the df at the respective indices
+
+    df.loc[(df['Shape'] == 'fibre') & (df['Size_3_[µm]'] > df['Size_2_[µm]']), 'Size_3_[µm]'] = df['Size_2_[µm]']  # when fibre higher than wide, use Size2 as height
+    df.loc[(df['Shape'] == 'irregular') & (df['Size_3_[µm]'] > df['Size_1_[µm]']), 'Size_3_[µm]'] = df['Size_2_[µm]']  # when irreg higher than long, use Size_1 as height
+   
+    #df.loc[(df['Shape'] == 'fibre') & (df['Size_3_[µm]'] < 5), 'Size_3_[µm]'] = df['Size_2_[µm]']  # empirical observation that Gepard created rather random noise in height measurements of fibres below 5 µm: so replace it by Size2 as well
+   
+    #df.loc[df['Shape'] == 'fibre', 'Size_3_[µm]'] = df['Size_2_[µm]']  # Heights for fibres (alternative 1): use Size_2 as height for all fibres
+
 
     # Calculate volumes
     # -----------------
