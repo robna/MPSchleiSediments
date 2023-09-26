@@ -6,6 +6,9 @@ import pickle
 from pathlib import Path
 from itertools import combinations
 from joblib import Parallel, delayed, cpu_count
+from tqdm import tqdm
+
+from helpers import tqdm_joblib
 
 
 def SelectFeatures(model_X, feature_set, feature_sets):
@@ -126,7 +129,13 @@ def inter_rank(NCV, refit_scorer):
     return NCV
 
 
-def unnegate(NCV, negated):
+def unnegate(NCV, scorers):
+    # saving a list of scores which have turned up with negated values in the results
+    negated = [ 
+        key for key, val in scorers.items()
+        if any(sub in str(val)
+        for sub in ['neg_', 'greater_is_better=False'])
+    ]
     ## Convert negated scores back to normal
     NCV[NCV.filter(regex='|'.join(negated)).columns] *= -1
     return NCV
@@ -175,4 +184,29 @@ def fix_feature_combis(params, feature_candidates_list, lin_combis=[2,3], tree_c
             l2 = len(params[i]['preprocessor__selector__kw_args'])
             print(f'{rn}: Number of feature sets changed from {l} to {l2}')
     return params
+    
+
+def ensemble_predict(esti, X, n_jobs=-1, verbose=False):
+    '''
+    esti: dataframe with columns 'estimator_refit_on_all' (trained models) and 'features' (lists of feature names used by the respective model)
+    X: dataframe with columns of features
+    returns: df of predictions
+    '''
+    # p = [
+    #     est['estimator_refit_on_all'].predict(X.loc[[P], est.features])
+    #     for _, est in esti.iterrows()
+    #     for P in X.index
+    #     ]
+    with tqdm_joblib(tqdm(desc=f'Predicting {len(X)} samples with {len(esti)} members', total=len(X)*len(esti))) as progress_bar:
+        p = Parallel(n_jobs=-1, verbose=verbose, backend='threading')(
+            delayed(est.estimator_refit_on_all.predict)(X.loc[[s], est.features])
+            for _, est in esti.iterrows()
+            for s in X.index
+            )
+    p = np.array(p).reshape(len(esti), len(X))
+    return pd.DataFrame(p, index=esti.index, columns=X.reset_index().Sample)
+    
+    
+def aggregate_predictions(pred_df, ensemble_aggregator, target):
+    return pd.Series([ensemble_aggregator(s) for _, s in pred_df.items()], index=pred_df.columns, name=f'{target}_predicted')
     

@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings('ignore')  # ignore warnings to avoid flooding the gridsearch output with repetitive messages (works for single cpu)
+
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -708,36 +711,52 @@ def repNCV_score_plots(scored_multi, return_df=False, ncv_mode=Config.ncv_mode, 
     Takes score df of multi-repetition simulations,
     re-arranges it to suitable long-form and plots
     a chart of score evoloution against number of
-    repetitions, facetted for scorer type
+    repetitions, facetted for scorer type and model run.
     '''
     df = scored_multi.unstack().reset_index().melt(id_vars=['NCV_repetitions', 'run_with'], var_name=['Scorer', 'Aggregation']).dropna()
-    df. Aggregation = df.Aggregation.str.split('_\d', expand=True)[0].str.strip('_of')
-    df['Mean_of_repetitions'] = ~df.Aggregation.str.contains('_of_all')
-    df. Aggregation = df.Aggregation.str.replace('_of_all', '')
-    df. Aggregation = df.Aggregation.str.replace('Mean_of_', '')
-    df. Aggregation = df.Aggregation.str.rstrip('s').str.lower()
+    df.Aggregation = df.Aggregation.str.split('_\d', expand=True)[0].str.strip('_of').str.rstrip('s').str.lower()
 
-    dfs = df.loc[df.Aggregation.str.contains('stdev')].rename(columns={'value': 'Score_stdev'})
-    dfs.Aggregation = dfs.Aggregation.str.replace('stdev_of_', '')
+    df = pd.concat([df, df.Aggregation.str.split('_of_', expand=True).rename(columns={0: 'rep_aggregator', 1: 'fold_aggregator'})], axis=1).drop(columns='Aggregation')
+    idx = df.loc[df.fold_aggregator == 'all'].index
+    df.fold_aggregator.loc[idx] = df.rep_aggregator.loc[idx]
+    df.rep_aggregator.loc[idx] = 'none'
 
-    df = df.loc[~df.Aggregation.str.contains('stdev')]
-    df.sort_values(['run_with', 'NCV_repetitions', 'Aggregation', 'Scorer', 'Mean_of_repetitions'], ascending=[True,True,False,False,False], inplace=True)
-    df = df[['run_with', 'NCV_repetitions', 'Aggregation', 'Scorer', 'Mean_of_repetitions', 'value']].rename(columns={'value': 'Score_value'})
+    dfs = df.loc[df.rep_aggregator == 'stdev'].rename(columns={'value': 'Score_stdev'})
+    dfs.drop(columns='rep_aggregator', inplace=True)
+    
+    df = df.loc[df.rep_aggregator != 'stdev']
+    df.sort_values(['run_with', 'NCV_repetitions', 'rep_aggregator', 'fold_aggregator', 'Scorer'], ascending=[True,True,False,False,False], inplace=True)
+    df = df[['run_with', 'NCV_repetitions', 'rep_aggregator', 'fold_aggregator', 'Scorer', 'value']].rename(columns={'value': 'Score_value'})
     df = df.merge(dfs, how='left')
+    df.Score_stdev.loc[df.rep_aggregator == 'none'] = np.nan
+    
+    sel_rep_aggregator = alt.selection_point(
+        fields=['rep_aggregator'],
+        bind=alt.binding_radio(options=np.append(df.rep_aggregator.unique(), None), labels=np.append(df.rep_aggregator.unique(), 'all')),
+        name='Select',
+        # clear=False,
+        value='mean',
+    )
+    toggle_stdev = alt.param(
+        bind=alt.binding_checkbox(name='Show standard deviations as areas? ')
+    )
     
     base = alt.Chart(df).encode(
         x='NCV_repetitions',
-        color = alt.Color('Aggregation', sort=['median', 'iqm', 'mean']),
+        color = alt.Color('fold_aggregator', sort=['median', 'iqm', 'mean']),
     ).properties(width=width, height=height,
     )
+    
     score = base.mark_line(
-        # point=True
+        point=True
     ).encode(
         y = alt.Y('Score_value', title=None),
-        strokeDash = alt.StrokeDash('Mean_of_repetitions', sort=None),
-        opacity = alt.condition(alt.FieldEqualPredicate(field='Mean_of_repetitions', equal='true'), alt.value(1.0), alt.value(0.3)),
-        tooltip = ['NCV_repetitions', 'Score_value', 'Score_stdev'],
+        strokeDash = alt.StrokeDash('rep_aggregator', sort=['median', 'iqm', 'mean']),
+        tooltip = ['NCV_repetitions', 'rep_aggregator', 'fold_aggregator', 'Score_value', 'Score_stdev'],
+    ).transform_filter(
+        sel_rep_aggregator
     )
+    
     stdev = base.mark_area(opacity=0.2).encode(
         y = 'lower:Q',
         y2 = 'upper:Q',
@@ -745,12 +764,15 @@ def repNCV_score_plots(scored_multi, return_df=False, ncv_mode=Config.ncv_mode, 
         lower = 'datum.Score_value - 0.5 * datum.Score_stdev',
         upper = 'datum.Score_value + 0.5 * datum.Score_stdev',
     ).transform_filter(
-        alt.FieldEqualPredicate(field='Mean_of_repetitions', equal='true'),
+        sel_rep_aggregator,
+    ).transform_filter(
+        toggle_stdev,
     )
+    
     cols = (stdev + score).facet(
         column = alt.Column(
             'Scorer',
-            sort=['R2', 'MedAPE', 'MAPE', 'MedAE'],
+            sort=[k for k in Config.scorers.keys()],  # ['R2', 'MedAPE', 'MAPE', 'MedAE', 'MAE'],
             title=[f"Modelled response variable: {target}" \
                  "   ---   " \
                  "Evolution of scores with increasing number of shuffle-repeated NCV runs" \
@@ -775,8 +797,125 @@ def repNCV_score_plots(scored_multi, return_df=False, ncv_mode=Config.ncv_mode, 
                 text=alt.value(model_class)
             )
         chart &= (text | cols.transform_filter(alt.FieldEqualPredicate(field='run_with', equal=model_class)))
-    chart = chart.configure_view(strokeWidth=0)
+    chart = chart.configure_view(
+        strokeWidth=0
+    ).add_params(
+        sel_rep_aggregator,
+        toggle_stdev,
+    )
     return (chart, df) if return_df else chart
+
+
+def ensemble_pred_histograms(members_df, pred_df, truth):
+    df = pd.concat([
+        members_df.iloc[:, 1:], pred_df
+        ],
+        axis=1).melt(
+        id_vars='regressor',
+        value_vars=pred_df.columns,
+        var_name='Sample',
+        value_name=f'{target}_predicted'
+    )
+    df2 = pd.DataFrame(truth).rename(columns={target: f'{target}_observed'}).reset_index()
+
+    input_dropdown = alt.binding_select(options=df.Sample.unique(), name='Sample ')
+    selection = alt.selection_point(fields=['Sample'], bind=input_dropdown)
+
+    histx = f'{target}_predicted'
+    hist = alt.Chart(df).mark_bar().encode(
+        # alt.X(f'{target}_predicted').bin(maxbins=30),
+        alt.X(histx).bin(step=100, maxbins=20), #.scale(domain=[f'min({histx}):Q', f'max({histx}):Q']),
+        y='count()',
+        color='regressor',
+    ).add_params(
+        selection
+    ).transform_filter(
+        selection
+    )
+
+    rule_of_truth = alt.Chart(df2).mark_rule(color='red').encode(
+        x=f'{target}_observed',
+        opacity=alt.value(0.4),
+        tooltip=['Sample', f'{target}_observed'],
+        size=alt.value(3)
+    ).transform_filter(
+        selection
+    )
+
+    return alt.layer(
+        hist, rule_of_truth
+    ).properties(
+        width=800
+    ).interactive(
+    )
+
+
+def ncv_pie(df, cols_select = ['regressor', 'test_set_samples', 'features'], show_top=4):
+    '''
+    Makes pie charts of how often certain elements are occuring in an NCV ensemble model
+    :param cols_select: columns in NCV df to make a plot of (default: ['regressor', 'features'])
+    :param show_top: number of groups to show in the plots: eg. show_top = 4  --> only the top 4 groups are shown, the rest is summarised as 'Other'.
+    '''
+    df = df.copy()
+    # df = df.loc[df.index.get_level_values('run_with').str.startswith('#'), cols_select]
+    members = len(df)
+    reps = len(df.index.get_level_values('NCV_repetition').unique())
+    df = df.loc[:, cols_select]
+    df.rename(columns={'features': 'feature_sets'}, inplace=True)
+    feature_frame = pd.DataFrame([[item] for sublist in df.feature_sets.to_list() for item in sublist], columns=['features'])
+    testset_frame = pd.DataFrame([[item] for sublist in df.test_set_samples.to_list() for item in sublist], columns=['test_set_samples'])
+
+    if 'regressor__booster' in df.columns:
+        df.regressor[~df.regressor__booster.isna()] = df.regressor[~df.regressor__booster.isna()] + ' ' + df.regressor__booster[~df.regressor__booster.isna()]
+
+    var_list = cols_select + ['feature_sets']
+    var_list = [{v: f"datum.rank <= {show_top} ? datum.{v} : 'Other'"} for v in var_list]  # turn into list of dicts with var_name: some-string-for-altairs_windowtransform
+
+    pies = []
+    for var in var_list:
+        var_name = next(iter(var))
+        source = feature_frame if var_name == 'features' else testset_frame if var_name == 'test_set_samples' else df
+        base = alt.Chart(source.reset_index()).encode(
+            alt.Theta('counted:Q').aggregate("sum").stack(True),
+            alt.Color(f'{var_name}:N', sort=alt.SortField('rank:O')),
+            alt.Order('rank:O').aggregate("sum"),
+            tooltip=[f'{var_name}:N', 
+                     alt.Tooltip('sum(counted):Q', title='count'),
+                     alt.Tooltip('sum(rank):O', title='rank'),
+                    ],
+        ).transform_aggregate(
+            counted='count()',
+            groupby=[var_name],
+        ).transform_calculate(
+            rel_counted=f"datum.counted / {source.shape[0]}",
+        ).transform_window(
+            rank='row_number()',
+            sort=[alt.SortField('counted', order="descending")],
+        ).transform_calculate(
+            **var,
+        )
+        pie = base.mark_arc(outerRadius=100)
+        text = base.mark_text(radius=140, size=20).encode(
+            alt.Text("rel_counted:Q", format='.0%').aggregate("sum")
+        )
+        pies.append(pie+text)
+
+    plot = alt.vconcat(*pies    
+    ).resolve_scale(
+        color='independent',
+    ).configure_legend(
+        orient='top',
+        labelLimit=0,
+    ).properties(
+        title={
+      "text": [f'Using ensemble with {members} members: {int(members/reps)} member(s) per repetition.'], 
+      "subtitle": [
+          f'There are {len(df.regressor.unique())} different model classes: {df.regressor.unique()}',
+          f'There are {len(df.feature_sets.apply(lambda x: tuple(x)).unique())} different feature sets, composed of {len(feature_frame.features.unique())} different features.',
+                  ]
+        },
+    )
+    return plot, df
 
 
 def model_pred_bars(df, target='Concentration', domain=None):
@@ -795,6 +934,25 @@ def model_pred_bars(df, target='Concentration', domain=None):
     ).properties(title='Deviation of predicted and interpolated values from obsereved.'
     # ).resolve_scale(y='independent'
     ).interactive(
+    )
+
+
+def per_err_agg_bar(pred_agg_df):
+    agg_dev_df = pd.DataFrame(  # caluclates the deviations of the aggregated predictions relative to the observed values
+        np.array([
+            (pred_agg_df[s] - pred_agg_df[target])/pred_agg_df[target] * 100 # relative difference in percent
+            for s in Config.aggregators.keys()
+        ]).T,
+        columns=Config.aggregators.keys(),
+        index=pred_agg_df.index)
+    agg_dev_df[target] = pred_agg_df[target]
+
+    return agg_dev_df.reset_index().melt(id_vars=['Sample', target]).sort_values(by=target).plot.barh(
+        x='Sample', xlabel='',
+        y='value', ylabel='Error [%]',
+        by='variable',
+        title=f'Percentage error of predictions per aggregation\nSamples are sorted by descending observed {target}',
+        width=600, height=1000,
     )
 
 
@@ -822,8 +980,8 @@ def gridplot(a, x, y, poly=None, rasterize=False, project=False, tiles=False):
     grid_plot = data_array.hvplot(
         x='x', y='y',
         rasterize=rasterize,
-        cmap='viridis',
-        cnorm='eq_hist',
+        cmap='spectral_r',
+        cnorm='log',#'eq_hist',
         tiles=tiles,
         project=project,
         crs=Config.baw_epsg,

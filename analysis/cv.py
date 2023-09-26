@@ -9,7 +9,7 @@ import threading
 
 from sklearn.model_selection import LeaveOneOut as sk_loo
 from statsmodels.sandbox.tools.cross_val import LeaveOneOut as sm_loo
-from sklearn.model_selection import GridSearchCV, cross_validate, KFold, RepeatedKFold
+from sklearn.model_selection import GridSearchCV, cross_validate, KFold, RepeatedKFold, StratifiedKFold, RepeatedStratifiedKFold
 from sklearn.metrics import max_error, mean_squared_error, mean_absolute_error, r2_score, mean_absolute_percentage_error, median_absolute_error
 from sklearn import clone, set_config
 # set_config(transform_output='pandas')  # only works for sklearn >= 1.2
@@ -22,8 +22,8 @@ from settings import Config, featurelist, getLogger, target
 
 
 logger = getLogger()
-
-
+            
+            
 def loocv(df):
     """
     Perform LOOCV on a dataframe.
@@ -145,19 +145,150 @@ def make_setup_dict(**kwargs):
     if 'folds' in setup.keys():
         if isinstance(setup['folds'], int):
             setup['folds'] = (setup['folds'], setup['folds'])
-    
+
     setup['cv_scheme'] = [
-        KFold(  # using single KFold in outer which will be repeated manually in loop to extract the test set indices at each iteration
+        ContinuousStratifiedKFold(  # using single StratifiedKFold in outer which will be repeated manually in loop to extract the test set indices at each iteration
             n_splits = setup['folds'][0],
+            n_strata = setup['stratify'][0] if setup['stratify'][0] else 1,
         ),
-        RepeatedKFold(  # using RepeatedKFold for inner
+        ContinuousStratifiedKFold(  # inner CV scheme with repetition
             n_splits = setup['folds'][1],
+            n_strata = setup['stratify'][1] if setup['stratify'][1] else 1,
             n_repeats = setup['repeats'][1],
         ),
     ]
     return setup
 
 
+class ContinuousStratifiedKFold:
+    """
+    Continuous stratified k-fold splitter.
+
+    Provides train/test indices to split data into train/test sets. Data is first divided into strata based on the
+    continuous target variable, and then splits are yielded with an as-equal-as-possible representation of each stratum in each
+    fold. This ensures that each fold contains a representative sample of each stratum.
+
+    The discretisation of the target variable is done using pandas.qcut, which bins the data based on quantiles. This means that
+    the bins will be of (nearly) equal sample number, but not necessarily of equal bin width. If the target variable is not evenly distributed,
+    this may result in some bins containing one more sample than others.
+
+
+    Parameters
+    ----------
+    n_splits : int, default=5
+        Number of folds. Must be at least 2.
+    n_strata : int or None, default=None
+        Number of strata to create based on the target variable. If None, defaults to n_splits.
+    n_repeats : int or None, default=None
+        Number of times to repeat the cross-validation process with different random splits.
+        If None, defaults to 1 (meaning single split into n_splits folds.
+    shuffle : bool, default=False
+        Whether or not to shuffle the data before splitting it into folds.
+    random_state : int or None, default=None
+        Random seed to use for shuffling the data and generating random splits.
+
+    Attributes
+    ----------
+    n_splits : int
+        Number of folds.
+    n_strata : int
+        Number of strata.
+    n_repeats : int
+        Number of repeats.
+    shuffle : bool
+        Whether or not to shuffle the data before splitting it into folds.
+    random_state : int or None
+        Random seed to use for shuffling the data and generating random splits.
+
+    Methods
+    -------
+    split(X, y[, groups])
+        Generate indices to split data into training and test set.
+    get_n_splits([X, y, groups])
+        Returns the number of splitting iterations in the cross-validator.
+        For repeated splits this equals n_splits * n_repeats
+
+    Notes
+    -----
+    This cross-valdidation splitter is a variation of StratifiedKFold that supports continuous target variables.
+    It works by first binning the target variable into P bins, where P is the number of strata, which is either
+    specified by the user or defaults to n_splits. Setting n_strata to 1 will result in a single bin, which is
+    equivalent to a non-stratified KFold.
+
+    Examples
+    --------
+    >>> from cv import ContinuousStratifiedKFold
+    >>> import numpy as np
+    >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13,14], [15,16], [17,18], [19,20], [21,22], [23,24]])
+    >>> y = np.array([0.0, 0.5, 2.5, 2.0, 10.0, 9.9, 9.8, 9.7, 9.6, 9.5, 14.0, 14.5])
+    >>> cv = ContinuousStratifiedKFold(n_splits=3)
+    >>> for train_index, test_index in cv.split(X, y):
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    TRAIN: [ 2  3  5  7  8  9 10 11] TEST: [0 1 4 6]
+    TRAIN: [ 0  1  3  4  6  8  9 11] TEST: [ 2  5  7 10]
+    TRAIN: [ 0  1  2  4  5  6  7 10] TEST: [ 3  8  9 11]
+    """
+    def __init__(self, n_splits=5, n_strata=None, n_repeats=None, shuffle=False, random_state=None):
+        self.n_splits = n_splits
+        self.n_strata = n_strata if n_strata else n_splits
+        self.n_repeats = n_repeats if n_repeats else 1
+        self.shuffle = shuffle
+        self.random_state = random_state
+
+    def split(self, X, y, groups=None):
+        """
+        Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data.
+        y : array-like of shape (n_samples,)
+            Target variable.
+        groups : array-like of shape (n_samples,), default=None
+            Group labels for the samples. Not used in this implementation.
+
+        Yields
+        ------
+        train_index : ndarray
+            The training set indices for that split.
+        test_index : ndarray
+            The testing set indices for that split.
+        """
+        # Create P bins based on the target variable
+        labels = [f'stratum_{s}' for s in range(self.n_strata)]
+        strata, bins = pd.qcut(y, self.n_strata, retbins=True, labels=labels)  # TODO: could also implement a boolean option to use pd.cut instead, which would result in bins of equal width 
+        # print({'bins': bins, 'strata': strata})  # turn on for diagnostics
+        
+        # Stratify the data based on the bins
+        if self.n_repeats > 1:
+            skf = RepeatedStratifiedKFold(n_splits=self.n_splits, n_repeats=self.n_repeats, random_state=self.random_state)
+        else:
+            skf = StratifiedKFold(n_splits=self.n_splits, shuffle=self.shuffle, random_state=self.random_state)
+        for train_index, test_index in skf.split(X, strata, groups):  # groups is not used here. It just exists for compatibility reasons.
+            yield train_index, test_index
+
+    def get_n_splits(self, X=None, y=None, groups=None):
+        """
+        Returns the number of splitting iterations in the cross-validator.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features), default=None
+            Training data. Unused, present here for API consistency by convention.
+        y : array-like of shape (n_samples,), default=None
+            Target variable. Unused, present here for API consistency by convention.
+        groups : array-like of shape (n_samples,), default=None
+            Group labels for the samples. Unused, present here for API consistency by convention.
+
+        Returns
+        -------
+        n_splits : int
+            Returns the number of splitting iterations in the cross-validator. For repeated splits this equals n_splits * n_repeats.
+        """
+        return self.n_splits * self.n_repeats
+
+    
 def ncv(pipe, params, model_X, model_y, scorers, setup):
     '''
     Performs nested cross-validation on a given pipeline and parameter grid.
@@ -236,7 +367,7 @@ def rep_ncv(pipe, params, model_X, model_y, scorers, setup):
             repstart = datetime.now()
             logger.info(f'>>>>>>>>>>   Starting NCV repetition {i+1} at {repstart.strftime("%Y-%m-%d %H:%M:%S")}   <<<<<<<<<<')
 
-            setup['cv_scheme'][0].shuffle = True  # activate shuffling to yiels varying outer fold train / test splits
+            setup['cv_scheme'][0].shuffle = True  # activate shuffling to yield varying outer fold train / test splits
             setup['cv_scheme'][0].random_state = setup['cv_scheme'][1].random_state = i  # set different random states for each repetition
 
             outerCV = ncv(pipe, params, model_X, model_y, scorers, setup)
@@ -246,7 +377,7 @@ def rep_ncv(pipe, params, model_X, model_y, scorers, setup):
 
             rep = {'NCV_repetition': np.repeat(i, len(list(outerCV.values())[0]))}
 
-            testsets = get_test_sets(setup['cv_scheme'][0], model_X)
+            testsets = get_test_sets(setup['cv_scheme'][0], model_X, model_y)
             outerCV = {**rep, **testsets, **outerCV}
 
             ## Print details of outerCV dict (uncomment for diagnostic reasons)
@@ -329,6 +460,7 @@ def best_scored(cv_results):
                                     and f'test_{Config.refit_scorer}'
                                     in key
                                 ])
+    # print(f'Control print: cv.best_scored()  -> Config.select_best is "{Config.select_best}"')
     if Config.select_best == 'median':
         avg_inner_test_scores = np.median(inner_test_scores, axis=0)
     elif Config.select_best == 'mean':
@@ -385,19 +517,20 @@ def get_iqm_cv_scores(outerCV):
 
 
 def get_inner_test_scores(NCV):
+    # print(f'Control print: cv.get_inner_test_scores()  -> Config.select_best is "{Config.select_best}"')
     for idx in NCV.index:
         b = NCV.loc[idx].estimator.cv_results_[f'rank_by_{Config.select_best}_test_{Config.refit_scorer}'].argmin()  # get index of candidate which won this round
         for s in Config.scorers.keys():
             NCV.loc[idx, f'inner_test_{s}'] = NCV.loc[idx].estimator.cv_results_[f'{Config.select_best}_test_{s}'][b]
 
 
-def get_test_sets(splitter, model_X):
+def get_test_sets(splitter, model_X, model_y):
     """
     Get the names and indices of samples in test sets.
     """
     return {
-        'test_set_indices': [test_index for train_index, test_index in splitter.split(model_X)],
-        'test_set_samples': [model_X.index.values[test_index] for train_index, test_index in splitter.split(model_X)],
+        'test_set_indices': [test_index for train_index, test_index in splitter.split(model_X, model_y)],
+        'test_set_samples': [model_X.index.values[test_index] for train_index, test_index in splitter.split(model_X, model_y)],
     }
 
 
@@ -513,23 +646,35 @@ def aggregate_scores(NCV, setup, r=None):
     rep_groups = NCV.groupby('NCV_repetition')
     scored = pd.DataFrame({
         key: [
+        np.median(rep_groups[f'test_{key}'].median()),  # Median of repetitions' outer test median scores
+        iqm(rep_groups[f'test_{key}'].median()),  # IQM of repetitions' outer test median scores
         np.mean(rep_groups[f'test_{key}'].median()),  # Mean of repetitions' outer test median scores
         np.std(rep_groups[f'test_{key}'].median()),  # Standard deviation of repetitions' outer test median scores
         np.median(NCV[f'test_{key}']),  # Median of all outer test scores
+        np.median(rep_groups[f'test_{key}'].agg(iqm)),  # Median of repetitions' outer test iqm scores
+        iqm(rep_groups[f'test_{key}'].agg(iqm)),  # IQM of repetitions' outer test iqm scores
         np.mean(rep_groups[f'test_{key}'].agg(iqm)),  # Mean of repetitions' outer test iqm scores
         np.std(rep_groups[f'test_{key}'].agg(iqm)),  # Standard deviation of repetitions' outer test iqm scores
         iqm(NCV[f'test_{key}']),  # IQM of all outer test scores
+        np.median(rep_groups[f'test_{key}'].mean()),  # Median of repetitions' outer test mean scores
+        iqm(rep_groups[f'test_{key}'].mean()),  # IQM of repetitions' outer test mean scores
         np.mean(rep_groups[f'test_{key}'].mean()),  # Mean of repetitions' outer test mean scores
         np.std(rep_groups[f'test_{key}'].mean()),  # Standard deviation of repetitions' outer test mean scores
         np.mean(NCV[f'test_{key}']),  # Mean of all outer test scores
             ] for key in Config.scorers
     }, index=[
+        f'Median_of_medians_of_{r}_repetitions',
+        f'IQM_of_medians_of_{r}_repetitions',
         f'Mean_of_medians_of_{r}_repetitions',
         f'Stdev_of_medians_of_{r}_repetitions',
         f'Median_of_all_{r * f}_folds_together',
+        f'Median_of_IQMs_of_{r}_repetitions',
+        f'IQM_of_IQMs_of_{r}_repetitions',
         f'Mean_of_IQMs_of_{r}_repetitions',
         f'Stdev_of_IQMs_of_{r}_repetitions',
         f'IQM_of_all_{r * f}_folds_together',
+        f'Median_of_means_of_{r}_repetitions',
+        f'IQM_of_means_of_{r}_repetitions',
         f'Mean_of_means_of_{r}_repetitions',
         f'Stdev_of_means_of_{r}_repetitions',
         f'Mean_of_all_{r * f}_folds_together',
@@ -559,6 +704,8 @@ def make_header(NCV, setup, starttime, time_needed, droplist, model_X, num_feat,
     ## Create a dataframe of aggregated scores and standard deviations
     scored = aggregate_scores(NCV, setup)    
     scored = scored.round(4).to_csv(sep=';') if Config.ncv_mode=='competitive' else 'COMPARATIVE RUN: no common scores available. Look at the individual scores of each model class!'
+    lin_combis = Config.lin_combis if hasattr(Config, 'lin_combis') else 'no restrictions'
+    tree_combis = Config.tree_combis if hasattr(Config, 'tree_combis') else 'no restrictions'
     ## Prepare meta-data header of NCV run for export to file
     header = f'''
 
@@ -572,7 +719,7 @@ def make_header(NCV, setup, starttime, time_needed, droplist, model_X, num_feat,
     Samples:;{model_X.index.to_list()}
     Vertical merge:;{Config.vertical_merge}
 
-    Number of features per candidate (min, max):;{num_feat}
+    Number of features per candidate (min, max):;{num_feat};Special restrictions for certain model types:;lin_combis:;{lin_combis};tree_combis:;{tree_combis}
     Total number of feature combinations tested:;{len(feature_candidates_list)}
     Available features: {len(featurelist)};{featurelist}
     Restricted combinations (mutal exclusive features, exclusive keywords):;{Config.mutual_exclusive};{Config.exclusive_keywords}
@@ -587,6 +734,13 @@ def make_header(NCV, setup, starttime, time_needed, droplist, model_X, num_feat,
     Repetitions:
         inner:;{setup['repeats'][1]}
         outer:;{setup['repeats'][0]}
+    Folds:
+        inner:;{setup['folds'][1]}
+        outer:;{setup['folds'][0]}
+    Stratify:
+        inner:;{setup['stratify'][1]}
+        outer:;{setup['stratify'][0]}
+    
     ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     Aggregated scores:
     {scored}

@@ -9,7 +9,8 @@ from scipy.interpolate import Rbf
 import gstools as gs
 import pykrige
 import skgstat
-import pygmt
+from whitebox import WhiteboxTools
+# import pygmt
 from settings import Config
 from geo_io import grid_load, zero_padding
 
@@ -215,25 +216,50 @@ def skgstat_ordkrig(x, y, z, xgrid, ygrid, params):
     return grid
 
 
-def pygmt_xyz2grd(x, y, z, xgrid, ygrid, params):  # TODO: pygmt interpolation not yet working
-    res = Config.interpolation_resolution
-    xmin, xmax, ymin, ymax = xgrid[0,0], xgrid[0,-1], ygrid[-1,0], xgrid[-1,-1], 
-    surf = pygmt.surface(x, y, z,
-                         region=[xmin, xmax, ymin, ymax],
-                         spacing=res)
+# def pygmt_xyz2grd(x, y, z, xgrid, ygrid, params):  # TODO: pygmt interpolation not yet working
+#     res = Config.interpolation_resolution
+#     xmin, xmax, ymin, ymax = xgrid[0,0], xgrid[0,-1], ygrid[-1,0], xgrid[-1,-1], 
+#     surf = pygmt.surface(x, y, z,
+#                          region=[xmin, xmax, ymin, ymax],
+#                          spacing=res)
 
-    ## https://www.pygmt.org/latest/api/generated/pygmt.xyz2grd.html
-    data = gpd.GeoDataFrame({'values': z, 'geometry': (x,y)})
-    data.crs = Config.baw_epsg
-    grid = pygmt.xyz2grd(data=data,
-                         region=[xmin, xmax, ymin, ymax],  # f'{xmin}/{xmax}/{ymin}/{ymax}+uM',
-                         spacing=(res, res),
-                         projection='U32N',  # f'EPSG:{Config.baw_epsg}',
-                         verbose=None,  # t for timing, True for more output
-                        )
-    return grid
+#     ## https://www.pygmt.org/latest/api/generated/pygmt.xyz2grd.html
+#     data = gpd.GeoDataFrame({'values': z, 'geometry': (x,y)})
+#     data.crs = Config.baw_epsg
+#     grid = pygmt.xyz2grd(data=data,
+#                          region=[xmin, xmax, ymin, ymax],  # f'{xmin}/{xmax}/{ymin}/{ymax}+uM',
+#                          spacing=(res, res),
+#                          projection='U32N',  # f'EPSG:{Config.baw_epsg}',
+#                          verbose=None,  # t for timing, True for more output
+#                         )
+#     return grid
 
 
+# def whitebox_idw(x, y, z, xgrid, ygrid, params):
+#     '''
+#     Interpolate points to grid using whiteboxtools. For reference see here: https://www.whiteboxgeo.com/manual/wbt_book/available_tools/gis_analysis.html#IdwInterpolation
+#     OBS: not yet working. See TODOs.
+#     '''
+#     wbt = WhiteboxTools()  # instanciate WBT
+    
+#     shp = None  # TODO: create temp shape file of points, as this is needed by WBT
+    
+#     gdf = wbt.idw_interpolation(
+#         # path to pints shapefile,
+#         # name of target variable in shape file, 
+#         output=f'../data/exports/models/predictions/interpolated/whitebox_temp/out.tif',  # wbt needs to write the interpolation result to a file (potentially mem file handler?)
+#         use_z=False,
+#         weight=params['weight'],
+#         radius=params['radius'],
+#         min_points=params['min_points'],
+#         cell_size=None,  # TODO: not needed if base raster is supplied
+#         base=None,  # TODO: make temp tif of xgrid, ygrid (as file or mem file)
+#         # callback=default_callback  # TODO: is this callback needed?
+#     )
+#     grid = None  # TODO: read the out.tif back as a grid (np array)
+#     return grid
+    
+   
 def load_external_interpol(x, y, z, xgrid, ygrid, params):
     grid = grid_load(params['path'] + params[params['var_name']])
     grid = zero_padding(grid, *xgrid.shape)

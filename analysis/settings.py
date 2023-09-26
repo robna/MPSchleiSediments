@@ -3,13 +3,14 @@ from pathlib import Path
 import numpy as np
 import statsmodels.formula.api as smf
 import statsmodels.api as sm
-from sklearn.metrics import r2_score, mean_absolute_error, mean_absolute_percentage_error, median_absolute_error, make_scorer
-from cv_helpers import median_absolute_percentage_error
+from sklearn.metrics import r2_score, mean_absolute_error, mean_absolute_percentage_error, median_absolute_error, mean_squared_error, mean_squared_log_error ,make_scorer
+from cv_helpers import median_absolute_percentage_error, iqm
 
 target = 'Concentration'
 featurelist = [
     'Depth',
     'Dist_Land',
+    # 'Dist_WWTP',
     'WWTP_influence_as_mean_time_travelled__sed_18µm_allseasons_444',#pre-final GLM
     'WWTP_influence_as_mean_time_travelled__sed_18µm_autumn_222',#pre-final GLM
     'WWTP_influence_as_cumulated_residence__nosed_18µm_autumn_222', #pre-final RF
@@ -71,9 +72,9 @@ class Config:
     dem_path: str = '../data/.DGM_Schlei_1982_bis_2002_UTM32.zip'  # path to the zip file containing DEMs of water depths
     dem_filename: str= 'DGM_Schlei_1982_bis_2002_UTM32_filled.grd'  # name of the DEM file to use (DGM_Schlei_1982_bis_2002_UTM32.grd is the original grid, DGM_Schlei_1982_bis_2002_UTM32_filled.tif is interpolated outwards to zero-depth at the actual Schlei coastline, the interpolation was done as described here: https://gis.stackexchange.com/a/457998/223215)
     dem_resolution: float = 5.0  # resolution of the digital elevation model in meters
-    interpolation_resolution: float = 20.0  # spatial resolution for geospatial interpolation in metres
+    interpolation_resolution: float = 10.0  # spatial resolution for geospatial interpolation in metres
     interpolation_methods: dict = {  # dict of "tool: params"   OBS: do not use 'var_name' as key in params dicts, as this term will later inserted by geo.interclip
-                                     'numpy_simple_idw': {'power': 0.11},  # power to which the distances are raised before weighting 
+                                     'numpy_simple_idw': {'power': 1},  # power to which the distances are raised before weighting 
                                      'numpy_rbf_idw': {},  # no params 
                                      'scipy_rbf_idw': {'function': 'linear'},  # Radial basis function of radius r: 
                                                                                 # 'multiquadric': sqrt((r/self.epsilon)**2 + 1),
@@ -83,7 +84,7 @@ class Config:
                                                                                 # 'cubic': r**3
                                                                                 # 'quintic': r**5
                                                                                 # 'thin_plate': r**2 * log(r)
-                                     'scipy_griddata': {'method': 'cubic'},  # {‘linear’, ‘nearest’, ‘cubic’} method for scipy.interpolate.griddata
+                                     'scipy_griddata': {'method': 'nearest'},  # {‘linear’, ‘nearest’, ‘cubic’} method for scipy.interpolate.griddata
                                      'pykrige_ordkrig': {'nlags': 6, 'weight': False, 'model': 'spherical',  # linear, power, gaussian, spherical, exponential and hole-effect
                                                          'variogram_params': {'sill': 12000000, 'range': 3000, 'nugget': 500000},  # variogram_params terms depend on the model type
                                                          'exact': True, 'plot': True, 'stats': True},
@@ -91,7 +92,11 @@ class Config:
                                                          'min_points': 20, 'max_points': 30, 'mode': 'exact',
                                                          'normalize': False, 'use_nugget': True, 'plot': True},
                                      'pygmt_xyz2grd': {},  # not yet working
-                                     'load_external_interpol': {'path': '/home/rob/ownCloud/microSCHLEI/Sediment_K/BAW/Smart-Map/', 'Concentration': '1_Krig_Conc_log_Grid_Map_5x5_10EXP_clipped.tiff', 'MassConcentration': '', 'SedDryBulkDensity': ''}  # load externally interpolated grids
+                                     'whitebox_idw': {'radius': 200, 'min_points': 2, 'weight': 1},  # not yet working
+                                     'load_external_interpol': {'path': '/home/rob/ownCloud/microSCHLEI/Sediment_K/BAW/Smart-Map/',
+                                                                'Concentration': '1_Krig_Conc_log_Grid_Map_5x5_10EXP_clipped.tiff',
+                                                                'MassConcentration': '',
+                                                                'SedDryBulkDensity': ''}  # load externally interpolated grids
                                  }
     use_seasons: list = ['spring']  # which seasons to use for the tracer-based WWTP influence estimation: must be a list of one or more of 'spring', 'summer','autumn'
     sed_contact_dist: float = 0.01  # distance in meters to the sediment contact, below which a tracer is considered to have sedimented
@@ -145,16 +150,21 @@ class Config:
     exclusive_keywords: list = ['WWTP']  # only feature_candidates sets with max 1 feature containing each keyword will be considered
     scorers: dict = {  # dictionary of scores to be used by gridsearch: values are lists of corresponding [scorer, gridsearch refit scorer string or callable]
                         'R2': [r2_score, 'r2'],
-                        'MAE': [mean_absolute_error, 'neg_mean_absolute_error'],
+                        'MedAPE': [median_absolute_percentage_error, make_scorer(median_absolute_percentage_error, greater_is_better=False)],
                         'MAPE': [mean_absolute_percentage_error, 'neg_mean_absolute_percentage_error'],
                         'MedAE': [median_absolute_error, 'neg_median_absolute_error'],
-                        'MedAPE': [median_absolute_percentage_error, make_scorer(median_absolute_percentage_error, greater_is_better=False)],
-                        # 'MSE': [mean_squared_error, 'neg_mean_squared_error'],
+                        'MAE': [mean_absolute_error, 'neg_mean_absolute_error'],
+                        'MSE': [mean_squared_error, 'neg_mean_squared_error'],
                         # 'MSLE': [mean_squared_log_error, 'neg_mean_squared_log_error'],
                     }
+    aggregators: dict = {  # dictionary of aggregators with corresponding callable
+                            'median': np.median,
+                            'iqm': iqm,
+                            'mean': np.mean,
+                        }
     refit_scorer: str = 'R2'  # one of the keys in scoring dict above: will be used to refit at set best estimator of the gridsearch object
-    select_best: str = 'median'  # type of average to be used to identify the best model of a gridsearch: can be 'median', 'mean' or 'iqm'
-    ncv_mode: str = 'competitive'  # 'competitive' for running all activated model param sets against each other, 'comparative' for running separate repNCVs for each model param set
+    select_best: str = 'mean'  # type of average to be used to identify the best model of a gridsearch: can be 'median', 'mean' or 'iqm'
+    ncv_mode: str = 'comparative'  # 'competitive' for running all activated model param sets against each other, 'comparative' for running separate repNCVs for each model param set (get combined afterwards by cv.rensembling function, which creates the equivalent to a competitive run)
     log_path: str = '../data/exports/models/logs'  # default path to logfile
     log_file: str = 'model.log'  # default name for log file
 
@@ -333,10 +343,10 @@ def getLogger(log_path=Config.log_path, log_file=Config.log_file):
     fileHandler.setLevel(logging.INFO)
     fileHandler.setFormatter(logFormatter)
     logger.addHandler(fileHandler)
-    # # add console handler
-    # consoleHandler = logging.StreamHandler()
-    # consoleHandler.setLevel(logging.INFO)
-    # consoleHandler.setFormatter(logFormatter)
-    # logger.addHandler(consoleHandler)
+    # add console handler
+    consoleHandler = logging.StreamHandler()
+    consoleHandler.setLevel(logging.INFO)
+    consoleHandler.setFormatter(logFormatter)
+    logger.addHandler(consoleHandler)
     logger.handlers[0].setFormatter(logFormatter)  # also format the root handler
     return logger
