@@ -178,7 +178,8 @@ def scatter_chart(
         scatter = scatter + scatter.mark_text(
             align='left',
             baseline='middle',
-            dx=7
+            dx=7,
+            fontSize=20,
         ).encode(
             text=f'{labels}:N'
         )
@@ -833,7 +834,7 @@ def ensemble_pred_histograms(members_df, pred_df, truth):
         selection
     )
 
-    rule_of_truth = alt.Chart(df2).mark_rule(color='red').encode(
+    rule_of_truth = alt.Chart(df2).mark_rule(color='black').encode(
         x=f'{target}_observed',
         opacity=alt.value(0.4),
         tooltip=['Sample', f'{target}_observed'],

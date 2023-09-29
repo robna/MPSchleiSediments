@@ -372,8 +372,12 @@ def rep_ncv(pipe, params, model_X, model_y, scorers, setup):
 
             outerCV = ncv(pipe, params, model_X, model_y, scorers, setup)
 
-            get_median_cv_scores(outerCV)
-            get_iqm_cv_scores(outerCV)
+            for outer_fold in range(len(outerCV['estimator'])):  # iterate through the outer folds
+                res = outerCV['estimator'][outer_fold].cv_results_  # get the dict of cv results (including test scores on each inner fold) for the current outer fold
+                append_agg_cv_scores(res, agg='median')
+                append_agg_cv_scores(res, agg='iqm')
+                # get_median_cv_scores(res)  # append median scores to dict inplace
+                # get_iqm_cv_scores(res)  # append iqm scores to dict inplace
 
             rep = {'NCV_repetition': np.repeat(i, len(list(outerCV.values())[0]))}
 
@@ -452,7 +456,7 @@ def best_scored(cv_results):
     :param cv_results: dictionary of cross-validation results
     :return: index of best scoring candidate accoring to the chosen refit scorer and aggregation method
     """
-
+    
     inner_test_scores = np.array([
                                     scores for key, scores
                                     in cv_results.items()
@@ -460,7 +464,20 @@ def best_scored(cv_results):
                                     and f'test_{Config.refit_scorer}'
                                     in key
                                 ])
-    # print(f'Control print: cv.best_scored()  -> Config.select_best is "{Config.select_best}"')
+    # print(f'Control print from function: cv.best_scored()  -> Config.select_best is "{Config.select_best}"')
+    # print(f'Control print from function: cv.best_scored()  -> Config.refit_scorer is "{Config.refit_scorer}"')
+    # print(f'Control print from function: cv.best_scored()  -> inner_test_scores shape: {inner_test_scores.shape}')
+    # print(f'Control print from function: cv.best_scored()  -> inner_test_scores: {inner_test_scores}')
+    # inner_test_keys = np.array([
+    #                                 key for key, scores
+    #                                 in cv_results.items()
+    #                                 if key.startswith('split')
+    #                                 and f'test_{Config.refit_scorer}'
+    #                                 in key
+    #                             ])
+    # print(f'Control print from function: cv.best_scored()  -> inner_test_scores:')
+    # print(pd.DataFrame(inner_test_scores.T, columns=inner_test_keys).T)
+    
     if Config.select_best == 'median':
         avg_inner_test_scores = np.median(inner_test_scores, axis=0)
     elif Config.select_best == 'mean':
@@ -469,51 +486,105 @@ def best_scored(cv_results):
         avg_inner_test_scores = np.array([iqm(s) for s in inner_test_scores.T])
     else:
         raise ValueError(f'Can only select for best mean, median or iqm score. You supplied "{Config.select_best}".')
-    return avg_inner_test_scores.argmax()
+    best_index = avg_inner_test_scores.argmax()
+    # print(f'Control print from function: cv.best_scored()  -> avg_inner_test_scores shape = {avg_inner_test_scores.shape}, max = {avg_inner_test_scores.max()}, best_index = {best_index}')
+    # print(f'Control print from function: cv.best_scored()  -> best_estimator: {cv_results["estimator"][best_index]}')
+    return best_index
     
 
-def get_median_cv_scores(outerCV):
+def append_agg_cv_scores(res, agg='median'):
     """
-    Add median cross-validation scores to nested CV results.
-    :param outerCV: result object of nested cross-validation
+    Add median or interquartile mean cross-validation scores to the given CV results.
+
+    Parameters
+    ----------
+    res : dict
+        Result object of nested cross-validation.
+    agg : str, optional
+        Aggregation method to be used for cross-validation scores. Must be 'median' or 'iqm'. Default is 'median'.
+
+    Notes
+    -----
+    The dictionary elements are modified inplace and not returned.
+    The function expects that multiple scorers were used in the cross-validation
+    and that they are listed in the Config.scorers dictionary.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    ValueError
+        If `agg` is not 'median' or 'iqm'.
     """
 
-    for outer_fold in range(len(outerCV['estimator'])):
-        res = outerCV['estimator'][outer_fold].cv_results_
-        res_df = pd.DataFrame(res)
-        for k, v in Config.scorers.items():
-            if f'rank_test_{k}' in res:
-                res[f'rank_by_mean_test_{k}'] = res.pop(f'rank_test_{k}')
-            res_df[f'median_test_{k}'] = res_df.filter(regex=f'^split._test_{k}').median(axis=1)
-            if all(res_df[f'median_test_{k}'].isna()):
-                res_df[f'rank_by_median_test_{k}'] = np.nan
-            else:
-                res_df[f'rank_by_median_test_{k}'] = res_df[f'median_test_{k}'].rank(ascending=False).astype(int)
+    if agg == 'median':
+        aggregator = np.median
+    elif agg == 'iqm':
+        aggregator = iqm
+    else:
+        raise ValueError(f'Can only aggregate for median or iqm score. You supplied "{agg}".')
 
-            res[f'median_test_{k}'] = res_df[f'median_test_{k}'].to_numpy()
-            res[f'rank_by_median_test_{k}'] = res_df[f'rank_by_median_test_{k}'].to_numpy()
+    res_df = pd.DataFrame(res)
+    for k, v in Config.scorers.items():
+        if f'rank_test_{k}' in res:
+            res[f'rank_by_mean_test_{k}'] = res.pop(f'rank_test_{k}')
+        splits = res_df.filter(regex=f"^split\d+_test_{k}")  # get all columns of the df that are named like "split<some-number>_test_<scorer>"
+        res_df[f'{agg}_test_{k}'] = [aggregator(s) for s in splits.values]
+        # print(f'Control print from function: cv.append_agg_cv_scores()  -> number of splits to aggregate: {len(splits.columns)}, aggregation: {aggregator}, scorer: {k}')
+        
+        if all(res_df[f'{agg}_test_{k}'].isna()):
+            res_df[f'rank_by_{agg}_test_{k}'] = np.nan
+        else:
+            res_df[f'rank_by_{agg}_test_{k}'] = res_df[f'{agg}_test_{k}'].rank(ascending=False).astype(int)
+
+        res[f'{agg}_test_{k}'] = res_df[f'{agg}_test_{k}'].to_numpy()
+        res[f'rank_by_{agg}_test_{k}'] = res_df[f'rank_by_{agg}_test_{k}'].to_numpy()
 
 
-def get_iqm_cv_scores(outerCV):
-    """
-    Add iqm cross-validation scores to nested CV results.
-    :param outerCV: result object of nested cross-validation
-    """
+# def get_median_cv_scores(res):
+#     """
+#     Add median cross-validation scores to CV results.
+#     :param res: cv_results_ dict of cross-validation object
+    
+#     Note: the dict elements are modified inplace and not returned.
+#     """
 
-    for outer_fold in range(len(outerCV['estimator'])):
-        res = outerCV['estimator'][outer_fold].cv_results_
-        res_df = pd.DataFrame(res)
-        for k, v in Config.scorers.items():
-            if f'rank_test_{k}' in res:
-                res[f'rank_by_mean_test_{k}'] = res.pop(f'rank_test_{k}')
-            res_df[f'iqm_test_{k}'] = [iqm(s) for s in res_df.filter(regex=f'^split._test_{k}').values]
-            if all(res_df[f'iqm_test_{k}'].isna()):
-                res_df[f'rank_by_iqm_test_{k}'] = np.nan
-            else:
-                res_df[f'rank_by_iqm_test_{k}'] = res_df[f'iqm_test_{k}'].rank(ascending=False).astype(int)
+#     res_df = pd.DataFrame(res)
+#     for k, v in Config.scorers.items():
+#         if f'rank_test_{k}' in res:
+#             res[f'rank_by_mean_test_{k}'] = res.pop(f'rank_test_{k}')
+#         res_df[f'median_test_{k}'] = res_df.filter(regex=f'^split._test_{k}').median(axis=1)
+#         if all(res_df[f'median_test_{k}'].isna()):
+#             res_df[f'rank_by_median_test_{k}'] = np.nan
+#         else:
+#             res_df[f'rank_by_median_test_{k}'] = res_df[f'median_test_{k}'].rank(ascending=False).astype(int)
 
-            res[f'iqm_test_{k}'] = res_df[f'iqm_test_{k}'].to_numpy()
-            res[f'rank_by_iqm_test_{k}'] = res_df[f'rank_by_iqm_test_{k}'].to_numpy()
+#         res[f'median_test_{k}'] = res_df[f'median_test_{k}'].to_numpy()
+#         res[f'rank_by_median_test_{k}'] = res_df[f'rank_by_median_test_{k}'].to_numpy()
+
+
+# def get_iqm_cv_scores(res):
+#     """
+#     Add iqm cross-validation scores to CV results.
+#     :param res: cv_results_ dict of cross-validation object
+    
+#     Note: the dict elements are modified inplace and not returned.
+#     """
+
+#     res_df = pd.DataFrame(res)
+#     for k, v in Config.scorers.items():
+#         if f'rank_test_{k}' in res:
+#             res[f'rank_by_mean_test_{k}'] = res.pop(f'rank_test_{k}')
+#         res_df[f'iqm_test_{k}'] = [iqm(s) for s in res_df.filter(regex=f'^split._test_{k}').values]
+#         if all(res_df[f'iqm_test_{k}'].isna()):
+#             res_df[f'rank_by_iqm_test_{k}'] = np.nan
+#         else:
+#             res_df[f'rank_by_iqm_test_{k}'] = res_df[f'iqm_test_{k}'].rank(ascending=False).astype(int)
+
+#         res[f'iqm_test_{k}'] = res_df[f'iqm_test_{k}'].to_numpy()
+#         res[f'rank_by_iqm_test_{k}'] = res_df[f'rank_by_iqm_test_{k}'].to_numpy()
 
 
 def get_inner_test_scores(NCV):
@@ -521,7 +592,7 @@ def get_inner_test_scores(NCV):
     for idx in NCV.index:
         b = NCV.loc[idx].estimator.cv_results_[f'rank_by_{Config.select_best}_test_{Config.refit_scorer}'].argmin()  # get index of candidate which won this round
         for s in Config.scorers.keys():
-            NCV.loc[idx, f'inner_test_{s}'] = NCV.loc[idx].estimator.cv_results_[f'{Config.select_best}_test_{s}'][b]
+            NCV.loc[idx, f'inner_{Config.select_best}_test_{s}'] = NCV.loc[idx].estimator.cv_results_[f'{Config.select_best}_test_{s}'][b]
 
 
 def get_test_sets(splitter, model_X, model_y):
@@ -695,7 +766,7 @@ def rensembling(NCV):
             r: '# Competitive mode:, ' + ', '.join(list(NCV.index.levels[0]))
             for r in NCV.index.get_level_values(0)
         })
-        ensemble_idx = rensembled.groupby(['NCV_repetition', 'OuterCV_fold'])[f'inner_test_{Config.refit_scorer}'].agg(pd.Series.idxmax).to_list()
+        ensemble_idx = rensembled.groupby(['NCV_repetition', 'OuterCV_fold'])[f'inner_{Config.select_best}_test_{Config.refit_scorer}'].agg(pd.Series.idxmax).to_list()
         NCV = pd.concat([NCV, rensembled.loc[ensemble_idx]])
     return NCV
 

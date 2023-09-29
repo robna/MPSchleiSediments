@@ -209,4 +209,19 @@ def ensemble_predict(esti, X, n_jobs=-1, verbose=False):
     
 def aggregate_predictions(pred_df, ensemble_aggregator, target):
     return pd.Series([ensemble_aggregator(s) for _, s in pred_df.items()], index=pred_df.columns, name=f'{target}_predicted')
+
+
+def check_testset_duplicates(NCV):
+    ## takes the NCV dataframe and checks for duplicates in the test sets
+    # if there are multiple runs in NCV (i.e. in comparative mode),
+    # the test sets would be identical between runs, so we only need to check one
+    unique_runs = NCV.index.get_level_values('run_with').unique()
+    # if there is only one run, slicing for unique_runs[0] would return the same dataframe
+    df = NCV.loc[NCV.index.get_level_values('run_with') == unique_runs[0]]
+    testset_length_freq = df.test_set_samples.apply(lambda x: len(x)).value_counts()
+
+    ## Check for duplicates in test sets
+    all_testsets = pd.DataFrame.from_dict([r for r in df.test_set_samples])
+    dup_testsets = all_testsets[all_testsets.duplicated()]
     
+    return dup_testsets, testset_length_freq
