@@ -707,33 +707,18 @@ def size_kde_combined_samples_dist_plot(mp_sed_melt, title=''):
     return alt.layer(dists, cumsum).resolve_scale(y='independent').properties(width=800, height=400, title=title)#.configure_title(fontSize=20, offset=5, orient='top', anchor='middle')
     
 
-def repNCV_score_plots(scored_multi, return_df=False, ncv_mode=Config.ncv_mode, width=400, height=300):
+def repNCV_score_plots(scored_long, width=400, height=300):
     '''
     Takes score df of multi-repetition simulations,
     re-arranges it to suitable long-form and plots
     a chart of score evoloution against number of
     repetitions, facetted for scorer type and model run.
     '''
-    df = scored_multi.unstack().reset_index().melt(id_vars=['NCV_repetitions', 'run_with'], var_name=['Scorer', 'Aggregation']).dropna()
-    df.Aggregation = df.Aggregation.str.split('_\d', expand=True)[0].str.strip('_of').str.rstrip('s').str.lower()
-
-    df = pd.concat([df, df.Aggregation.str.split('_of_', expand=True).rename(columns={0: 'rep_aggregator', 1: 'fold_aggregator'})], axis=1).drop(columns='Aggregation')
-    idx = df.loc[df.fold_aggregator == 'all'].index
-    df.fold_aggregator.loc[idx] = df.rep_aggregator.loc[idx]
-    df.rep_aggregator.loc[idx] = 'none'
-
-    dfs = df.loc[df.rep_aggregator == 'stdev'].rename(columns={'value': 'Score_stdev'})
-    dfs.drop(columns='rep_aggregator', inplace=True)
     
-    df = df.loc[df.rep_aggregator != 'stdev']
-    df.sort_values(['run_with', 'NCV_repetitions', 'rep_aggregator', 'fold_aggregator', 'Scorer'], ascending=[True,True,False,False,False], inplace=True)
-    df = df[['run_with', 'NCV_repetitions', 'rep_aggregator', 'fold_aggregator', 'Scorer', 'value']].rename(columns={'value': 'Score_value'})
-    df = df.merge(dfs, how='left')
-    df.Score_stdev.loc[df.rep_aggregator == 'none'] = np.nan
-    
+    rep_aggregators = [ra for ra in scored_long.rep_aggregator.unique() if ra is not np.nan]
     sel_rep_aggregator = alt.selection_point(
         fields=['rep_aggregator'],
-        bind=alt.binding_radio(options=np.append(df.rep_aggregator.unique(), None), labels=np.append(df.rep_aggregator.unique(), 'all')),
+        bind=alt.binding_radio(options=np.append(rep_aggregators, None), labels=np.append(rep_aggregators, 'all')),
         name='Select',
         # clear=False,
         value='mean',
@@ -741,8 +726,11 @@ def repNCV_score_plots(scored_multi, return_df=False, ncv_mode=Config.ncv_mode, 
     toggle_stdev = alt.param(
         bind=alt.binding_checkbox(name='Show standard deviations as areas? ')
     )
+    toggle_scatters = alt.param(
+        bind=alt.binding_checkbox(name='[Not working yet...] Show scores of individual reps? ')
+    )
     
-    base = alt.Chart(df).encode(
+    base = alt.Chart(scored_long).encode(
         x='NCV_repetitions',
         color = alt.Color('fold_aggregator', sort=['median', 'iqm', 'mean']),
     ).properties(width=width, height=height,
@@ -755,6 +743,8 @@ def repNCV_score_plots(scored_multi, return_df=False, ncv_mode=Config.ncv_mode, 
         strokeDash = alt.StrokeDash('rep_aggregator', sort=['median', 'iqm', 'mean']),
         tooltip = ['NCV_repetitions', 'rep_aggregator', 'fold_aggregator', 'Score_value', 'Score_stdev'],
     ).transform_filter(
+        'datum.rep_aggregator != NaN',
+    ).transform_filter(
         sel_rep_aggregator
     )
     
@@ -765,12 +755,27 @@ def repNCV_score_plots(scored_multi, return_df=False, ncv_mode=Config.ncv_mode, 
         lower = 'datum.Score_value - 0.5 * datum.Score_stdev',
         upper = 'datum.Score_value + 0.5 * datum.Score_stdev',
     ).transform_filter(
+        'datum.rep_aggregator != NaN',
+    ).transform_filter(
         sel_rep_aggregator,
     ).transform_filter(
         toggle_stdev,
     )
+
+    scatters = base.mark_point(  # TODO: doesn't show
+        # opacity=0.5,
+        size=40
+    ).encode(
+        y = alt.Y('Score_value', title=None),
+        tooltip = ['NCV_repetitions', 'fold_aggregator', 'Score_value'],
+    ).transform_filter(
+        # alt.FieldEqualPredicate(field='rep_aggregator', equal='NaN'),
+        'datum.rep_aggregator == NaN',
+    ).transform_filter(
+        toggle_scatters,
+    )
     
-    cols = (stdev + score).facet(
+    cols = (stdev + scatters + score).facet(
         column = alt.Column(
             'Scorer',
             sort=[k for k in Config.scorers.keys()],  # ['R2', 'MedAPE', 'MAPE', 'MedAE', 'MAE'],
@@ -786,7 +791,7 @@ def repNCV_score_plots(scored_multi, return_df=False, ncv_mode=Config.ncv_mode, 
     ).interactive(
     )    
     chart = alt.hconcat()
-    for model_class in df.run_with.unique():
+    for model_class in scored_long.run_with.unique():
         text = alt.Chart(df_0).mark_text(
                 angle=270,
                 lineBreak=', ',
@@ -803,8 +808,9 @@ def repNCV_score_plots(scored_multi, return_df=False, ncv_mode=Config.ncv_mode, 
     ).add_params(
         sel_rep_aggregator,
         toggle_stdev,
+        toggle_scatters,
     )
-    return (chart, df) if return_df else chart
+    return chart
 
 
 def ensemble_pred_histograms(members_df, pred_df, truth):
@@ -817,7 +823,7 @@ def ensemble_pred_histograms(members_df, pred_df, truth):
         var_name='Sample',
         value_name=f'{target}_predicted'
     )
-    df2 = pd.DataFrame(truth).rename(columns={target: f'{target}_observed'}).reset_index()
+    df2 = pd.DataFrame(truth).rename(columns={target: f'{target}_observed'}).reset_index()  # TODO: add rules for median, iqm and mean
 
     input_dropdown = alt.binding_select(options=df.Sample.unique(), name='Sample ')
     selection = alt.selection_point(fields=['Sample'], bind=input_dropdown)
@@ -834,8 +840,9 @@ def ensemble_pred_histograms(members_df, pred_df, truth):
         selection
     )
 
-    rule_of_truth = alt.Chart(df2).mark_rule(color='black').encode(
+    rule_of_truth = alt.Chart(df2).mark_rule(strokeWidth=10).encode(
         x=f'{target}_observed',
+        color=alt.value('black'), 
         opacity=alt.value(0.4),
         tooltip=['Sample', f'{target}_observed'],
         size=alt.value(3)
@@ -946,12 +953,12 @@ def per_err_agg_bar(pred_agg_df):
         ]).T,
         columns=Config.aggregators.keys(),
         index=pred_agg_df.index)
+    cols = agg_dev_df.columns
     agg_dev_df[target] = pred_agg_df[target]
 
-    return agg_dev_df.reset_index().melt(id_vars=['Sample', target]).sort_values(by=target).plot.barh(
+    return agg_dev_df.reset_index().sort_values(by=target).plot.barh(
         x='Sample', xlabel='',
-        y='value', ylabel='Error [%]',
-        by='variable',
+        y=cols, ylabel='Error [%]',
         title=f'Percentage error of predictions per aggregation\nSamples are sorted by descending observed {target}',
         width=600, height=1000,
     )

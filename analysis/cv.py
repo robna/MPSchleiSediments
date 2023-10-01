@@ -168,10 +168,16 @@ class ContinuousStratifiedKFold:
     continuous target variable, and then splits are yielded with an as-equal-as-possible representation of each stratum in each
     fold. This ensures that each fold contains a representative sample of each stratum.
 
-    The discretisation of the target variable is done using pandas.qcut, which bins the data based on quantiles. This means that
-    the bins will be of (nearly) equal sample number, but not necessarily of equal bin width. If the target variable is not evenly distributed,
+    There are two modes for stratification implemented: 'quantile' and 'uniform'.
+    In 'quantile' mode, the target variable is discretised using pandas.qcut, which bins the data based on quantiles.
+    This means that the bins will be of (nearly) equal sample number,
+    but not necessarily of equal bin width. If the target variable is not evenly distributed,
     this may result in some bins containing one more sample than others.
+    In 'uniform' mode, the target variable is discretised using pandas.cut, which bins the data into equally sized bins.
+    This means that the bins will be of equal width, but not necessarily of equal sample number. This mode can only be used
+    if the bin with the fewest samples has at least as many samples as the number of inteded folds.
 
+    If mode is set to None or omitted, uniform strafitication is attempted first, and if that fails, quantile stratification.
 
     Parameters
     ----------
@@ -184,6 +190,8 @@ class ContinuousStratifiedKFold:
         If None, defaults to 1 (meaning single split into n_splits folds.
     shuffle : bool, default=False
         Whether or not to shuffle the data before splitting it into folds.
+    mode : str, default='None'
+        Mode to use for stratification. Must be one of 'None', 'quantile' or 'uniform'.
     random_state : int or None, default=None
         Random seed to use for shuffling the data and generating random splits.
 
@@ -197,6 +205,8 @@ class ContinuousStratifiedKFold:
         Number of repeats.
     shuffle : bool
         Whether or not to shuffle the data before splitting it into folds.
+    mode : str
+        Mode to use for creating bins for stratification.
     random_state : int or None
         Random seed to use for shuffling the data and generating random splits.
 
@@ -221,18 +231,19 @@ class ContinuousStratifiedKFold:
     >>> import numpy as np
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13,14], [15,16], [17,18], [19,20], [21,22], [23,24]])
     >>> y = np.array([0.0, 0.5, 2.5, 2.0, 10.0, 9.9, 9.8, 9.7, 9.6, 9.5, 14.0, 14.5])
-    >>> cv = ContinuousStratifiedKFold(n_splits=3)
+    >>> cv = ContinuousStratifiedKFold(n_splits=3, mode='quantile')
     >>> for train_index, test_index in cv.split(X, y):
     ...     print("TRAIN:", train_index, "TEST:", test_index)
-    TRAIN: [ 2  3  5  7  8  9 10 11] TEST: [0 1 4 6]
+    TRAIN: [ 2  3  5  7  8  9 10 11] TEST: [ 0  1  4  6]
     TRAIN: [ 0  1  3  4  6  8  9 11] TEST: [ 2  5  7 10]
     TRAIN: [ 0  1  2  4  5  6  7 10] TEST: [ 3  8  9 11]
     """
-    def __init__(self, n_splits=5, n_strata=None, n_repeats=None, shuffle=False, random_state=None):
+    def __init__(self, n_splits=5, n_strata=None, n_repeats=None, shuffle=False, mode='None', random_state=None):
         self.n_splits = n_splits
         self.n_strata = n_strata if n_strata else n_splits
         self.n_repeats = n_repeats if n_repeats else 1
         self.shuffle = shuffle
+        self.mode = mode
         self.random_state = random_state
 
     def split(self, X, y, groups=None):
@@ -255,9 +266,32 @@ class ContinuousStratifiedKFold:
         test_index : ndarray
             The testing set indices for that split.
         """
+
+        # Check mode and set stratificator function
+        if self.mode == 'quantile':
+            self.stratificator = pd.qcut
+        elif self.mode == 'uniform' or self.mode is None:
+            # test if when using pd.cut, the min number of samples in bins is at least n_splits
+            self.stratificator = pd.cut
+            min_smpls = self.stratificator(y, self.n_strata).value_counts().min()
+            if min_smpls < self.n_splits:
+                if self.mode == 'uniform': 
+                    raise ValueError(f'''
+                                        Not enough samples in target variable to use uniform stratification.
+                                        Splitting into {self.n_strata} bins would result the smallest bin having only
+                                        {min_smpls} samples, but at least {self.n_splits} are required.
+                                        Try lowering the number of strata or use quantile stratification instead.
+                                        ''')
+                else:
+                    self.stratificator = pd.qcut
+        else:
+            raise ValueError(f'''
+                             Invalid mode. Must be one of 'quantile', 'uniform' or None.
+                             ''')
+        
         # Create P bins based on the target variable
-        labels = [f'stratum_{s}' for s in range(self.n_strata)]
-        strata, bins = pd.qcut(y, self.n_strata, retbins=True, labels=labels)  # TODO: could also implement a boolean option to use pd.cut instead, which would result in bins of equal width 
+        self.labels = [f'stratum_{s}' for s in range(self.n_strata)]
+        strata, bins = self.stratificator(y, self.n_strata, retbins=True, labels=self.labels)
         # print({'bins': bins, 'strata': strata})  # turn on for diagnostics
         
         # Stratify the data based on the bins
@@ -698,6 +732,27 @@ def process_results(NCV, model_X, model_y, params=None, allSamples_Scores=False,
     # NCV.drop('regressor', axis=1, inplace=True)
     return NCV
     
+def transform_score_df(scored_multi):
+    df = scored_multi.unstack().reset_index().melt(id_vars=['NCV_repetitions', 'run_with'], var_name=['Scorer', 'Aggregation']).dropna()
+    df.Aggregation = df.Aggregation.str.split('_\d', expand=True)[0].str.strip('_of').str.rstrip('s').str.lower()
+
+    df = pd.concat([df, df.Aggregation.str.split('_of_', expand=True).rename(columns={0: 'rep_aggregator', 1: 'fold_aggregator'})], axis=1).drop(columns='Aggregation')
+    idx = df.loc[df.fold_aggregator == 'all'].index
+    df.fold_aggregator.loc[idx] = df.rep_aggregator.loc[idx]
+    df.rep_aggregator.loc[idx] = 'none'
+
+    dfs = df.loc[df.rep_aggregator == 'stdev'].rename(columns={'value': 'Score_stdev'})
+    dfs.drop(columns='rep_aggregator', inplace=True)
+    
+    df = df.loc[df.rep_aggregator != 'stdev']
+    df.sort_values(['run_with', 'NCV_repetitions', 'rep_aggregator', 'fold_aggregator', 'Scorer'], ascending=[True,True,False,False,False], inplace=True)
+    df = df[['run_with', 'NCV_repetitions', 'rep_aggregator', 'fold_aggregator', 'Scorer', 'value']].rename(columns={'value': 'Score_value'})
+    df = df.merge(dfs, how='left')
+    df.Score_stdev.loc[df.rep_aggregator == 'none'] = np.nan
+    df = df.reset_index(drop=True).set_index(['run_with', 'NCV_repetitions'])
+    
+    return df
+
 
 def aggregation(NCV, setup, r=None):
     scored_comp = pd.DataFrame()
@@ -828,3 +883,29 @@ def augment_predictions(predi_series, samples_data_df, target=None, kind=''):
     df = predi_series.to_frame().join(samples_data_df[cols])
     df['Type'] = kind
     return df
+
+
+def aggregate_folds_only(NCV):
+    ## Calculates the aggregated scores from NCV over the folds of every repetition, without aggregating over the repetitions.
+    
+    gb = NCV.groupby(['run_with', 'NCV_repetition'])
+    
+    content = [[an, s, g[f'test_{s}'].agg(a)]
+               for an, a in Config.aggregators.items()
+               for s in Config.scorers.keys()
+               for gn, g in gb]
+    
+    index = pd.MultiIndex.from_tuples(
+        [gn
+         for a in Config.aggregators.values()
+         for s in Config.scorers.keys()
+         for gn, g in gb],
+        names=['run_with', 'NCV_repetitions'])
+    
+    columns=['fold_aggregator', 'Scorer', 'Score_value']
+    
+    return pd.DataFrame(
+        content,
+        index=index,
+        columns=columns,
+    )

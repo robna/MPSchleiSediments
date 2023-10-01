@@ -19,6 +19,7 @@ featurelist = [
     'WWTP_influence_as_mean_time_travelled__nosed_0µm_allseasons_222_',#pre-final GLM*
     'SED_D50', #pre-final RF
     'perc_MUD', # pre-final GLM
+    # 'TOC',
     'PC1', # pre-final GLM + RF*
     'PC2'
 ]
