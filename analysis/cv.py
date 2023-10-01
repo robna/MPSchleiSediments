@@ -238,7 +238,7 @@ class ContinuousStratifiedKFold:
     TRAIN: [ 0  1  3  4  6  8  9 11] TEST: [ 2  5  7 10]
     TRAIN: [ 0  1  2  4  5  6  7 10] TEST: [ 3  8  9 11]
     """
-    def __init__(self, n_splits=5, n_strata=None, n_repeats=None, shuffle=False, mode='None', random_state=None):
+    def __init__(self, n_splits=5, n_strata=None, n_repeats=None, shuffle=False, mode=None, random_state=None):
         self.n_splits = n_splits
         self.n_strata = n_strata if n_strata else n_splits
         self.n_repeats = n_repeats if n_repeats else 1
