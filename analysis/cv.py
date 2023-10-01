@@ -150,10 +150,12 @@ def make_setup_dict(**kwargs):
         ContinuousStratifiedKFold(  # using single StratifiedKFold in outer which will be repeated manually in loop to extract the test set indices at each iteration
             n_splits = setup['folds'][0],
             n_strata = setup['stratify'][0] if setup['stratify'][0] else 1,
+            mode = setup['stratification_mode'],
         ),
         ContinuousStratifiedKFold(  # inner CV scheme with repetition
             n_splits = setup['folds'][1],
             n_strata = setup['stratify'][1] if setup['stratify'][1] else 1,
+            mode = setup['stratification_mode'],
             n_repeats = setup['repeats'][1],
         ),
     ]
@@ -826,7 +828,7 @@ def rensembling(NCV):
     return NCV
 
 
-def make_header(NCV, setup, starttime, time_needed, droplist, model_X, num_feat, feature_candidates_list, scaler, regressor_params):
+def make_header(NCV, setup, starttime, time_needed, droplist, model_X, num_feat, feature_candidates_list, scaler, regressor_params, dup_testsets):
     ## Create a dataframe of aggregated scores and standard deviations
     scored = aggregate_scores(NCV, setup)    
     scored = scored.round(4).to_csv(sep=';') if Config.ncv_mode=='competitive' else 'COMPARATIVE RUN: no common scores available. Look at the individual scores of each model class!'
@@ -855,17 +857,17 @@ def make_header(NCV, setup, starttime, time_needed, droplist, model_X, num_feat,
     Winning candidate of gridsearch (inner CV loop) determined by best;{Config.select_best} {Config.refit_scorer} score; Note: results within each repetition are sorted by this!
 
     CV schemes:
+        outer:;{setup['cv_scheme'][0]};Number of duplicated test sets:;{len(dup_testsets)}
         inner:;{setup['cv_scheme'][1]}
-        outer:;{setup['cv_scheme'][0]}
     Repetitions:
-        inner:;{setup['repeats'][1]}
         outer:;{setup['repeats'][0]}
+        inner:;{setup['repeats'][1]}
     Folds:
-        inner:;{setup['folds'][1]}
         outer:;{setup['folds'][0]}
-    Stratify:
-        inner:;{setup['stratify'][1]}
+        inner:;{setup['folds'][1]}
+    Stratify (mode={setup['stratification_mode']}:
         outer:;{setup['stratify'][0]}
+        inner:;{setup['stratify'][1]}
     
     ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     Aggregated scores:
