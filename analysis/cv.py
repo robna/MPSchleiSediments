@@ -136,29 +136,37 @@ def get_performance(df, target, kind='predicted', with_outliers=False):
     
 def make_setup_dict(**kwargs):
     setup = kwargs  # dict of lists of NCV parameter settings: first element for outer, second for inner CV    
+    
+    setup['cv_scheme'] = [
+        ContinuousStratifiedKFold(), # using single StratifiedKFold in outer which will be repeated manually in loop to extract the test set indices at each iteration
+        ContinuousStratifiedKFold()  # inner CV scheme with repetition
+    ]
+    
     if 'repeats' in setup.keys():
-        if isinstance(setup['repeats'], int):
+        if isinstance(setup['repeats'], (int, float)):
             setup['repeats'] = (setup['repeats'], setup['repeats'])
         else:
             setup['repeats'] = (setup['repeats'][0], max(int(setup['repeats'][1]), 1))
+        setup['cv_scheme'][1].n_repeats = setup['repeats'][1]
             
     if 'folds' in setup.keys():
-        if isinstance(setup['folds'], int):
+        if isinstance(setup['folds'], (int, float)):
             setup['folds'] = (setup['folds'], setup['folds'])
-
-    setup['cv_scheme'] = [
-        ContinuousStratifiedKFold(  # using single StratifiedKFold in outer which will be repeated manually in loop to extract the test set indices at each iteration
-            n_splits = setup['folds'][0],
-            n_strata = setup['stratify'][0] if setup['stratify'][0] else 1,
-            mode = setup['stratification_mode'],
-        ),
-        ContinuousStratifiedKFold(  # inner CV scheme with repetition
-            n_splits = setup['folds'][1],
-            n_strata = setup['stratify'][1] if setup['stratify'][1] else 1,
-            mode = setup['stratification_mode'],
-            n_repeats = setup['repeats'][1],
-        ),
-    ]
+        setup['cv_scheme'][0].n_splits = setup['folds'][0]
+        setup['cv_scheme'][1].n_splits = setup['folds'][1]
+            
+    if 'stratification_mode' in setup.keys():
+        if isinstance(setup['stratification_mode'], str):
+            setup['stratification_mode'] = (setup['stratification_mode'], setup['stratification_mode'])
+        setup['cv_scheme'][0].mode = setup['stratification_mode'][0]
+        setup['cv_scheme'][1].mode = setup['stratification_mode'][1]
+    
+    if 'strata' in setup.keys():
+        if isinstance(setup['strata'], (int, float)):
+            setup['strata'] = (setup['strata'], setup['strata'])
+        setup['cv_scheme'][0].strata = setup['strata'][0]
+        setup['cv_scheme'][1].strata = setup['strata'][1]
+    
     return setup
 
 
@@ -170,30 +178,34 @@ class ContinuousStratifiedKFold:
     continuous target variable, and then splits are yielded with an as-equal-as-possible representation of each stratum in each
     fold. This ensures that each fold contains a representative sample of each stratum.
 
-    There are two modes for stratification implemented: 'quantile' and 'uniform'.
+    There are two modes for stratification implemented: 'quantile' and 'interval'.
+    
     In 'quantile' mode, the target variable is discretised using pandas.qcut, which bins the data based on quantiles.
     This means that the bins will be of (nearly) equal sample number,
     but not necessarily of equal bin width. If the target variable is not evenly distributed,
-    this may result in some bins containing one more sample than others.
-    In 'uniform' mode, the target variable is discretised using pandas.cut, which bins the data into equally sized bins.
+    this may result in some bins containing one more sample than others. If strata is a number it will dictate how many quantiles
+    will be used. If strata is list-like of floats between 0 and one, its values will be used as quantile edges.
+    
+    In 'interval' mode, the target variable is discretised using pandas.cut, which bins the data into strata equally sized bins
+    if strata is a number, or into the bins defined by the their edge values in strata, if it is list-like.
     This means that the bins will be of equal width, but not necessarily of equal sample number. This mode can only be used
     if the bin with the fewest samples has at least as many samples as the number of inteded folds.
 
-    If mode is set to None or omitted, uniform strafitication is attempted first, and if that fails, quantile stratification.
+    If mode is set to None or omitted, interval strafitication is attempted first, and if that fails, quantile stratification.
 
     Parameters
     ----------
     n_splits : int, default=5
         Number of folds. Must be at least 2.
-    n_strata : int or None, default=None
-        Number of strata to create based on the target variable. If None, defaults to n_splits.
+    strata : int or None, default=None
+        Number of strata to create based on the target variable. If None, False or 0: strata = n_splits.
     n_repeats : int or None, default=None
         Number of times to repeat the cross-validation process with different random splits.
         If None, defaults to 1 (meaning single split into n_splits folds.
     shuffle : bool, default=False
         Whether or not to shuffle the data before splitting it into folds.
     mode : str, default='None'
-        Mode to use for stratification. Must be one of 'None', 'quantile' or 'uniform'.
+        Mode to use for stratification. Must be one of 'None', 'quantile' or 'interval'.
     random_state : int or None, default=None
         Random seed to use for shuffling the data and generating random splits.
 
@@ -201,8 +213,8 @@ class ContinuousStratifiedKFold:
     ----------
     n_splits : int
         Number of folds.
-    n_strata : int
-        Number of strata.
+    strata : int or list-like
+        Number of strata if int. Otherwise values will be used for bin edges.
     n_repeats : int
         Number of repeats.
     shuffle : bool
@@ -224,7 +236,7 @@ class ContinuousStratifiedKFold:
     -----
     This cross-valdidation splitter is a variation of StratifiedKFold that supports continuous target variables.
     It works by first binning the target variable into P bins, where P is the number of strata, which is either
-    specified by the user or defaults to n_splits. Setting n_strata to 1 will result in a single bin, which is
+    specified by the user or defaults to n_splits. Setting strata to 1 will result in a single bin, which is
     equivalent to a non-stratified KFold.
 
     Examples
@@ -240,9 +252,9 @@ class ContinuousStratifiedKFold:
     TRAIN: [ 0  1  3  4  6  8  9 11] TEST: [ 2  5  7 10]
     TRAIN: [ 0  1  2  4  5  6  7 10] TEST: [ 3  8  9 11]
     """
-    def __init__(self, n_splits=5, n_strata=None, n_repeats=None, shuffle=False, mode=None, random_state=None):
+    def __init__(self, n_splits=5, strata=None, n_repeats=None, shuffle=False, mode=None, random_state=None):
         self.n_splits = n_splits
-        self.n_strata = n_strata if n_strata else n_splits
+        self.strata = strata if strata else n_splits
         self.n_repeats = n_repeats if n_repeats else 1
         self.shuffle = shuffle
         self.mode = mode
@@ -272,28 +284,31 @@ class ContinuousStratifiedKFold:
         # Check mode and set stratificator function
         if self.mode == 'quantile':
             self.stratificator = pd.qcut
-        elif self.mode == 'uniform' or self.mode is None:
+        elif self.mode == 'interval' or self.mode is None:
             # test if when using pd.cut, the min number of samples in bins is at least n_splits
             self.stratificator = pd.cut
-            min_smpls = self.stratificator(y, self.n_strata).value_counts().min()
-            if min_smpls < self.n_splits:
-                if self.mode == 'uniform': 
+            min_smpls = self.stratificator(y, self.strata).value_counts()
+            if all(min_smpls < self.n_splits):
+                if self.mode == 'interval': 
                     raise ValueError(f'''
-                                        Not enough samples in target variable to use uniform stratification.
-                                        Splitting into {self.n_strata} bins would result the smallest bin having only
-                                        {min_smpls} samples, but at least {self.n_splits} are required.
+                                        Not enough samples in target variable to use interval stratification.
+                                        Splitting into {self.strata} bins would result in the smallest bin having
+                                        only {min_smpls} samples, but at least {self.n_splits} are required.
                                         Try lowering the number of strata or use quantile stratification instead.
                                         ''')
                 else:
-                    self.stratificator = pd.qcut
+                    self.stratificator = pd.qcut  # fallback to quantile stratification
+                    if isinstance(self.strata, (list, tuple)):
+                        self.strata = len(self.strata)  # when using fallback but original strata was list-like of bin edges, define same number of quantile bins
         else:
             raise ValueError(f'''
-                             Invalid mode. Must be one of 'quantile', 'uniform' or None.
+                             Invalid mode. Must be one of 'quantile', 'interval' or None.
                              ''')
+        # print(f'Control print from function: cv.ContinuousStratifiedKFold.split()  -> self.stratificator is "{self.stratificator.__name__}"')
         
         # Create P bins based on the target variable
-        self.labels = [f'stratum_{s}' for s in range(self.n_strata)]
-        strata, bins = self.stratificator(y, self.n_strata, retbins=True, labels=self.labels)
+        self.labels = [f'stratum_{s}' for s in range(self.strata)]
+        strata, bins = self.stratificator(y, self.strata, retbins=True, labels=self.labels)
         # print({'bins': bins, 'strata': strata})  # turn on for diagnostics
         
         # Stratify the data based on the bins
@@ -856,18 +871,18 @@ def make_header(NCV, setup, starttime, time_needed, droplist, model_X, num_feat,
     Regressors:;{[[g['regressor'][0].__class__.__name__, [{k: v} for k, v in g.items() if k.startswith('regressor__')]] for g in regressor_params]}
     Winning candidate of gridsearch (inner CV loop) determined by best;{Config.select_best} {Config.refit_scorer} score; Note: results within each repetition are sorted by this!
 
-    CV schemes:
-        outer:;{setup['cv_scheme'][0]};Number of duplicated test sets:;{len(dup_testsets)}
-        inner:;{setup['cv_scheme'][1]}
-    Repetitions:
-        outer:;{setup['repeats'][0]}
-        inner:;{setup['repeats'][1]}
+    CV schemes (set mode: '{setup['stratification_mode'] if 'stratification_mode' in setup.keys() else None}'):
+        outer:;{setup['cv_scheme'][0].__class__.__name__};mode (last split):{setup['cv_scheme'][0].mode}; Number of duplicated test sets:;{len(dup_testsets)}
+        inner:;{setup['cv_scheme'][1].__class__.__name__};mode (last split):{setup['cv_scheme'][1].mode};
+    Strata (set strata: '{setup['strata'] if 'strata' in setup.keys() else None}'):
+        outer strata (last split):;{setup['cv_scheme'][0].strata}
+        inner strata (last split):;{setup['cv_scheme'][1].strata}
     Folds:
         outer:;{setup['folds'][0]}
         inner:;{setup['folds'][1]}
-    Stratify (mode={setup['stratification_mode']}:
-        outer:;{setup['stratify'][0]}
-        inner:;{setup['stratify'][1]}
+    Repetitions:
+        outer:;{setup['repeats'][0]}
+        inner:;{setup['repeats'][1]}
     
     ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     Aggregated scores:
