@@ -218,10 +218,10 @@ def check_testset_duplicates(NCV):
     unique_runs = NCV.index.get_level_values('run_with').unique()
     # if there is only one run, slicing for unique_runs[0] would return the same dataframe
     df = NCV.loc[NCV.index.get_level_values('run_with') == unique_runs[0]]
-    testset_length_freq = df.test_set_samples.apply(lambda x: len(x)).value_counts()
+    testset_length_freq = df.outer_test_set_samples.apply(lambda x: len(x)).value_counts()
 
     ## Check for duplicates in test sets
-    all_testsets = pd.DataFrame.from_dict([r for r in df.test_set_samples])
+    all_testsets = pd.DataFrame.from_dict([r for r in df.outer_test_set_samples])
     dup_testsets = all_testsets[all_testsets.duplicated()]
     
     return dup_testsets, testset_length_freq

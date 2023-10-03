@@ -156,7 +156,7 @@ def make_setup_dict(**kwargs):
         setup['cv_scheme'][1].n_splits = setup['folds'][1]
             
     if 'stratification_mode' in setup.keys():
-        if isinstance(setup['stratification_mode'], str):
+        if isinstance(setup['stratification_mode'], (str, type(None))):
             setup['stratification_mode'] = (setup['stratification_mode'], setup['stratification_mode'])
         setup['cv_scheme'][0].mode = setup['stratification_mode'][0]
         setup['cv_scheme'][1].mode = setup['stratification_mode'][1]
@@ -307,7 +307,7 @@ class ContinuousStratifiedKFold:
         # print(f'Control print from function: cv.ContinuousStratifiedKFold.split()  -> self.stratificator is "{self.stratificator.__name__}"')
         
         # Create P bins based on the target variable
-        self.labels = [f'stratum_{s}' for s in range(self.strata)]
+        self.labels = [f'stratum_{s}' for s in range(len(self.strata)-1 if isinstance(self.strata, (list, tuple)) else self.strata)]
         strata, bins = self.stratificator(y, self.strata, retbins=True, labels=self.labels)
         # print({'bins': bins, 'strata': strata})  # turn on for diagnostics
         
@@ -432,8 +432,20 @@ def rep_ncv(pipe, params, model_X, model_y, scorers, setup):
 
             rep = {'NCV_repetition': np.repeat(i, len(list(outerCV.values())[0]))}
 
-            testsets = get_test_sets(setup['cv_scheme'][0], model_X, model_y)
-            outerCV = {**rep, **testsets, **outerCV}
+            outer_testsets = get_test_sets(setup['cv_scheme'][0], model_X, model_y, prefix='outer')
+            # print(f'Outer test sets of outer Rep {i}: \n {outer_testsets}')
+            
+            inner_testsets = {
+                # 'inner_test_set_indices': [],  # test set indices refer to the reduced lists of samples (ots samples are missing, and vary between outer folds)
+                'inner_test_set_samples': []
+            }
+            for ots in outer_testsets['outer_test_set_indices']:
+                current_inner_testsets = get_test_sets(setup['cv_scheme'][1], model_X.iloc[~ots], model_y.iloc[~ots], prefix='inner')
+                for k in inner_testsets:
+                    inner_testsets[k].append(current_inner_testsets[k])
+            # print(f'Inner test sets of outer Rep {i}: \n {inner_testsets}')
+                              
+            outerCV = {**rep, **outer_testsets, **inner_testsets, **outerCV}
 
             ## Print details of outerCV dict (uncomment for diagnostic reasons)
             # print([(
@@ -582,12 +594,22 @@ def append_agg_cv_scores(res, agg='median'):
         if f'rank_test_{k}' in res:
             res[f'rank_by_mean_test_{k}'] = res.pop(f'rank_test_{k}')
         splits = res_df.filter(regex=f"^split\d+_test_{k}")  # get all columns of the df that are named like "split<some-number>_test_<scorer>"
-        res_df[f'{agg}_test_{k}'] = [aggregator(s) for s in splits.values]
+        # print(splits)
+        
+        if splits.isna().any().any():
+            print('There were NaN in some of the inner test scores: \n',
+                  splits[splits.isna().any(axis=1)].rename_axis(index='param_gridpoint').T,
+                  f'\n The NaN-splits will not be included in the calculation of the {agg}_test_{k} for the configurations of these param_gridpoints.')
+            
+        res_df[f'{agg}_test_{k}'] = [aggregator(s[~np.isnan(s)]) for s in splits.values]
         # print(f'Control print from function: cv.append_agg_cv_scores()  -> number of splits to aggregate: {len(splits.columns)}, aggregation: {aggregator}, scorer: {k}')
         
         if all(res_df[f'{agg}_test_{k}'].isna()):
             res_df[f'rank_by_{agg}_test_{k}'] = np.nan
         else:
+            # with pd.option_context('display.max_rows', None):
+                # print('\n Splits: \n', splits)
+                # print(f'Ranks of {agg}_test_{k}: \n {res_df[f"{agg}_test_{k}"].rank(ascending=False)}')
             res_df[f'rank_by_{agg}_test_{k}'] = res_df[f'{agg}_test_{k}'].rank(ascending=False).astype(int)
 
         res[f'{agg}_test_{k}'] = res_df[f'{agg}_test_{k}'].to_numpy()
@@ -646,13 +668,13 @@ def get_inner_test_scores(NCV):
             NCV.loc[idx, f'inner_{Config.select_best}_test_{s}'] = NCV.loc[idx].estimator.cv_results_[f'{Config.select_best}_test_{s}'][b]
 
 
-def get_test_sets(splitter, model_X, model_y):
+def get_test_sets(splitter, X, y, prefix=''):
     """
     Get the names and indices of samples in test sets.
     """
     return {
-        'test_set_indices': [test_index for train_index, test_index in splitter.split(model_X, model_y)],
-        'test_set_samples': [model_X.index.values[test_index] for train_index, test_index in splitter.split(model_X, model_y)],
+        f'{prefix}_test_set_indices': [test_index for train_index, test_index in splitter.split(X, y)],
+        f'{prefix}_test_set_samples': [X.index.values[test_index] for train_index, test_index in splitter.split(X, y)],    
     }
 
 

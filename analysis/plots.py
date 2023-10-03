@@ -858,7 +858,7 @@ def ensemble_pred_histograms(members_df, pred_df, truth):
     )
 
 
-def ncv_pie(df, cols_select = ['regressor', 'test_set_samples', 'features'], show_top=4):
+def ncv_pie(df, cols_select = ['regressor', 'outer_test_set_samples', 'features'], show_top=4):
     '''
     Makes pie charts of how often certain elements are occuring in an NCV ensemble model
     :param cols_select: columns in NCV df to make a plot of (default: ['regressor', 'features'])
@@ -871,7 +871,7 @@ def ncv_pie(df, cols_select = ['regressor', 'test_set_samples', 'features'], sho
     df = df.loc[:, cols_select]
     df.rename(columns={'features': 'feature_sets'}, inplace=True)
     feature_frame = pd.DataFrame([[item] for sublist in df.feature_sets.to_list() for item in sublist], columns=['features'])
-    testset_frame = pd.DataFrame([[item] for sublist in df.test_set_samples.to_list() for item in sublist], columns=['test_set_samples'])
+    testset_frame = pd.DataFrame([[item] for sublist in df.outer_test_set_samples.to_list() for item in sublist], columns=['outer_test_set_samples'])
 
     if 'regressor__booster' in df.columns:
         df.regressor[~df.regressor__booster.isna()] = df.regressor[~df.regressor__booster.isna()] + ' ' + df.regressor__booster[~df.regressor__booster.isna()]
@@ -882,7 +882,7 @@ def ncv_pie(df, cols_select = ['regressor', 'test_set_samples', 'features'], sho
     pies = []
     for var in var_list:
         var_name = next(iter(var))
-        source = feature_frame if var_name == 'features' else testset_frame if var_name == 'test_set_samples' else df
+        source = feature_frame if var_name == 'features' else testset_frame if var_name == 'outer_test_set_samples' else df
         base = alt.Chart(source.reset_index()).encode(
             alt.Theta('counted:Q').aggregate("sum").stack(True),
             alt.Color(f'{var_name}:N', sort=alt.SortField('rank:O')),
