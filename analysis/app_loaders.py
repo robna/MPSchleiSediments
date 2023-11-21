@@ -3,6 +3,7 @@ import pandas as pd
 import prepare_data
 import KDE_utils
 from components import PCOA
+from app_helpers import use_shortnames
 from settings import Config, sediment_data_filepaths
 
 import streamlit as st

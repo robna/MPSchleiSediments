@@ -9,7 +9,7 @@ import glm
 import cv
 from components import pca, PCOA
 from plots import scatter_chart, poly_comp_chart, poly_comp_pie, histograms, biplot, station_map, size_kde_combined_samples_dist_plot
-from settings import Config, featurelist, sediment_data_filepaths
+from settings import Config, shortnames, featurelist, sediment_data_filepaths
 
 from app_loaders import (
     data_load_and_prep,
@@ -49,12 +49,14 @@ def main():
     raw_data_checkbox, vertical_merge = general_settings()  # loads sidebar widgets to control data calculations and app behaviour
     Config.vertical_merge = vertical_merge
     mp_pdd = data_load_and_prep()  # load data
+    # mp_pdd = mp_pdd.replace({'Sample': shortnames}).sort_values(by='Sample')
     
     if raw_data_checkbox:
         df_expander(mp_pdd, "Original MP particle domain data")            
 
     mp_pdd = pdd_filters(mp_pdd)  # provide side bar menus and filter data
     sdd_iow = pdd2sdd(mp_pdd)
+    # sdd_iow = sdd_iow.replace({'Sample': shortnames}).sort_values(by='Sample')
     sdd_iow = sdd_filters(sdd_iow)  # additional filters in siedbar can be used to limit which samples are included
 
     sed_scor, grainsize_iow, boundaries_dict = load_grainsize_data()
@@ -150,7 +152,7 @@ def main():
     new_chap('Single predictor correlation and colinearity check')
     sample_chart_selections, cols = get_selections(featurelist, ('perc_MUD', 'Concentration', 'regio_sep'), key='sddPlot_')
 
-    scatters, reg_params = scatter_chart(df, **sample_chart_selections, title='', width=800, height=600)
+    scatters, reg_params = scatter_chart(df, **sample_chart_selections, title='', width=800, height=800)
 
     cols[0].write(scatters)
     cols[2].markdown('___', unsafe_allow_html=True)
@@ -170,7 +172,7 @@ def main():
     if st.checkbox('Calculate GLM'):
         col1, col2 = st.columns(2)
         families = ['Gaussian', 'Poisson', 'Gamma', 'Tweedie', 'InverseGaussian', 'NegativeBinomial']
-        family = col1.radio('Select distribution family:', families, index=families.index('NegativeBinomial'))
+        family = col1.radio('Select distribution family:', families, index=families.index('Gamma'))
         # for neg.binom use CT-alpha-estimator from here: https://web.archive.org/web/20210303054417/https://dius.com.au/2017/08/03/using-statsmodels-glms-to-model-beverage-consumption/
         Config.glm_family = family
         if family == 'Tweedie':
@@ -178,38 +180,46 @@ def main():
             Config.glm_tweedie_power = tweedie_power
 
         links = [None, 'Power', 'identity', 'inverse_power', 'inverse_squared', 'sqrt', 'log']
-        link = col2.selectbox('Select link function (use None for default link of family):', links, index=1)
+        link = col2.selectbox('Select link function (use None for default link of family):', links, index=links.index('log'))
         Config.glm_link = link
         if link == 'Power':
             power_power = col2.number_input('Exponent of power link function:', value=-1.55, min_value=-10.0, max_value=10.0, step=0.1)
             Config.glm_power_power = power_power
 
-        Config.glm_formula = st.text_input('GLM formula:', 'Concentration ~ Dist_WWTP + PC1')
+        Config.glm_formula = st.text_input('GLM formula:', 'Concentration ~ Depth + perc_MUD + Q("WWTP_influence_as_mean_time_travelled__nosed_0µm_allseasons_222_")')
         target_name = Config.glm_formula.split('~')[0].strip()
 
         # resp = st.sidebar.selectbox('Select Response', reponselist)
         glm_res = glm.glm(df)
 
         col1, col2, col3 = st.columns(3)
-        col1.write(glm_res.summary())
+        col1.write(glm_res.summary2())
 
         st.text("")  # empty line to make some distance
 
         df['yhat'] = glm_res.mu
         df['pearson_resid'] = glm_res.resid_pearson
+        df['deviance_resid'] = glm_res.resid_deviance
+        df['response_resid'] = glm_res.resid_response
+        df['working_resid'] = glm_res.resid_working
+        
         col2.write(scatter_chart(df, target_name, 'yhat',
                                  #color='regio_sep',
                                  identity=True, equal_axes=False,
                                  width=500, height=300,
                                  title='GLM --- yhat vs. y')[0])
-        if col3.checkbox('log yhat?'):
+        chosen_resid = col3.selectbox('Select residuals:', ['pearson_resid', 'deviance_resid', 'response_resid', 'working_resid'], index=0)
+        if col3.checkbox('log yhat?', value=True):
             df.yhat = np.log(df.yhat)
-        col3.write(scatter_chart(df, 'yhat', 'pearson_resid',
+        col3.write(scatter_chart(df, 'yhat', chosen_resid,
                                  #color='regio_sep', 
                                  title='GLM --- Pearson residuals')[0])
 
         resid = glm_res.resid_deviance.copy()
-        col3.pyplot(qqplot(resid, line='r'))
+        qq = qqplot(resid, line='r')
+        # qq is a matplotlib figure, now lets get its axes and add a title
+        qq.suptitle('GLM --- QQ-plot of deviance residuals against standard normal distribution')
+        col3.pyplot(qq)
 
         if st.checkbox('LOOCV'):
             loocv_predictions, metrics = cv.loocv(df)
