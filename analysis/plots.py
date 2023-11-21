@@ -729,15 +729,18 @@ def repNCV_score_plots(scored_long, width=400, height=300):
     toggle_scatters = alt.param(
         bind=alt.binding_checkbox(name='[Not working yet...] Show scores of individual reps? ')
     )
+    # toggle_logx = alt.param(
+    #     bind=alt.binding_checkbox(name='Show x axis as log scale? ')  # TODO: not finished
+    # )
     
     base = alt.Chart(scored_long).encode(
-        x='NCV_repetitions',
+        x=alt.X('NCV_repetitions', scale=alt.Scale(type='linear')),
         color = alt.Color('fold_aggregator', sort=['median', 'iqm', 'mean']),
     ).properties(width=width, height=height,
     )
     
     score = base.mark_line(
-        point=True
+        # point=True
     ).encode(
         y = alt.Y('Score_value', title=None),
         strokeDash = alt.StrokeDash('rep_aggregator', sort=['median', 'iqm', 'mean']),
@@ -789,6 +792,7 @@ def repNCV_score_plots(scored_long, width=400, height=300):
     ).resolve_scale(
         y='independent'
     ).interactive(
+        bind_x = False
     )    
     chart = alt.hconcat()
     for model_class in scored_long.run_with.unique():
@@ -809,6 +813,7 @@ def repNCV_score_plots(scored_long, width=400, height=300):
         sel_rep_aggregator,
         toggle_stdev,
         toggle_scatters,
+        # toggle_logx,
     )
     return chart
 

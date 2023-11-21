@@ -3,20 +3,20 @@ from pathlib import Path
 import numpy as np
 import statsmodels.formula.api as smf
 import statsmodels.api as sm
-from sklearn.metrics import r2_score, mean_absolute_error, mean_absolute_percentage_error, median_absolute_error, mean_squared_error, mean_squared_log_error ,make_scorer
+from sklearn.metrics import r2_score, mean_absolute_error, mean_absolute_percentage_error, median_absolute_error, mean_squared_error, mean_squared_log_error, d2_tweedie_score, make_scorer
 from cv_helpers import median_absolute_percentage_error, iqm
 
 target = 'Concentration'
 featurelist = [
     'Depth',
     'Dist_Land',
-    # 'Dist_WWTP',
-    'WWTP_influence_as_mean_time_travelled__sed_18µm_allseasons_444',#pre-final GLM
-    'WWTP_influence_as_mean_time_travelled__sed_18µm_autumn_222',#pre-final GLM
-    'WWTP_influence_as_cumulated_residence__nosed_18µm_autumn_222', #pre-final RF
-    'WWTP_influence_as_mean_time_travelled__nosed_18µm_allseasons_222',#pre-final GLM
-    'WWTP_influence_as_cumulated_residence__nosed_0µm_allseasons_222_',#pre-final RF*
-    'WWTP_influence_as_mean_time_travelled__nosed_0µm_allseasons_222_',#pre-final GLM*
+    # 'Dist_WWTP', 
+    'WWTP_influence_as_mean_time_travelled__sed_18µm_allseasons_444',#pre-final GLM       # Disco4
+    'WWTP_influence_as_mean_time_travelled__sed_18µm_autumn_222',#pre-final GLM           # Disco3
+    'WWTP_influence_as_cumulated_residence__nosed_18µm_autumn_222', #pre-final RF         # Disco6
+    'WWTP_influence_as_mean_time_travelled__nosed_18µm_allseasons_222',#pre-final GLM     # Disco2
+    'WWTP_influence_as_cumulated_residence__nosed_0µm_allseasons_222_',#pre-final RF*     # Disco5
+    'WWTP_influence_as_mean_time_travelled__nosed_0µm_allseasons_222_',#pre-final GLM*    # Disco1
     'SED_D50', #pre-final RF
     'perc_MUD', # pre-final GLM
     # 'TOC',
@@ -136,16 +136,16 @@ class Config:
 
     # Settings for the CV notebook
     mutual_exclusive: list = [  # Mutual exclusive list (list of lists detailing predictors that are not allowed together in one model candidate)
-        ['SED_MODE1', 'SED_D50'],
-        ['SED_MODE1', 'PC1'],
-        ['SED_MODE1', 'perc_MUD'],
-        ['SED_MODE1', 'TOC'],
+        # ['SED_MODE1', 'SED_D50'],
+        # ['SED_MODE1', 'PC1'],
+        # ['SED_MODE1', 'perc_MUD'],
+        # ['SED_MODE1', 'TOC'],
         ['SED_D50', 'PC1'],
         ['SED_D50', 'perc_MUD'],
-        ['SED_D50', 'TOC'],
+        # ['SED_D50', 'TOC'],
         ['perc_MUD', 'PC1'],
-        ['perc_MUD', 'TOC'],
-        ['PC1', 'TOC'],
+        # ['perc_MUD', 'TOC'],
+        # ['PC1', 'TOC'],
         # ['Dist_Land', 'Depth']
         ]
     exclusive_keywords: list = ['WWTP']  # only feature_candidates sets with max 1 feature containing each keyword will be considered
@@ -156,6 +156,7 @@ class Config:
                         'MedAE': [median_absolute_error, 'neg_median_absolute_error'],
                         'MAE': [mean_absolute_error, 'neg_mean_absolute_error'],
                         'MSE': [mean_squared_error, 'neg_mean_squared_error'],
+                        # 'D2gamma': [d2_tweedie_score(power=2), make_scorer(d2_tweedie_score, power=2)],  # TODO: cannot instantiate here! Pass class only and instantiate with power=2 at the point of use
                         # 'MSLE': [mean_squared_log_error, 'neg_mean_squared_log_error'],
                     }
     aggregators: dict = {  # dictionary of aggregators with corresponding callable

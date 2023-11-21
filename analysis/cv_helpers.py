@@ -208,7 +208,13 @@ def ensemble_predict(esti, X, n_jobs=-1, verbose=False):
     
     
 def aggregate_predictions(pred_df, ensemble_aggregator, target):
-    return pd.Series([ensemble_aggregator(s) for _, s in pred_df.items()], index=pred_df.columns, name=f'{target}_predicted')
+    '''
+    pred_df: dataframe of ensemble predictions (row = members, columns = samples)
+    ensemble_aggregator: tuple: either (rep_aggregator,) if ensemble was previously already reduced, or (rep_aggregator, folds_aggregator)
+    '''
+    if len(ensemble_aggregator) > 1:
+        pred_df = pd.DataFrame([g.agg(ensemble_aggregator[1]) for _, g in pred_df.groupby('NCV_repetition')]) #.agg(Config.aggregators[rep_aggregator])
+    return pd.Series([ensemble_aggregator[0](s) for _, s in pred_df.items()], index=pred_df.columns, name=f'{target}_predicted')
 
 
 def check_testset_duplicates(NCV):

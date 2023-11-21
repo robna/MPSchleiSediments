@@ -435,17 +435,21 @@ def rep_ncv(pipe, params, model_X, model_y, scorers, setup):
             outer_testsets = get_test_sets(setup['cv_scheme'][0], model_X, model_y, prefix='outer')
             # print(f'Outer test sets of outer Rep {i}: \n {outer_testsets}')
             
-            inner_testsets = {
-                # 'inner_test_set_indices': [],  # test set indices refer to the reduced lists of samples (ots samples are missing, and vary between outer folds)
-                'inner_test_set_samples': []
-            }
-            for ots in outer_testsets['outer_test_set_indices']:
-                current_inner_testsets = get_test_sets(setup['cv_scheme'][1], model_X.iloc[~ots], model_y.iloc[~ots], prefix='inner')
-                for k in inner_testsets:
-                    inner_testsets[k].append(current_inner_testsets[k])
-            # print(f'Inner test sets of outer Rep {i}: \n {inner_testsets}')
+            # inner_testsets = {
+            #     # 'inner_test_set_indices': [],  # test set indices refer to the reduced lists of samples (ots samples are missing, and vary between outer folds)
+            #     'inner_test_set_samples': []
+            # }
+            # for ots in outer_testsets['outer_test_set_indices']:
+            #     current_inner_testsets = get_test_sets(setup['cv_scheme'][1], model_X.iloc[~ots], model_y.iloc[~ots], prefix='inner')
+            #     for k in inner_testsets:
+            #         inner_testsets[k].append(current_inner_testsets[k])
+            # # print(f'Inner test sets of outer Rep {i}: \n {inner_testsets}')
                               
-            outerCV = {**rep, **outer_testsets, **inner_testsets, **outerCV}
+            outerCV = {
+                **rep,
+                **outer_testsets,
+                # **inner_testsets,  # TODO: had to take out the inner folds extraction, as it can throw "n_splits cannot be smaller than samples in each class" error. Needs checking.
+                **outerCV}
 
             ## Print details of outerCV dict (uncomment for diagnostic reasons)
             # print([(
