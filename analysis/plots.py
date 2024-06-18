@@ -336,7 +336,7 @@ def poly_comp_chart(poly_comp, color='polymer_type'):
     ).properties(width=80)
 
     chart = alt.hconcat(chart_abs.interactive(), chart_rel, chart_tot.interactive()).resolve_scale('independent')
-    chart.save('../data/exports/plots/poly_comp_chart.html')  # activate save chart to html file
+    # chart.save('../data/exports/plots/poly_comp_chart.html')  # activate save chart to html file
 
     return chart  # | chart.encode(y=alt.Y('Concentration',stack='normalize'))
 
