@@ -4,6 +4,14 @@ from functools import reduce
 from statsmodels.graphics.gofplots import qqplot
 from sklearn.metrics import r2_score
 
+try:  # if running on streamlit server, local data will not be found if directory is not added to PATH
+    import sys
+    sys.path.append("/mount/src/mpschleisediments/analysis")
+    import os
+    os.chdir("/mount/src/mpschleisediments/analysis")
+except Exception:
+    pass
+
 import prepare_data
 import glm
 import cv
