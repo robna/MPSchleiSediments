@@ -199,7 +199,7 @@ regio_sep = {
     'Schlei_S18_15cm': 'inner',
     'Schlei_S19': 'inner',
     'Schlei_S20': 'inner',
-    'Schlei_S21': 'outer', 
+    'Schlei_S21': 'inner', 
     'Schlei_S22': 'outer',
     'Schlei_S23': 'outer',
     'Schlei_S24': 'outer',
