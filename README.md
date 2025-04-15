@@ -125,7 +125,7 @@ If you would like to contribute to this project, please fork the repository and 
 
 ## License
 
-This project is licensed under the <...> License - see the [<...>](LICENSE) file for details.
+This project is licensed under GNU GPL v3.0 - see the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgments
 
