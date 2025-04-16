@@ -4,13 +4,13 @@ from functools import reduce
 from statsmodels.graphics.gofplots import qqplot
 from sklearn.metrics import r2_score
 
-try:  # if running on streamlit server, local data will not be found if directory is not added to PATH
-    import sys
-    sys.path.append("/mount/src/mpschleisediments/analysis")
-    import os
-    os.chdir("/mount/src/mpschleisediments/analysis")
-except Exception:
-    pass
+# try:  # if running on streamlit server, local data will not be found if directory is not added to PATH
+#     import sys
+#     sys.path.append("/mount/src/mpschleisediments/analysis")
+#     import os
+#     os.chdir("/mount/src/mpschleisediments/analysis")
+# except Exception:
+#     pass
 
 import prepare_data
 import glm
@@ -97,6 +97,13 @@ def main():
             cols[2].write('Regression parameters:')
             cols[2].write(particle_reg_params)
         df_expander(df, "MP sample domain data", height=1000)       
+        st.download_button(
+            label=f"Download sampleDomainData as CSV",
+            data=df.to_csv().encode('utf-8'),
+            file_name=f'sampleDomainData.csv',
+            mime='text/csv',
+            disabled=0,
+            ) 
         df_expander(grainsize_iow, f"Sediment grainsize data (IOW), loaded from: {sediment_data_filepaths[f'IOW_{Config.sediment_grainsize_basis}']}", row_sums=True)
 
 #%%
@@ -158,7 +165,7 @@ def main():
 
 #%%
     new_chap('Single predictor correlation and colinearity check')
-    sample_chart_selections, cols = get_selections(featurelist, ('perc_MUD', 'Concentration', 'regio_sep'), key='sddPlot_')
+    sample_chart_selections, cols = get_selections(df.columns.to_list(), ('perc_MUD', 'Concentration', 'regio_sep'), key='sddPlot_')
 
     scatters, reg_params = scatter_chart(df, **sample_chart_selections, title='', width=800, height=800)
 
