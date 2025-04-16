@@ -6,7 +6,12 @@ from settings import densities, regio_sep, shortnames, sediment_data_filepaths, 
 from KDE_utils import unbound_kde
 import outliers
 import geo
+from pathlib import Path
 
+# In analysis/app.py or prepare_data.py
+HERE = Path(__file__).resolve().parent          # analysis/ folder
+ROOT = HERE.parent                              # project root
+DATA_DIR = ROOT / "data"
 
 def fix_gradistat_names(df):
     df = df.rename(columns=shortnames)
@@ -31,7 +36,7 @@ def get_pdd():
     Reads the MP particle domain data (PDD) from the CSV file and does some preprocessing
     """
     
-    mp_pdd = pd.read_csv('../data/mp_pdd.csv', index_col=0)
+    mp_pdd = pd.read_csv(DATA_DIR / 'mp_pdd.csv', index_col=0)
     mp_pdd.drop(columns=['Site_name', 'Compartment', 'Contributor', 'Project', 'Particle_name', 'lab_blank_ID', 'sample_ID'], inplace=True)  # columns not needed for analysis
     mp_pdd = height_vol_dens_mass(mp_pdd)  # calculate particle weights
     mp_pdd = geom_mean_3d(mp_pdd)  # calculate the geometric mean from 3 size dimensions
@@ -59,12 +64,12 @@ def get_grainsizes(
     Reads the sediment grainsize data from the CSV file and does some preprocessing
     """
 
-    grainsize_iow = pd.read_csv('../' + IOW_sed_gs_path)
+    grainsize_iow = pd.read_csv(ROOT / IOW_sed_gs_path)
 
     if Config.vertical_merge:
         grainsize_iow = merge_vertical(grainsize_iow)
 
-    grainsize_cau = pd.read_csv('../' + CAU_sed_gs_path)
+    grainsize_cau = pd.read_csv(ROOT / CAU_sed_gs_path)
     grainsize_cau.dropna(subset=grainsize_cau.iloc[:,1:].columns, how='all', inplace=True)  # CAU sediment data contains empty sammples which are dropped here
 
     # Get the binning structure of the imported sediment data and optionally rebin it (make binning coarser) for faster computation
@@ -255,18 +260,18 @@ def additional_sdd_merging(mp_sdd, how='left'):
 
     # import gradistat results
     IOW_sed_gradistat_path=sediment_data_filepaths[f'IOW_GRADISTAT_{Config.sediment_grainsize_basis}']
-    sed_gradistat = pd.read_csv(f'../{IOW_sed_gradistat_path}', index_col=0)
+    sed_gradistat = pd.read_csv(ROOT / IOW_sed_gradistat_path, index_col=0)
     if Config.vertical_merge:
         sed_gradistat = merge_vertical(sed_gradistat, avg=True)
     sed_gradistat = fix_gradistat_names(sed_gradistat)
 
     # import organic matter size, TOC, Hg data
-    sed_om = pd.read_csv('../data/Schlei_OM.csv', index_col=0)
+    sed_om = pd.read_csv(DATA_DIR / 'Schlei_OM.csv', index_col=0)
     if Config.vertical_merge:
         sed_om = merge_vertical(sed_om, avg=True)
 
     # import sampling log data
-    slogs = pd.read_csv('../data/Metadata_IOW_sampling_log.csv', index_col=0)
+    slogs = pd.read_csv(DATA_DIR / 'Metadata_IOW_sampling_log.csv', index_col=0)
     if Config.vertical_merge:
         slogs = merge_vertical(slogs, avg=True)
 
@@ -285,11 +290,11 @@ def additional_sdd_merging(mp_sdd, how='left'):
     # calculate distance from shore
     mp_sdd_amended['Dist_Land'] = geo.get_distance_to_shore(mp_sdd_amended['LON'], mp_sdd_amended['LAT'])
     # calculate WWTP_influence from BAW tracer model data
-    mp_sdd_amended = geo.get_wwtp_influence(mp_sdd_amended, tracks_file='../data/BAW_tracer_simulations.zip', file_postfix='_IOW')
+    mp_sdd_amended = geo.get_wwtp_influence(mp_sdd_amended, tracks_file=DATA_DIR / 'BAW_tracer_simulations.zip', file_postfix='_IOW')
     
     # concatenate with Warnow data: only activate if you want to use Warnow data for comparison
     if Config.warnow:
-        warnow = pd.read_csv('../data/Warnow_sdd.csv', index_col=0)
+        warnow = pd.read_csv(DATA_DIR / 'Warnow_sdd.csv', index_col=0)
         warnow["ConcentrationA500"] = warnow["Concentration"]
         mp_sdd_amended = pd.concat([mp_sdd_amended, warnow], sort=False)
     
