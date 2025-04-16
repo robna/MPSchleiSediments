@@ -9,6 +9,12 @@ import rpy2.robjects as ro  # Obs: rpy2 needs to be installed in v.3.5.1. most r
 import rpy2.robjects.packages as rpackages
 from rpy2.robjects import r, pandas2ri
 pandas2ri.activate()
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent          # analysis/ folder
+ROOT = HERE.parent                              # project root
+DATA_DIR = ROOT / "data"
+
 
 
 def optimise_bandwidth(data, weights=None):
@@ -105,7 +111,7 @@ def probDens2prob(size_pdfs, sdd_MP=None):
 
 
 def load_manual_height_measurments(low, high):
-        df = pd.read_csv('../data/ManualHeights_Schlei_S8_v2.csv')
+        df = pd.read_csv(DATA_DIR / 'ManualHeights_Schlei_S8_v2.csv')
         x = df.loc[(df.manual_Size_3_um >= low) & (df.manual_Size_3_um <= high), 'manual_Size_3_um']
         return x
 

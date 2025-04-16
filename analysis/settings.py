@@ -6,6 +6,11 @@ import statsmodels.api as sm
 from sklearn.metrics import r2_score, mean_absolute_error, mean_absolute_percentage_error, median_absolute_error, mean_squared_error, mean_squared_log_error, d2_tweedie_score, make_scorer
 from cv_helpers import median_absolute_percentage_error, iqm
 
+HERE = Path(__file__).resolve().parent          # analysis/ folder
+ROOT = HERE.parent                              # project root
+DATA_DIR = ROOT / "data"
+
+
 target = 'Concentration'
 featurelist = [
     'Depth',
@@ -38,7 +43,7 @@ sediment_data_filepaths = {
 
 class Config:
     # General data preparation settings
-    sediment_layer_depth: float = 0.05  # thickness of the sampled sediment layer in m
+    sediment_layer_depth: float = 0.15  # thickness of the sampled sediment layer in m
     sediment_grainsize_basis: str = 'Volume_logscale'  # 'Volume' for volume based grainsize distribution, 'Count' for count based
     min_part_count: int = 0  # how many MP particles are required to be considered as a valid sample 
     rebinning: bool = False  # whether or not to aggregate sizes to coarser bins
@@ -70,7 +75,7 @@ class Config:
     baw_epsg: int = 25832  # epsg code of the baw data
     restrict_tracers_to_depth: float = 30.0  # for BAW tracer particles depth values larger than this, will be replaced by an interpolation from their neighbours, set to 0 for no depth correction
     station_buffers: float = 444.0  # buffer radius in meters around each sample station , in which tracer ocurrences from the BAW simulation are counted
-    dem_path: str = '../data/.DGM_Schlei_1982_bis_2002_UTM32.zip'  # path to the zip file containing DEMs of water depths
+    dem_path: str = str(DATA_DIR / '.DGM_Schlei_1982_bis_2002_UTM32.zip')  # path to the zip file containing DEMs of water depths
     dem_filename: str= 'DGM_Schlei_1982_bis_2002_UTM32_filled.grd'  # name of the DEM file to use (DGM_Schlei_1982_bis_2002_UTM32.grd is the original grid, DGM_Schlei_1982_bis_2002_UTM32_filled.tif is interpolated outwards to zero-depth at the actual Schlei coastline, the interpolation was done as described here: https://gis.stackexchange.com/a/457998/223215)
     dem_resolution: float = 5.0  # resolution of the digital elevation model in meters
     interpolation_resolution: float = 10.0  # spatial resolution for geospatial interpolation in metres
@@ -167,7 +172,7 @@ class Config:
     refit_scorer: str = 'R2'  # one of the keys in scoring dict above: will be used to refit at set best estimator of the gridsearch object
     select_best: str = 'mean'  # type of average to be used to identify the best model of a gridsearch: can be 'median', 'mean' or 'iqm'
     ncv_mode: str = 'comparative'  # 'competitive' for running all activated model param sets against each other, 'comparative' for running separate repNCVs for each model param set (get combined afterwards by cv.rensembling function, which creates the equivalent to a competitive run)
-    log_path: str = '../data/exports/models/logs'  # default path to logfile
+    log_path: str = str(DATA_DIR / 'exports/models/logs')  # default path to logfile
     log_file: str = 'model.log'  # default name for log file
 
 Config.bandwidths: np.array = 10 ** np.linspace(0, 3,

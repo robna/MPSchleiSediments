@@ -10,6 +10,9 @@ from settings import Config, baw_tracer_reduction_factors
 import interpol, geo_io
 tqdm.pandas()
 
+HERE = Path(__file__).resolve().parent          # analysis/ folder
+ROOT = HERE.parent                              # project root
+DATA_DIR = ROOT / "data"
 
 
 def get_distance_to_shore(LON, LAT, polygon=None, epsg=Config.baw_epsg):
@@ -77,7 +80,7 @@ def get_wwtp_influence(sdd, trackpoints=None, tracks_file=None, buffer_radius=Co
     """
 
     try:  # because this calculation takes a while, we want to be able to save the tracks to a file and load them later
-        return pd.merge(sdd, pd.read_csv(f'../data/{col_prefix + file_postfix}.csv', index_col=0), how='left', left_on='Sample', right_index=True)
+        return pd.merge(sdd, pd.read_csv(DATA_DIR / f'{col_prefix + file_postfix}.csv', index_col=0), how='left', left_on='Sample', right_index=True)
     except:
         print('Need to calculate WWTP influence based on simulated particle tracks. This may take a while...')
         sdd = sdd.copy()
@@ -110,7 +113,7 @@ def get_wwtp_influence(sdd, trackpoints=None, tracks_file=None, buffer_radius=Co
         sdd[col_prefix+'_as_mean_time_travelled'].fillna(Config.tracer_mean_time_fillna, inplace=True)
         sdd.drop(columns=['geometry'], inplace=True)
         # save calculated WWTP influence factors (the last 3 columns of sdd) to a csv file
-        sdd.set_index('Sample').iloc[:, -4:].to_csv(f'../data/{col_prefix + file_postfix}.csv', index_label='Sample')
+        sdd.set_index('Sample').iloc[:, -4:].to_csv(DATA_DIR / f'{col_prefix + file_postfix}.csv', index_label='Sample')
         return sdd
 
 

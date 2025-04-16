@@ -7,13 +7,17 @@ import rasterio as rio
 from rasterio.transform import from_origin
 from settings import Config
 
+HERE = Path(__file__).resolve().parent          # analysis/ folder
+ROOT = HERE.parent                              # project root
+DATA_DIR = ROOT / "data"
+
 
 def get_schlei(epsg=Config.baw_epsg):
     """
     Loads the Schlei polygon from a shapefile
     :return: GeoDataFrame with the Schlei polygon
     """    
-    return gpd.read_file('../data/SchleiCoastline_from_OSM.geojson').to_crs(f"EPSG:{epsg}")
+    return gpd.read_file(DATA_DIR / 'SchleiCoastline_from_OSM.geojson').to_crs(f"EPSG:{epsg}")
 
 
 def load_zipped_grid(path2zip, path2grid=None):
